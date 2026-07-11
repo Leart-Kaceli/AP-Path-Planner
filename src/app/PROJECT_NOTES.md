@@ -2,16 +2,10 @@
 
 ## Day 1 Completed
 
-- Set up Next.js project
-- Installed dependencies
+- Installed Next.js
 - Configured TypeScript
 - Configured Tailwind CSS
-- Created first homepage
-- Connected GitHub repository
-
-## Next Steps
-
-- Build website layout
-- Create navigation
-- Design dashboard
-- Add authentication
+- Connected GitHub
+- Learned project structure
+- Created first landing page
+- Made first code commit
