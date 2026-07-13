@@ -1,13 +1,21 @@
+import About from "@/components/About";
+import Features from "@/components/Features";
+import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
+import Navbar from "@/components/Navbar";
+
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-5xl font-bold">
-        AP Path Planner
-      </h1>
+    <>
+      <Navbar />
 
-      <p className="mt-4 text-xl text-gray-600">
-        Plan smarter. Study better. Achieve your AP goals.
-      </p>
-    </main>
+      <main>
+        <Hero />
+        <Features />
+        <About />
+      </main>
+
+      <Footer />
+    </>
   );
 }
