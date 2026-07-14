@@ -226,3 +226,53 @@ Learned how to:
 - Learn controlled form inputs
 - Learn event handling
 - Allow courses to be added and removed
+
+
+# Day 4 Completed
+
+## Course Management
+
+- Replaced the Courses placeholder with an interactive course manager
+- Created a form for adding AP courses
+- Added course name, teacher, goal score, and progress inputs
+- Added form validation
+- Created reusable course cards
+- Added course deletion
+- Added an empty-state message
+- Added automatically updating course statistics
+- Added average progress calculations
+- Added goal-score statistics
+
+## React Concepts Learned
+
+- Controlled form inputs
+- React form submission
+- Event handling
+- useState with arrays
+- Adding items with the spread operator
+- Removing items with filter()
+- Conditional rendering
+- Lifting state up
+- Passing callback functions through props
+- Derived values
+- Resetting form state
+
+## TypeScript Concepts Learned
+
+- Custom object types
+- Union types
+- Function prop types
+- Typed React form events
+- Arrays containing typed objects
+
+## Current Limitation
+
+- Course data resets when the browser refreshes
+- Firebase will later store course data permanently
+
+## Day 5 Goals
+
+- Save course data in browser storage
+- Edit existing courses
+- Improve course navigation
+- Begin building the assignment management feature
