@@ -276,3 +276,58 @@ Learned how to:
 - Edit existing courses
 - Improve course navigation
 - Begin building the assignment management feature
+
+# Day 5 Completed
+
+## Course Persistence
+
+- Added browser storage using localStorage
+- Courses now remain after browser refreshes
+- Converted course arrays to and from JSON
+- Added safe error handling for saved data
+- Prevented initial state from overwriting stored courses
+
+## Course Editing
+
+- Added an Edit Course button
+- Allowed course information to be loaded into the form
+- Added Save Changes functionality
+- Added Cancel editing functionality
+- Preserved course IDs while editing
+- Added automatic scrolling to the form
+
+## Course Management Improvements
+
+- Added confirmation before deletion
+- Added Clear All Courses functionality
+- Added confirmation before clearing all courses
+- Updated course statistics after edits and deletions
+- Preserved changes after refreshing the browser
+
+## React Concepts Learned
+
+- useEffect
+- Synchronizing React with browser storage
+- Editing items in state with map()
+- Finding items with find()
+- Checking arrays with some()
+- Conditional form modes
+- Immutable state updates
+- Loading and saving JSON
+- Optional chaining
+- Nullish coalescing
+
+## Current Limitation
+
+- Course data is only stored in the current browser
+- Data does not yet sync between devices
+- User authentication and Firebase will solve this later
+
+## Day 6 Goals
+
+- Build interactive assignment management
+- Create assignment types
+- Add assignment forms
+- Add completion tracking
+- Add priority and due-date filtering
+- Save assignments in localStorage

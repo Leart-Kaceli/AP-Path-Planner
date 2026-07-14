@@ -4,17 +4,26 @@ import { useState, type FormEvent } from "react";
 import type { Course, GoalScore } from "@/types/course";
 
 type CourseFormProps = {
-  onAddCourse: (course: Course) => void;
+  courseToEdit: Course | null;
+  onSaveCourse: (course: Course) => void;
+  onCancelEdit: () => void;
 };
 
 export default function CourseForm({
-  onAddCourse,
+  courseToEdit,
+  onSaveCourse,
+  onCancelEdit,
 }: CourseFormProps) {
-  const [name, setName] = useState("");
-  const [teacher, setTeacher] = useState("");
-  const [goalScore, setGoalScore] = useState<GoalScore>(5);
-  const [progress, setProgress] = useState("0");
-  const [error, setError] = useState("");
+  const [name, setName] = useState(courseToEdit?.name ?? "");
+const [teacher, setTeacher] = useState(courseToEdit?.teacher ?? "");
+const [goalScore, setGoalScore] = useState<GoalScore>(
+  courseToEdit?.goalScore ?? 5,
+);
+const [progress, setProgress] = useState(
+  String(courseToEdit?.progress ?? 0),
+);
+const [error, setError] = useState("");
+
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,15 +46,15 @@ export default function CourseForm({
       return;
     }
 
-    const newCourse: Course = {
-      id: crypto.randomUUID(),
-      name: trimmedName,
-      teacher: trimmedTeacher || "Teacher not entered",
-      goalScore,
-      progress: progressNumber,
-    };
+   const savedCourse: Course = {
+  id: courseToEdit?.id ?? crypto.randomUUID(),
+  name: trimmedName,
+  teacher: trimmedTeacher || "Teacher not entered",
+  goalScore,
+  progress: progressNumber,
+};
 
-    onAddCourse(newCourse);
+onSaveCourse(savedCourse);
 
     setName("");
     setTeacher("");
@@ -58,12 +67,14 @@ export default function CourseForm({
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div>
         <h2 className="text-xl font-semibold text-slate-900">
-          Add an AP Course
-        </h2>
+  {courseToEdit ? "Edit AP Course" : "Add an AP Course"}
+</h2>
 
         <p className="mt-1 text-sm text-slate-600">
-          Enter your course information and current progress.
-        </p>
+  {courseToEdit
+    ? "Update the information for this course."
+    : "Enter your course information and current progress."}
+</p>
       </div>
 
       <form
@@ -164,12 +175,24 @@ export default function CourseForm({
           </p>
         )}
 
-        <button
-          type="submit"
-          className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-        >
-          Add Course
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+  <button
+    type="submit"
+    className="flex-1 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+  >
+    {courseToEdit ? "Save Changes" : "Add Course"}
+  </button>
+
+  {courseToEdit && (
+    <button
+      type="button"
+      onClick={onCancelEdit}
+      className="rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+    >
+      Cancel
+    </button>
+  )}
+</div>
       </form>
     </section>
   );

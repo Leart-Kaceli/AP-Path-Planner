@@ -2,11 +2,13 @@ import type { Course } from "@/types/course";
 
 type ManagedCourseCardProps = {
   course: Course;
+  onEdit: (course: Course) => void;
   onDelete: (courseId: string) => void;
 };
 
 export default function ManagedCourseCard({
   course,
+  onEdit,
   onDelete,
 }: ManagedCourseCardProps) {
   return (
@@ -46,13 +48,23 @@ export default function ManagedCourseCard({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onDelete(course.id)}
-        className="mt-6 text-sm font-semibold text-red-600 transition hover:text-red-700"
-      >
-        Delete Course
-      </button>
+      <div className="mt-6 flex items-center gap-4">
+  <button
+    type="button"
+    onClick={() => onEdit(course)}
+    className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+  >
+    Edit Course
+  </button>
+
+  <button
+    type="button"
+    onClick={() => onDelete(course.id)}
+    className="text-sm font-semibold text-red-600 transition hover:text-red-700"
+  >
+    Delete Course
+  </button>
+</div>
     </article>
   );
 }
