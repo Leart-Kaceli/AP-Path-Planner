@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import CourseForm from "@/components/courses/CourseForm";
 import ManagedCourseCard from "@/components/courses/ManagedCourseCard";
 import type { Course } from "@/types/course";
+import {
+  ASSIGNMENT_STORAGE_KEY,
+  COURSE_STORAGE_KEY,
+} from "@/constants/storage";
 
-const COURSE_STORAGE_KEY = "ap-path-planner-courses";
+import type { Assignment } from "@/types/assignment";
 
 const initialCourses: Course[] = [
   {
@@ -114,11 +118,42 @@ function cancelEditingCourse() {
   }
 
   const shouldDelete = window.confirm(
-    `Delete ${courseToDelete.name}?`,
+    `Delete ${courseToDelete.name} and its connected assignments?`,
   );
 
   if (!shouldDelete) {
     return;
+  }
+
+  try {
+    const storedAssignments = localStorage.getItem(
+      ASSIGNMENT_STORAGE_KEY,
+    );
+
+    if (storedAssignments) {
+      const parsedAssignments = JSON.parse(
+        storedAssignments,
+      ) as Assignment[];
+
+      if (Array.isArray(parsedAssignments)) {
+        const remainingAssignments =
+          parsedAssignments.filter(
+            (assignment) =>
+              assignment.course !==
+              courseToDelete.name,
+          );
+
+        localStorage.setItem(
+          ASSIGNMENT_STORAGE_KEY,
+          JSON.stringify(remainingAssignments),
+        );
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Could not remove connected assignments:",
+      error,
+    );
   }
 
   setCourses((currentCourses) =>
@@ -128,8 +163,8 @@ function cancelEditingCourse() {
   );
 
   if (courseToEdit?.id === courseId) {
-  setCourseToEdit(null);
-}
+    setCourseToEdit(null);
+  }
 }
 
 function clearAllCourses() {
@@ -138,11 +173,45 @@ function clearAllCourses() {
   }
 
   const shouldClear = window.confirm(
-    "Delete all courses? This action cannot be undone.",
+    "Delete all courses and their connected assignments? This action cannot be undone.",
   );
 
   if (!shouldClear) {
     return;
+  }
+
+  try {
+    const storedAssignments = localStorage.getItem(
+      ASSIGNMENT_STORAGE_KEY,
+    );
+
+    if (storedAssignments) {
+      const parsedAssignments = JSON.parse(
+        storedAssignments,
+      ) as Assignment[];
+
+      if (Array.isArray(parsedAssignments)) {
+        const courseNames = new Set(
+          courses.map((course) => course.name),
+        );
+
+        const remainingAssignments =
+          parsedAssignments.filter(
+            (assignment) =>
+              !courseNames.has(assignment.course),
+          );
+
+        localStorage.setItem(
+          ASSIGNMENT_STORAGE_KEY,
+          JSON.stringify(remainingAssignments),
+        );
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Could not remove connected assignments:",
+      error,
+    );
   }
 
   setCourses([]);

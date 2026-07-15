@@ -16,12 +16,12 @@ import ManagedAssignmentCard from "@/components/assignments/ManagedAssignmentCar
 
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
+import {
+  ASSIGNMENT_STORAGE_KEY,
+  COURSE_STORAGE_KEY,
+} from "@/constants/storage";
 
-const ASSIGNMENT_STORAGE_KEY =
-  "ap-path-planner-assignments";
 
-const COURSE_STORAGE_KEY =
-  "ap-path-planner-courses";
 
 const initialAssignments: Assignment[] = [
   {

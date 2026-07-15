@@ -400,3 +400,77 @@ Learned how to:
 - Display real upcoming assignments
 - Calculate completion percentages
 - Add overdue and due-soon indicators
+
+# Day 7 Completed
+
+## Live Dashboard Data
+
+- Replaced hard-coded dashboard data with saved user data
+- Loaded courses from localStorage
+- Loaded assignments from localStorage
+- Added shared storage-key constants
+- Added safe loading and error handling
+- Added a dashboard loading state
+- Added dashboard empty states
+
+## Dashboard Statistics
+
+- Connected the AP course count to saved courses
+- Added active assignment count
+- Added active high-priority count
+- Calculated average course progress
+- Calculated assignment completion percentage
+- Made statistics update based on saved data
+
+## Course Dashboard
+
+- Displayed saved course cards
+- Displayed real course progress
+- Limited the dashboard preview to four courses
+- Added a Manage Courses link
+- Added a no-courses empty state
+
+## Assignment Dashboard
+
+- Displayed real upcoming assignments
+- Sorted assignments by due date
+- Limited the dashboard preview to five assignments
+- Excluded completed assignments from the upcoming list
+- Added overdue, due-today, due-soon, and upcoming labels
+- Added a Manage Assignments link
+- Added a no-active-assignments state
+
+## Date Utilities
+
+- Created reusable date parsing functions
+- Added date-only comparison
+- Added due-date timing calculations
+- Added readable date formatting
+- Updated the dashboard header to show the current date
+
+## React and Next.js Concepts Learned
+
+- Loading shared browser data
+- Derived statistics
+- Reusable utility functions
+- Loading states
+- Empty states
+- Sorting and limiting arrays
+- Separating client and server components
+- Sharing constants across features
+- Avoiding duplicated state
+
+## Current Limitations
+
+- The dashboard updates after refreshing the page
+- Data remains stored only in the current browser
+- Firebase will later provide live synchronization and user accounts
+
+## Day 8 Goals
+
+- Build the study planner interface
+- Create study sessions
+- Connect study sessions to courses
+- Track study duration
+- Add weekly study statistics
+- Save study sessions in localStorage

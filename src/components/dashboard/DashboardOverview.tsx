@@ -1,0 +1,440 @@
+"use client";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import Link from "next/link";
+
+import AssignmentCard from "@/components/dashboard/AssignmentCard";
+import CourseCard from "@/components/dashboard/CourseCard";
+import StatCard from "@/components/dashboard/StatCard";
+
+import {
+  ASSIGNMENT_STORAGE_KEY,
+  COURSE_STORAGE_KEY,
+} from "@/constants/storage";
+
+import type { Assignment } from "@/types/assignment";
+import type { Course } from "@/types/course";
+
+type LoadedDashboardData = {
+  courses: Course[];
+  assignments: Assignment[];
+};
+
+const emptyDashboardData: LoadedDashboardData = {
+  courses: [],
+  assignments: [],
+};
+
+export default function DashboardOverview() {
+  const [dashboardData, setDashboardData] =
+    useState<LoadedDashboardData>(
+      emptyDashboardData,
+    );
+
+  const [hasLoaded, setHasLoaded] =
+    useState(false);
+
+  useEffect(() => {
+    try {
+      const storedCourses =
+        localStorage.getItem(
+          COURSE_STORAGE_KEY,
+        );
+
+      const storedAssignments =
+        localStorage.getItem(
+          ASSIGNMENT_STORAGE_KEY,
+        );
+
+      const courses = storedCourses
+        ? (JSON.parse(
+            storedCourses,
+          ) as Course[])
+        : [];
+
+      const assignments =
+        storedAssignments
+          ? (JSON.parse(
+              storedAssignments,
+            ) as Assignment[])
+          : [];
+
+      const safeCourses =
+        Array.isArray(courses)
+          ? courses
+          : [];
+
+      const safeAssignments =
+        Array.isArray(assignments)
+          ? assignments
+          : [];
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDashboardData({
+        courses: safeCourses,
+        assignments: safeAssignments,
+      });
+    } catch (error) {
+      console.error(
+        "Could not load dashboard data:",
+        error,
+      );
+
+      setDashboardData(
+        emptyDashboardData,
+      );
+    } finally {
+      setHasLoaded(true);
+    }
+  }, []);
+
+  if (!hasLoaded) {
+    return <DashboardLoading />;
+  }
+
+  const { courses, assignments } =
+    dashboardData;
+
+  const completedAssignments =
+    assignments.filter(
+      (assignment) =>
+        assignment.completed,
+    );
+
+  const activeAssignments =
+    assignments.filter(
+      (assignment) =>
+        !assignment.completed,
+    );
+
+  const highPriorityAssignments =
+    activeAssignments.filter(
+      (assignment) =>
+        assignment.priority === "High",
+    );
+
+  const averageProgress =
+    courses.length === 0
+      ? 0
+      : Math.round(
+          courses.reduce(
+            (total, course) =>
+              total + course.progress,
+            0,
+          ) / courses.length,
+        );
+
+  const assignmentCompletion =
+    assignments.length === 0
+      ? 0
+      : Math.round(
+          (completedAssignments.length /
+            assignments.length) *
+            100,
+        );
+
+  const upcomingAssignments =
+    activeAssignments
+      .slice()
+      .sort(
+        (assignmentA, assignmentB) =>
+          assignmentA.dueDate.localeCompare(
+            assignmentB.dueDate,
+          ),
+      )
+      .slice(0, 5);
+
+  const displayedCourses =
+    courses.slice(0, 4);
+
+  return (
+    <main className="px-6 py-8">
+      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="AP Courses"
+          value={String(courses.length)}
+          description="Currently enrolled"
+        />
+
+        <StatCard
+          title="Active Tasks"
+          value={String(
+            activeAssignments.length,
+          )}
+          description="Assignments remaining"
+        />
+
+        <StatCard
+          title="High Priority"
+          value={String(
+            highPriorityAssignments.length,
+          )}
+          description="Active urgent tasks"
+        />
+
+        <StatCard
+          title="Average Progress"
+          value={`${averageProgress}%`}
+          description="Across all AP courses"
+        />
+      </section>
+
+      <section className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Your AP Courses
+              </h2>
+
+              <p className="mt-1 text-slate-600">
+                Progress across your saved
+                courses.
+              </p>
+            </div>
+
+            <Link
+              href="/courses"
+              className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+            >
+              Manage Courses
+            </Link>
+          </div>
+
+          {displayedCourses.length > 0 ? (
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              {displayedCourses.map(
+                (course) => (
+                  <CourseCard
+                    key={course.id}
+                    name={course.name}
+                    teacher={
+                      course.teacher
+                    }
+                    goalScore={
+                      course.goalScore
+                    }
+                    progress={
+                      course.progress
+                    }
+                  />
+                ),
+              )}
+            </div>
+          ) : (
+            <DashboardEmptyState
+              title="No courses added"
+              description="Add your AP courses to start tracking progress."
+              href="/courses"
+              linkText="Add a Course"
+            />
+          )}
+        </div>
+
+        <DashboardProgressSummary
+          courseProgress={
+            averageProgress
+          }
+          assignmentCompletion={
+            assignmentCompletion
+          }
+          completedAssignments={
+            completedAssignments.length
+          }
+          totalAssignments={
+            assignments.length
+          }
+        />
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Upcoming Assignments
+            </h2>
+
+            <p className="mt-1 text-slate-600">
+              Your next active deadlines,
+              sorted by date.
+            </p>
+          </div>
+
+          <Link
+            href="/assignments"
+            className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+          >
+            Manage Assignments
+          </Link>
+        </div>
+
+        {upcomingAssignments.length > 0 ? (
+          <div className="mt-3">
+            {upcomingAssignments.map(
+              (assignment) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  title={assignment.title}
+                  course={assignment.course}
+                  dueDate={
+                    assignment.dueDate
+                  }
+                  priority={
+                    assignment.priority
+                  }
+                />
+              ),
+            )}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+            <h3 className="font-semibold text-slate-900">
+              No active assignments
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Add an assignment or enjoy
+              having everything completed.
+            </p>
+
+            <Link
+              href="/assignments"
+              className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Add Assignment
+            </Link>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <main className="px-6 py-8">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {[1, 2, 3, 4].map(
+          (placeholder) => (
+            <div
+              key={placeholder}
+              className="h-36 animate-pulse rounded-2xl bg-slate-200"
+            />
+          ),
+        )}
+      </div>
+
+      <div className="mt-8 h-96 animate-pulse rounded-2xl bg-slate-200" />
+    </main>
+  );
+}
+
+type DashboardEmptyStateProps = {
+  title: string;
+  description: string;
+  href: string;
+  linkText: string;
+};
+
+function DashboardEmptyState({
+  title,
+  description,
+  href,
+  linkText,
+}: DashboardEmptyStateProps) {
+  return (
+    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+      <h3 className="font-semibold text-slate-900">
+        {title}
+      </h3>
+
+      <p className="mt-2 text-sm text-slate-600">
+        {description}
+      </p>
+
+      <Link
+        href={href}
+        className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+      >
+        {linkText}
+      </Link>
+    </div>
+  );
+}
+
+type DashboardProgressSummaryProps = {
+  courseProgress: number;
+  assignmentCompletion: number;
+  completedAssignments: number;
+  totalAssignments: number;
+};
+
+function DashboardProgressSummary({
+  courseProgress,
+  assignmentCompletion,
+  completedAssignments,
+  totalAssignments,
+}: DashboardProgressSummaryProps) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-slate-900">
+        Overall Progress
+      </h2>
+
+      <div className="mt-6 space-y-7">
+        <ProgressRow
+          label="Average course progress"
+          percentage={courseProgress}
+          description={`${courseProgress}%`}
+        />
+
+        <ProgressRow
+          label="Assignments completed"
+          percentage={
+            assignmentCompletion
+          }
+          description={`${completedAssignments}/${totalAssignments}`}
+        />
+      </div>
+    </section>
+  );
+}
+
+type ProgressRowProps = {
+  label: string;
+  percentage: number;
+  description: string;
+};
+
+function ProgressRow({
+  label,
+  percentage,
+  description,
+}: ProgressRowProps) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <span className="font-medium text-slate-600">
+          {label}
+        </span>
+
+        <span className="font-semibold text-slate-900">
+          {description}
+        </span>
+      </div>
+
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-blue-600 transition-all"
+          style={{
+            width: `${percentage}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
