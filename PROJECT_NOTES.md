@@ -331,3 +331,72 @@ Learned how to:
 - Add completion tracking
 - Add priority and due-date filtering
 - Save assignments in localStorage
+
+# Day 6 Completed
+
+## Assignment Management
+
+- Replaced the Assignments placeholder page
+- Created an interactive assignment form
+- Connected assignments to saved AP courses
+- Added title, course, due date, priority, and notes fields
+- Added form validation
+- Created reusable assignment cards
+- Added assignment editing
+- Added assignment deletion
+- Added assignment completion tracking
+- Added confirmation before deletion
+- Added Clear Completed functionality
+
+## Filtering and Search
+
+- Added assignment search
+- Added status filtering
+- Added priority filtering
+- Added combined filtering
+- Sorted assignments by due date
+- Added a filtered-results count
+- Added an empty filtered-results state
+
+## Statistics
+
+- Added total assignment count
+- Added active assignment count
+- Added completed assignment count
+- Added active high-priority count
+- Made statistics update automatically
+
+## Persistence
+
+- Saved assignments using localStorage
+- Loaded assignments after browser refresh
+- Converted assignment arrays with JSON.stringify()
+- Restored assignment arrays with JSON.parse()
+- Loaded course names from saved course data
+
+## React Concepts Learned
+
+- Controlled assignment forms
+- Updating objects inside arrays
+- Immutable state updates
+- Search and filter logic
+- Chained filter() and sort()
+- Derived state
+- Checkbox event handling
+- Conditional styling
+- Resetting component state with a key
+- Sharing state through a parent component
+
+## Current Limitations
+
+- Data remains limited to one browser
+- Course changes require the Assignments page to reload
+- Firebase and authentication will later sync data across devices
+
+## Day 7 Goals
+
+- Improve dashboard data accuracy
+- Connect dashboard statistics to saved courses and assignments
+- Display real upcoming assignments
+- Calculate completion percentages
+- Add overdue and due-soon indicators

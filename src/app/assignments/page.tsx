@@ -1,22 +1,38 @@
 import Link from "next/link";
+import AssignmentManager from "@/components/assignments/AssignmentManager";
 
-export default function CoursesPage() {
+export default function AssignmentsPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center">
-      <h1 className="text-4xl font-bold text-slate-900">
-        Assignments Page
-      </h1>
+    <main className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-blue-600">
+              Manage Your Assignments
+            </p>
 
-      <p className="mt-4 text-lg text-slate-600">
-        Assignment management features will be added soon.
-      </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+              Your Assignments
+            </h1>
 
-      <Link
-        href="/dashboard"
-        className="mt-8 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-      >
-        Return to Dashboard
-      </Link>
+            <p className="mt-2 text-slate-600">
+              Add tasks, monitor deadlines,
+              and track completed work.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard"
+            className="w-fit rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <AssignmentManager />
+      </div>
     </main>
   );
 }
