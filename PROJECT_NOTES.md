@@ -545,3 +545,73 @@ Learned how to:
 - Add weekly study-time summaries
 - Build the initial grade tracker
 - Create weighted grade categories
+
+# Day 9 Completed
+
+## Grade Tracker
+
+- Replaced the Grades placeholder page
+- Created an interactive grade-entry form
+- Connected grades to saved AP courses
+- Added title, category, points, and date fields
+- Added form validation
+- Created reusable grade cards
+- Added grade editing
+- Added grade deletion
+- Added Clear All Grades functionality
+- Saved grades using localStorage
+
+## Grade Calculations
+
+- Calculated percentages from earned and possible points
+- Added overall point-based average
+- Added test average
+- Added grade-entry count
+- Added number of courses being tracked
+- Made calculations update automatically
+
+## Grade Search and Filtering
+
+- Added course filtering
+- Added category filtering
+- Added grade search
+- Added combined filtering
+- Sorted grades by date
+- Added an empty filtered-results state
+
+## Dashboard Study Integration
+
+- Loaded study sessions into the dashboard
+- Added completed study-time statistics
+- Added upcoming study-session previews
+- Sorted study sessions by date and time
+- Excluded completed sessions from upcoming sessions
+- Added a Study Planner dashboard link
+- Added an empty study-session state
+
+## React Concepts Learned
+
+- Calculating values from saved state
+- Building point-based grade averages
+- Reusing add and edit forms
+- Filtering data by several conditions
+- Loading multiple localStorage data sources
+- Integrating one feature into another feature
+- Avoiding duplicated derived state
+- Formatting saved times and dates
+
+## Current Limitations
+
+- Grade calculations are currently point-based
+- Category weighting is not yet customizable
+- Data remains limited to the current browser
+- Dashboard changes may require a refresh
+- Firebase will later provide account-based synchronization
+
+## Day 10 Goals
+
+- Add customizable grade-category weights
+- Calculate weighted course averages
+- Add letter-grade labels
+- Display grade summaries by course
+- Improve dashboard navigation consistency

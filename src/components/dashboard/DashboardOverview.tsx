@@ -10,10 +10,13 @@ import Link from "next/link";
 import AssignmentCard from "@/components/dashboard/AssignmentCard";
 import CourseCard from "@/components/dashboard/CourseCard";
 import StatCard from "@/components/dashboard/StatCard";
+import type { StudySession } from "@/types/studySession";
+import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
 
 import {
   ASSIGNMENT_STORAGE_KEY,
   COURSE_STORAGE_KEY,
+  STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
 import type { Assignment } from "@/types/assignment";
@@ -22,11 +25,13 @@ import type { Course } from "@/types/course";
 type LoadedDashboardData = {
   courses: Course[];
   assignments: Assignment[];
+  studySessions: StudySession[];
 };
 
 const emptyDashboardData: LoadedDashboardData = {
   courses: [],
   assignments: [],
+  studySessions: [],
 };
 
 export default function DashboardOverview() {
@@ -50,6 +55,11 @@ export default function DashboardOverview() {
           ASSIGNMENT_STORAGE_KEY,
         );
 
+        const storedStudySessions =
+  localStorage.getItem(
+    STUDY_SESSION_STORAGE_KEY,
+  );
+
       const courses = storedCourses
         ? (JSON.parse(
             storedCourses,
@@ -63,6 +73,18 @@ export default function DashboardOverview() {
             ) as Assignment[])
           : [];
 
+          const studySessions =
+  storedStudySessions
+    ? (JSON.parse(
+        storedStudySessions,
+      ) as StudySession[])
+    : [];
+
+const safeStudySessions =
+  Array.isArray(studySessions)
+    ? studySessions
+    : [];
+
       const safeCourses =
         Array.isArray(courses)
           ? courses
@@ -75,9 +97,10 @@ export default function DashboardOverview() {
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDashboardData({
-        courses: safeCourses,
-        assignments: safeAssignments,
-      });
+  courses: safeCourses,
+  assignments: safeAssignments,
+  studySessions: safeStudySessions,
+});
     } catch (error) {
       console.error(
         "Could not load dashboard data:",
@@ -96,8 +119,11 @@ export default function DashboardOverview() {
     return <DashboardLoading />;
   }
 
-  const { courses, assignments } =
-    dashboardData;
+  const {
+  courses,
+  assignments,
+  studySessions,
+} = dashboardData;
 
   const completedAssignments =
     assignments.filter(
@@ -111,11 +137,41 @@ export default function DashboardOverview() {
         !assignment.completed,
     );
 
-  const highPriorityAssignments =
-    activeAssignments.filter(
-      (assignment) =>
-        assignment.priority === "High",
-    );
+
+    const completedStudySessions =
+  studySessions.filter(
+    (session) => session.completed,
+  );
+
+const scheduledStudySessions =
+  studySessions.filter(
+    (session) => !session.completed,
+  );
+
+const completedStudyMinutes =
+  completedStudySessions.reduce(
+    (total, session) =>
+      total + session.durationMinutes,
+    0,
+  );
+
+const upcomingStudySessions =
+  scheduledStudySessions
+    .slice()
+    .sort((sessionA, sessionB) => {
+      const firstDateTime =
+        `${sessionA.date}T${sessionA.startTime}`;
+
+      const secondDateTime =
+        `${sessionB.date}T${sessionB.startTime}`;
+
+      return firstDateTime.localeCompare(
+        secondDateTime,
+      );
+    })
+    .slice(0, 3);
+
+
 
   const averageProgress =
     courses.length === 0
@@ -169,18 +225,19 @@ export default function DashboardOverview() {
         />
 
         <StatCard
-          title="High Priority"
-          value={String(
-            highPriorityAssignments.length,
-          )}
-          description="Active urgent tasks"
-        />
+  title="Study Time"
+  value={formatStudyMinutes(
+    completedStudyMinutes,
+  )}
+  description="Completed across all sessions"
+/>
 
         <StatCard
           title="Average Progress"
           value={`${averageProgress}%`}
           description="Across all AP courses"
         />
+        
       </section>
 
       <section className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
@@ -234,6 +291,8 @@ export default function DashboardOverview() {
             />
           )}
         </div>
+
+        
 
         <DashboardProgressSummary
           courseProgress={
@@ -310,6 +369,57 @@ export default function DashboardOverview() {
           </div>
         )}
       </section>
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-900">
+        Upcoming Study Sessions
+      </h2>
+
+      <p className="mt-1 text-slate-600">
+        Your next scheduled study blocks.
+      </p>
+    </div>
+
+    <Link
+      href="/planner"
+      className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+    >
+      Open Study Planner
+    </Link>
+  </div>
+
+  {upcomingStudySessions.length > 0 ? (
+    <div className="mt-3">
+      {upcomingStudySessions.map(
+        (session) => (
+          <DashboardStudySession
+            key={session.id}
+            session={session}
+          />
+        ),
+      )}
+    </div>
+  ) : (
+    <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+      <h3 className="font-semibold text-slate-900">
+        No study sessions scheduled
+      </h3>
+
+      <p className="mt-2 text-sm text-slate-600">
+        Schedule focused study time for one
+        of your courses.
+      </p>
+
+      <Link
+        href="/planner"
+        className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+      >
+        Schedule Session
+      </Link>
+    </div>
+  )}
+</section>
     </main>
   );
 }
@@ -437,4 +547,19 @@ function ProgressRow({
       </div>
     </div>
   );
+}
+
+function formatStudyMinutes(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${remainingMinutes}m`;
 }
