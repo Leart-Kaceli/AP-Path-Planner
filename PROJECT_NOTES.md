@@ -474,3 +474,74 @@ Learned how to:
 - Track study duration
 - Add weekly study statistics
 - Save study sessions in localStorage
+
+# Day 8 Completed
+
+## Study Planner
+
+- Replaced the Study Planner placeholder page
+- Created an interactive study-session form
+- Connected study sessions to saved AP courses
+- Added topic, date, time, duration, and notes fields
+- Added form validation
+- Created reusable study-session cards
+- Added session editing
+- Added session deletion
+- Added completion tracking
+- Added confirmation before deletion
+- Added Clear Completed functionality
+
+## Study Statistics
+
+- Added total study-session count
+- Added scheduled-session count
+- Added completed-session count
+- Calculated total completed study time
+- Calculated total planned study time
+- Added a study-time completion progress bar
+- Made all statistics update automatically
+
+## Search and Filtering
+
+- Added course filtering
+- Added completion-status filtering
+- Added topic and notes search
+- Added combined filtering
+- Sorted sessions by date and start time
+- Added an empty filtered-results state
+
+## Persistence
+
+- Added a shared study-session storage key
+- Saved sessions using localStorage
+- Restored sessions after browser refresh
+- Loaded saved AP courses into the planner
+- Used JSON.stringify() and JSON.parse()
+
+## React Concepts Learned
+
+- Controlled study-planning forms
+- Form validation
+- Reusing add and edit forms
+- Updating array objects with map()
+- Removing array items with filter()
+- Derived statistics
+- Filtering and sorting data
+- Resetting component state with a key
+- Formatting times and durations
+- Synchronizing state with browser storage
+
+## Current Limitations
+
+- Sessions are stored only in the current browser
+- Course changes require the Planner page to refresh
+- There are no notifications or calendar synchronization yet
+- Firebase will later provide accounts and device synchronization
+
+## Day 9 Goals
+
+- Connect study-session data to the dashboard
+- Display upcoming study sessions
+- Add weekly study-time summaries
+- Build the initial grade tracker
+- Create weighted grade categories
