@@ -681,3 +681,69 @@ Learned how to:
 - Build the profile/settings page
 - Allow the student name to be customized
 - Add theme and preference settings
+
+# Day 11 Completed
+
+## Profile and Settings
+
+- Replaced the Profile placeholder page
+- Added customizable student name
+- Added school information
+- Added graduation year
+- Added weekly study-time goal
+- Added appearance preference
+- Added profile preview
+- Added profile validation
+- Added Reset Profile functionality
+- Saved profile information in localStorage
+
+## Dashboard Personalization
+
+- Loaded the saved student name
+- Displayed the saved name in the dashboard greeting
+- Preserved profile information after refresh
+- Added profile defaults and reusable profile types
+
+## Dashboard Grade Integration
+
+- Loaded saved grades into the dashboard
+- Loaded saved grade weights
+- Added overall point average
+- Added overall weighted average
+- Added letter-grade labels
+- Added course-specific weighted averages
+- Added a Manage Grades link
+- Added a no-grades empty state
+
+## Appearance Settings
+
+- Added light, dark, and system preferences
+- Applied the theme preference to the root HTML element
+- Added Tailwind class-based dark-mode support
+- Began adding dark-mode styles
+
+## React and TypeScript Concepts Learned
+
+- Generic object-update functions
+- Saving settings objects
+- Loading partial saved objects safely
+- Merging saved data with defaults
+- Synchronizing state with the DOM
+- Formatting profile information
+- Sharing saved settings across pages
+- Loading several data types into one dashboard
+
+## Current Limitations
+
+- Dark-mode styles are not yet applied to every component
+- Dashboard updates may require a refresh
+- Profile data remains stored in the current browser
+- Firebase will later synchronize profiles across devices
+
+## Day 12 Goals
+
+- Apply dark mode throughout the application
+- Improve responsive mobile navigation
+- Build a mobile sidebar menu
+- Add dashboard weekly-study-goal progress
+- Improve accessibility and keyboard navigation

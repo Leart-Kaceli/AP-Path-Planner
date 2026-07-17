@@ -12,3 +12,6 @@ export const GRADE_STORAGE_KEY =
 
 export const GRADE_WEIGHT_STORAGE_KEY =
   "ap-path-planner-grade-weights";
+
+export const PROFILE_STORAGE_KEY =
+  "ap-path-planner-profile";

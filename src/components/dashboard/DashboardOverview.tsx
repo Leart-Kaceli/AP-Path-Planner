@@ -10,35 +10,54 @@ import Link from "next/link";
 import AssignmentCard from "@/components/dashboard/AssignmentCard";
 import CourseCard from "@/components/dashboard/CourseCard";
 import StatCard from "@/components/dashboard/StatCard";
-import type { StudySession } from "@/types/studySession";
 import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
+import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
+import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
 
 import {
   ASSIGNMENT_STORAGE_KEY,
   COURSE_STORAGE_KEY,
+  GRADE_STORAGE_KEY,
+  GRADE_WEIGHT_STORAGE_KEY,
   STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
+import {
+  calculatePointAverage,
+  calculateWeightedAverage,
+} from "@/utils/grades";
+
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
+import type { StudySession } from "@/types/studySession";
+import type {
+  CourseGradeWeights,
+  GradeEntry,
+} from "@/types/grade";
 
 type LoadedDashboardData = {
   courses: Course[];
   assignments: Assignment[];
   studySessions: StudySession[];
+  grades: GradeEntry[];
+  weightsByCourse: CourseGradeWeights;
 };
-
 const emptyDashboardData: LoadedDashboardData = {
   courses: [],
   assignments: [],
   studySessions: [],
+  grades: [],
+  weightsByCourse: {},
 };
 
+
 export default function DashboardOverview() {
-  const [dashboardData, setDashboardData] =
-    useState<LoadedDashboardData>(
-      emptyDashboardData,
-    );
+
+
+const [dashboardData, setDashboardData] =
+  useState<LoadedDashboardData>(
+    emptyDashboardData,
+  );
 
   const [hasLoaded, setHasLoaded] =
     useState(false);
@@ -58,6 +77,16 @@ export default function DashboardOverview() {
         const storedStudySessions =
   localStorage.getItem(
     STUDY_SESSION_STORAGE_KEY,
+  );
+
+    const storedGrades =
+  localStorage.getItem(
+    GRADE_STORAGE_KEY,
+  );
+
+const storedGradeWeights =
+  localStorage.getItem(
+    GRADE_WEIGHT_STORAGE_KEY,
   );
 
       const courses = storedCourses
@@ -80,6 +109,19 @@ export default function DashboardOverview() {
       ) as StudySession[])
     : [];
 
+    const grades = storedGrades
+  ? (JSON.parse(
+      storedGrades,
+    ) as GradeEntry[])
+  : [];
+
+const weightsByCourse =
+  storedGradeWeights
+    ? (JSON.parse(
+        storedGradeWeights,
+      ) as CourseGradeWeights)
+    : {};
+
 const safeStudySessions =
   Array.isArray(studySessions)
     ? studySessions
@@ -95,11 +137,26 @@ const safeStudySessions =
           ? assignments
           : [];
 
+        const safeGrades =
+  Array.isArray(grades)
+    ? grades
+    : [];
+
+const safeWeightsByCourse =
+  weightsByCourse &&
+  typeof weightsByCourse === "object" &&
+  !Array.isArray(weightsByCourse)
+    ? weightsByCourse
+    : {};
+
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDashboardData({
+     setDashboardData({
   courses: safeCourses,
   assignments: safeAssignments,
   studySessions: safeStudySessions,
+  grades: safeGrades,
+  weightsByCourse:
+    safeWeightsByCourse,
 });
     } catch (error) {
       console.error(
@@ -119,10 +176,12 @@ const safeStudySessions =
     return <DashboardLoading />;
   }
 
-  const {
+const {
   courses,
   assignments,
   studySessions,
+  grades,
+  weightsByCourse,
 } = dashboardData;
 
   const completedAssignments =
@@ -206,6 +265,61 @@ const upcomingStudySessions =
 
   const displayedCourses =
     courses.slice(0, 4);
+
+  const overallPointAverage =
+  calculatePointAverage(grades);
+
+const coursesWithGrades = Array.from(
+  new Set(
+    grades.map((grade) => grade.course),
+  ),
+);
+
+const weightedCourseSummaries =
+  coursesWithGrades
+    .map((course) => {
+      const courseGrades = grades.filter(
+        (grade) =>
+          grade.course === course,
+      );
+
+      const weights =
+        weightsByCourse[course] ??
+        DEFAULT_GRADE_WEIGHTS;
+
+      const weightedAverage =
+        calculateWeightedAverage(
+          courseGrades,
+          weights,
+        );
+
+      return {
+        course,
+        weightedAverage,
+      };
+    })
+    .filter(
+      (
+        summary,
+      ): summary is {
+        course: string;
+        weightedAverage: number;
+      } =>
+        summary.weightedAverage !== null,
+    );
+
+const overallWeightedAverage =
+  weightedCourseSummaries.length === 0
+    ? null
+    : Math.round(
+        weightedCourseSummaries.reduce(
+          (total, summary) =>
+            total +
+            summary.weightedAverage,
+          0,
+        ) /
+          weightedCourseSummaries.length,
+      );
 
   return (
     <main className="px-6 py-8">
@@ -309,6 +423,18 @@ const upcomingStudySessions =
           }
         />
       </section>
+
+      <div className="mt-8">
+  <DashboardGradeSummary
+    pointAverage={overallPointAverage}
+    weightedAverage={
+      overallWeightedAverage
+    }
+    courseSummaries={
+      weightedCourseSummaries
+    }
+  />
+</div>
 
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

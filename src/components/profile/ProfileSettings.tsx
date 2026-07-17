@@ -1,0 +1,510 @@
+"use client";
+
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+} from "react";
+
+import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
+import { PROFILE_STORAGE_KEY } from "@/constants/storage";
+
+import type {
+  StudentProfile,
+  ThemePreference,
+} from "@/types/profile";
+
+export default function ProfileSettings() {
+  const [profile, setProfile] =
+    useState<StudentProfile>(
+      DEFAULT_STUDENT_PROFILE,
+    );
+
+  const [hasLoaded, setHasLoaded] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  useEffect(() => {
+    try {
+      const storedProfile =
+        localStorage.getItem(
+          PROFILE_STORAGE_KEY,
+        );
+
+      if (storedProfile) {
+        const parsedProfile = JSON.parse(
+          storedProfile,
+        ) as Partial<StudentProfile>;
+
+        const loadedProfile: StudentProfile = {
+          ...DEFAULT_STUDENT_PROFILE,
+          ...parsedProfile,
+        };
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setProfile(loadedProfile);
+        applyTheme(loadedProfile.theme);
+      } else {
+        applyTheme(
+          DEFAULT_STUDENT_PROFILE.theme,
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Could not load profile settings:",
+        error,
+      );
+    } finally {
+      setHasLoaded(true);
+    }
+  }, []);
+
+  function updateProfile<
+    Key extends keyof StudentProfile,
+  >(
+    key: Key,
+    value: StudentProfile[Key],
+  ) {
+    setProfile((currentProfile) => ({
+      ...currentProfile,
+      [key]: value,
+    }));
+
+    setMessage("");
+  }
+
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    const trimmedName =
+      profile.name.trim();
+
+    const trimmedSchool =
+      profile.school.trim();
+
+    if (!trimmedName) {
+      setMessage(
+        "Please enter your name.",
+      );
+      return;
+    }
+
+    if (
+      profile.weeklyStudyGoalMinutes < 30 ||
+      profile.weeklyStudyGoalMinutes > 3000
+    ) {
+      setMessage(
+        "Weekly study goal must be between 30 and 3000 minutes.",
+      );
+      return;
+    }
+
+    const savedProfile: StudentProfile = {
+      ...profile,
+      name: trimmedName,
+      school: trimmedSchool,
+    };
+
+    try {
+      localStorage.setItem(
+        PROFILE_STORAGE_KEY,
+        JSON.stringify(savedProfile),
+      );
+
+      setProfile(savedProfile);
+      applyTheme(savedProfile.theme);
+      setMessage("Profile saved successfully.");
+    } catch (error) {
+      console.error(
+        "Could not save profile settings:",
+        error,
+      );
+
+      setMessage(
+        "Your profile could not be saved.",
+      );
+    }
+  }
+
+  function resetProfile() {
+    const shouldReset = window.confirm(
+      "Reset all profile settings to their defaults?",
+    );
+
+    if (!shouldReset) {
+      return;
+    }
+
+    setProfile(DEFAULT_STUDENT_PROFILE);
+
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify(
+        DEFAULT_STUDENT_PROFILE,
+      ),
+    );
+
+    applyTheme(
+      DEFAULT_STUDENT_PROFILE.theme,
+    );
+
+    setMessage(
+      "Profile reset to default settings.",
+    );
+  }
+
+  if (!hasLoaded) {
+    return (
+      <div className="h-96 animate-pulse rounded-2xl bg-slate-200" />
+    );
+  }
+
+  return (
+    <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">
+            Student Profile
+          </h2>
+
+          <p className="mt-2 text-slate-600">
+            Customize the information used
+            throughout AP Path Planner.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-6">
+          <div>
+            <label
+              htmlFor="profile-name"
+              className="text-sm font-medium text-slate-700"
+            >
+              Name
+            </label>
+
+            <input
+              id="profile-name"
+              type="text"
+              value={profile.name}
+              onChange={(event) =>
+                updateProfile(
+                  "name",
+                  event.target.value,
+                )
+              }
+              placeholder="Your name"
+              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="profile-school"
+              className="text-sm font-medium text-slate-700"
+            >
+              School
+            </label>
+
+            <input
+              id="profile-school"
+              type="text"
+              value={profile.school}
+              onChange={(event) =>
+                updateProfile(
+                  "school",
+                  event.target.value,
+                )
+              }
+              placeholder="Your high school"
+              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="graduation-year"
+                className="text-sm font-medium text-slate-700"
+              >
+                Graduation year
+              </label>
+
+              <select
+                id="graduation-year"
+                value={
+                  profile.graduationYear
+                }
+                onChange={(event) =>
+                  updateProfile(
+                    "graduationYear",
+                    event.target.value,
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="2026">
+                  2026
+                </option>
+
+                <option value="2027">
+                  2027
+                </option>
+
+                <option value="2028">
+                  2028
+                </option>
+
+                <option value="2029">
+                  2029
+                </option>
+
+                <option value="2030">
+                  2030
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="weekly-study-goal"
+                className="text-sm font-medium text-slate-700"
+              >
+                Weekly study goal
+              </label>
+
+              <div className="relative mt-2">
+                <input
+                  id="weekly-study-goal"
+                  type="number"
+                  min="30"
+                  max="3000"
+                  step="15"
+                  value={
+                    profile.weeklyStudyGoalMinutes
+                  }
+                  onChange={(event) =>
+                    updateProfile(
+                      "weeklyStudyGoalMinutes",
+                      Number(
+                        event.target.value,
+                      ),
+                    )
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 pr-20 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+                  minutes
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="theme-preference"
+              className="text-sm font-medium text-slate-700"
+            >
+              Appearance
+            </label>
+
+            <select
+              id="theme-preference"
+              value={profile.theme}
+              onChange={(event) =>
+                updateProfile(
+                  "theme",
+                  event.target
+                    .value as ThemePreference,
+                )
+              }
+              className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="system">
+                Use system setting
+              </option>
+
+              <option value="light">
+                Light
+              </option>
+
+              <option value="dark">
+                Dark
+              </option>
+            </select>
+          </div>
+
+          {message && (
+            <p
+              role="status"
+              className={`rounded-lg px-4 py-3 text-sm font-medium ${
+                message.includes(
+                  "successfully",
+                ) ||
+                message.includes("reset")
+                  ? "bg-green-50 text-green-700"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="submit"
+              className="flex-1 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+            >
+              Save Profile
+            </button>
+
+            <button
+              type="button"
+              onClick={resetProfile}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <ProfilePreview profile={profile} />
+    </div>
+  );
+}
+
+type ProfilePreviewProps = {
+  profile: StudentProfile;
+};
+
+function ProfilePreview({
+  profile,
+}: ProfilePreviewProps) {
+  return (
+    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+        Preview
+      </p>
+
+      <div className="mt-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-700">
+        {getInitials(profile.name)}
+      </div>
+
+      <h2 className="mt-5 text-2xl font-bold text-slate-900">
+        {profile.name || "Student"}
+      </h2>
+
+      <p className="mt-1 text-slate-600">
+        {profile.school ||
+          "School not entered"}
+      </p>
+
+      <div className="mt-6 space-y-4 border-t border-slate-200 pt-6 text-sm">
+        <PreviewRow
+          label="Graduation year"
+          value={profile.graduationYear}
+        />
+
+        <PreviewRow
+          label="Weekly study goal"
+          value={formatMinutes(
+            profile.weeklyStudyGoalMinutes,
+          )}
+        />
+
+        <PreviewRow
+          label="Appearance"
+          value={capitalize(profile.theme)}
+        />
+      </div>
+    </aside>
+  );
+}
+
+type PreviewRowProps = {
+  label: string;
+  value: string;
+};
+
+function PreviewRow({
+  label,
+  value,
+}: PreviewRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-slate-500">
+        {label}
+      </span>
+
+      <span className="font-semibold text-slate-900">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function getInitials(name: string) {
+  const words = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (words.length === 0) {
+    return "S";
+  }
+
+  return words
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+function formatMinutes(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function capitalize(value: string) {
+  return (
+    value.charAt(0).toUpperCase() +
+    value.slice(1)
+  );
+}
+
+function applyTheme(
+  theme: ThemePreference,
+) {
+  const prefersDark =
+    window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+  const shouldUseDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      prefersDark);
+
+  document.documentElement.classList.toggle(
+    "dark",
+    shouldUseDark,
+  );
+}
