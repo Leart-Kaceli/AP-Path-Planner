@@ -9,3 +9,6 @@ export const STUDY_SESSION_STORAGE_KEY =
 
 export const GRADE_STORAGE_KEY =
   "ap-path-planner-grades";
+
+export const GRADE_WEIGHT_STORAGE_KEY =
+  "ap-path-planner-grade-weights";

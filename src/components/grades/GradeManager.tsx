@@ -7,18 +7,33 @@ import GradeFilters, {
   type GradeCategoryFilter,
 } from "@/components/grades/GradeFilters";
 import GradeForm from "@/components/grades/GradeForm";
+import CourseGradeSummaryCard from "@/components/grades/CourseGradeSummaryCard";
+import GradeWeightEditor from "@/components/grades/GradeWeightEditor";
+import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 
 import {
   COURSE_STORAGE_KEY,
   GRADE_STORAGE_KEY,
+  GRADE_WEIGHT_STORAGE_KEY,
 } from "@/constants/storage";
 
 import type { Course } from "@/types/course";
-import type { GradeEntry } from "@/types/grade";
+import type {
+  CourseGradeWeights,
+  GradeCategory,
+  GradeEntry,
+} from "@/types/grade";
+import {
+  calculatePointAverage,
+  calculateWeightedAverage,
+} from "@/utils/grades";
 
 export default function GradeManager() {
   const [grades, setGrades] =
     useState<GradeEntry[]>([]);
+
+  const [weightsByCourse, setWeightsByCourse] =
+  useState<CourseGradeWeights>({});
 
   const [courseNames, setCourseNames] =
     useState<string[]>([]);
@@ -39,11 +54,32 @@ export default function GradeManager() {
     useState("");
 
   useEffect(() => {
+    const storedWeights =
+  localStorage.getItem(
+    GRADE_WEIGHT_STORAGE_KEY,
+  );
+    
     try {
       const storedGrades =
         localStorage.getItem(
           GRADE_STORAGE_KEY,
         );
+      if (storedWeights) {
+  const parsedWeights = JSON.parse(
+    storedWeights,
+  ) as CourseGradeWeights;
+
+  if (
+    parsedWeights &&
+    typeof parsedWeights === "object" &&
+    !Array.isArray(parsedWeights)
+  ) {
+    // Add the ESLint comment only if
+    // your linter reports this exact line.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+setWeightsByCourse(parsedWeights);
+  }
+}
 
       if (storedGrades) {
         const parsedGrades = JSON.parse(
@@ -51,7 +87,6 @@ export default function GradeManager() {
         ) as GradeEntry[];
 
         if (Array.isArray(parsedGrades)) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setGrades(parsedGrades);
         }
       }
@@ -83,6 +118,24 @@ export default function GradeManager() {
       setHasLoaded(true);
     }
   }, []);
+
+  useEffect(() => {
+  if (!hasLoaded) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      GRADE_WEIGHT_STORAGE_KEY,
+      JSON.stringify(weightsByCourse),
+    );
+  } catch (error) {
+    console.error(
+      "Could not save grade weights:",
+      error,
+    );
+  }
+}, [weightsByCourse, hasLoaded]);
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -169,24 +222,49 @@ export default function GradeManager() {
   }
 
   function clearAllGrades() {
-    if (grades.length === 0) {
-      return;
-    }
-
-    const shouldClear = window.confirm(
-      "Delete all grade entries? This action cannot be undone.",
-    );
-
-    if (!shouldClear) {
-      return;
-    }
-
-    setGrades([]);
-    setGradeToEdit(null);
+  if (grades.length === 0) {
+    return;
   }
 
-  const normalizedSearch =
-    searchTerm.trim().toLowerCase();
+  const shouldClear = window.confirm(
+    "Delete all grade entries? This action cannot be undone.",
+  );
+
+  if (!shouldClear) {
+    return;
+  }
+
+  setGrades([]);
+  setGradeToEdit(null);
+}
+
+function changeGradeWeight(
+  course: string,
+  category: GradeCategory,
+  weight: number,
+) {
+  setWeightsByCourse((currentWeights) => ({
+    ...currentWeights,
+    [course]: {
+      ...(currentWeights[course] ??
+        DEFAULT_GRADE_WEIGHTS),
+      [category]: weight,
+    },
+  }));
+}
+
+function resetGradeWeights(course: string) {
+  setWeightsByCourse((currentWeights) => ({
+    ...currentWeights,
+    [course]: {
+      ...DEFAULT_GRADE_WEIGHTS,
+    },
+  }));
+}
+
+const normalizedSearch =
+  searchTerm.trim().toLowerCase();
+
 
   const filteredGrades = grades
     .filter((grade) => {
@@ -223,33 +301,51 @@ export default function GradeManager() {
       gradeB.date.localeCompare(gradeA.date),
     );
 
-  const totalEarnedPoints = grades.reduce(
-    (total, grade) =>
-      total + grade.earnedPoints,
-    0,
-  );
+  const coursesWithGrades = Array.from(
+  new Set(
+    grades.map((grade) => grade.course),
+  ),
+);
 
-  const totalPossiblePoints = grades.reduce(
-    (total, grade) =>
-      total + grade.possiblePoints,
-    0,
-  );
+const overallPointAverage =
+  calculatePointAverage(grades);
 
-  const overallPercentage =
-    totalPossiblePoints === 0
-      ? 0
-      : Math.round(
-          (totalEarnedPoints /
-            totalPossiblePoints) *
-            100,
-        );
+const weightedCourseAverages =
+  coursesWithGrades
+    .map((course) => {
+      const courseGrades = grades.filter(
+        (grade) =>
+          grade.course === course,
+      );
 
-  const testGrades = grades.filter(
-    (grade) => grade.category === "Test",
-  );
+      const courseWeights =
+        weightsByCourse[course] ??
+        DEFAULT_GRADE_WEIGHTS;
 
-  const testPercentage =
-    calculateGroupPercentage(testGrades);
+      return calculateWeightedAverage(
+        courseGrades,
+        courseWeights,
+      );
+    })
+    .filter(
+      (
+        average,
+      ): average is number =>
+        average !== null,
+    );
+
+const overallWeightedAverage =
+  weightedCourseAverages.length === 0
+    ? null
+    : Math.round(
+        weightedCourseAverages.reduce(
+          (total, average) =>
+            total + average,
+          0,
+        ) /
+          weightedCourseAverages.length,
+      );
+
 
   return (
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
@@ -265,36 +361,89 @@ export default function GradeManager() {
 
       <section className="min-w-0">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <GradeStatCard
-            title="Grade Entries"
-            value={String(grades.length)}
-          />
+  <GradeStatCard
+    title="Grade Entries"
+    value={String(grades.length)}
+  />
 
-          <GradeStatCard
-            title="Overall Average"
-            value={`${overallPercentage}%`}
-          />
+  <GradeStatCard
+    title="Point Average"
+    value={
+      overallPointAverage === null
+        ? "—"
+        : `${overallPointAverage}%`
+    }
+  />
 
-          <GradeStatCard
-            title="Test Average"
-            value={
-              testGrades.length === 0
-                ? "—"
-                : `${testPercentage}%`
-            }
-          />
+  <GradeStatCard
+    title="Weighted Average"
+    value={
+      overallWeightedAverage === null
+        ? "—"
+        : `${overallWeightedAverage}%`
+    }
+  />
 
-          <GradeStatCard
-            title="Courses Tracked"
-            value={String(
-              new Set(
-                grades.map(
-                  (grade) => grade.course,
-                ),
-              ).size,
-            )}
+  <GradeStatCard
+    title="Courses Tracked"
+    value={String(
+      coursesWithGrades.length,
+    )}
+  />
+</div>
+
+    <div className="mt-8">
+  <GradeWeightEditor
+    courseNames={courseNames}
+    weightsByCourse={
+      weightsByCourse
+    }
+    onWeightChange={
+      changeGradeWeight
+    }
+    onResetWeights={
+      resetGradeWeights
+    }
+  />
+</div>
+
+{coursesWithGrades.length > 0 && (
+  <section className="mt-8">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-900">
+        Course Grade Summaries
+      </h2>
+
+      <p className="mt-1 text-slate-600">
+        Compare weighted and point-based
+        averages for each course.
+      </p>
+    </div>
+
+    <div className="mt-5 grid gap-5">
+      {coursesWithGrades.map((course) => {
+        const courseGrades =
+          grades.filter(
+            (grade) =>
+              grade.course === course,
+          );
+
+        const courseWeights =
+          weightsByCourse[course] ??
+          DEFAULT_GRADE_WEIGHTS;
+
+        return (
+          <CourseGradeSummaryCard
+            key={course}
+            course={course}
+            grades={courseGrades}
+            weights={courseWeights}
           />
-        </div>
+        );
+      })}
+    </div>
+  </section>
+)}
 
         <div className="mt-8">
           <GradeFilters
@@ -358,30 +507,6 @@ export default function GradeManager() {
         )}
       </section>
     </div>
-  );
-}
-
-function calculateGroupPercentage(
-  grades: GradeEntry[],
-) {
-  const earned = grades.reduce(
-    (total, grade) =>
-      total + grade.earnedPoints,
-    0,
-  );
-
-  const possible = grades.reduce(
-    (total, grade) =>
-      total + grade.possiblePoints,
-    0,
-  );
-
-  if (possible === 0) {
-    return 0;
-  }
-
-  return Math.round(
-    (earned / possible) * 100,
   );
 }
 

@@ -615,3 +615,69 @@ Learned how to:
 - Add letter-grade labels
 - Display grade summaries by course
 - Improve dashboard navigation consistency
+
+# Day 10 Completed
+
+## Weighted Grade System
+
+- Added customizable category weights
+- Added default grade weights
+- Added separate weights for each course
+- Saved course weights using localStorage
+- Added Reset Defaults functionality
+- Added a warning when weights do not total 100%
+- Calculated weighted course averages
+- Skipped empty grade categories during weighted calculations
+
+## Grade Summaries
+
+- Added point-based course averages
+- Added weighted course averages
+- Added category averages
+- Added course-specific grade summary cards
+- Added grade-entry counts by course
+- Added overall point average
+- Added overall weighted average
+- Added letter-grade labels
+
+## Grade Utilities
+
+- Created reusable grade calculation functions
+- Created category-average calculations
+- Created weighted-average calculations
+- Created a reusable letter-grade function
+- Avoided storing duplicated calculated values
+
+## Navigation Improvements
+
+- Replaced sidebar click state with usePathname
+- Highlighted the active route automatically
+- Preserved the correct active link after refreshing
+- Improved navigation consistency across pages
+
+## React and TypeScript Concepts Learned
+
+- Nested state objects
+- Updating nested objects immutably
+- Record utility types
+- Per-course settings
+- Weighted calculations
+- Reusable calculation utilities
+- Route-aware navigation
+- Derived data
+- Mapping course data into summary components
+
+## Current Limitations
+
+- Letter-grade boundaries use a general default scale
+- Schools may use different category weights
+- Category weights are stored only in the current browser
+- Firebase will later synchronize data across devices
+
+## Day 11 Goals
+
+- Add grade data to the dashboard
+- Show overall and course averages on the dashboard
+- Build the profile/settings page
+- Allow the student name to be customized
+- Add theme and preference settings

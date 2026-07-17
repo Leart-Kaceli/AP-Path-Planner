@@ -14,3 +14,13 @@ export type GradeEntry = {
   possiblePoints: number;
   date: string;
 };
+
+export type GradeWeights = Record<
+  GradeCategory,
+  number
+>;
+
+export type CourseGradeWeights = Record<
+  string,
+  GradeWeights
+>;

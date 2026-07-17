@@ -1,5 +1,9 @@
 import type { GradeEntry } from "@/types/grade";
 import { formatDate } from "@/utils/dates";
+import {
+  calculateGradePercentage,
+  getLetterGrade,
+} from "@/utils/grades";
 
 type GradeCardProps = {
   grade: GradeEntry;
@@ -7,12 +11,7 @@ type GradeCardProps = {
   onDelete: (gradeId: string) => void;
 };
 
-function calculatePercentage(grade: GradeEntry) {
-  return Math.round(
-    (grade.earnedPoints / grade.possiblePoints) *
-      100,
-  );
-}
+
 
 function getGradeStyle(percentage: number) {
   if (percentage >= 90) {
@@ -35,7 +34,11 @@ export default function GradeCard({
   onEdit,
   onDelete,
 }: GradeCardProps) {
-  const percentage = calculatePercentage(grade);
+  const percentage =
+  calculateGradePercentage(grade);
+
+const letterGrade =
+  getLetterGrade(percentage);
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -50,13 +53,13 @@ export default function GradeCard({
           </p>
         </div>
 
-        <span
-          className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${getGradeStyle(
-            percentage,
-          )}`}
-        >
-          {percentage}%
-        </span>
+       <span
+  className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${getGradeStyle(
+    percentage,
+  )}`}
+>
+  {percentage}% · {letterGrade}
+</span>
       </div>
 
       <div className="mt-5 grid gap-4 text-sm sm:grid-cols-3">
