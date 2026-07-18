@@ -19,13 +19,17 @@ import {
   COURSE_STORAGE_KEY,
   GRADE_STORAGE_KEY,
   GRADE_WEIGHT_STORAGE_KEY,
+  PROFILE_STORAGE_KEY,
   STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
+
+import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
 
 import {
   calculatePointAverage,
   calculateWeightedAverage,
 } from "@/utils/grades";
+import { isDateInCurrentWeek } from "@/utils/dates";
 
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
@@ -34,6 +38,7 @@ import type {
   CourseGradeWeights,
   GradeEntry,
 } from "@/types/grade";
+import type { StudentProfile } from "@/types/profile";
 
 type LoadedDashboardData = {
   courses: Course[];
@@ -41,6 +46,7 @@ type LoadedDashboardData = {
   studySessions: StudySession[];
   grades: GradeEntry[];
   weightsByCourse: CourseGradeWeights;
+  profile: StudentProfile;
 };
 const emptyDashboardData: LoadedDashboardData = {
   courses: [],
@@ -48,6 +54,7 @@ const emptyDashboardData: LoadedDashboardData = {
   studySessions: [],
   grades: [],
   weightsByCourse: {},
+  profile: DEFAULT_STUDENT_PROFILE,
 };
 
 
@@ -87,6 +94,11 @@ const [dashboardData, setDashboardData] =
 const storedGradeWeights =
   localStorage.getItem(
     GRADE_WEIGHT_STORAGE_KEY,
+  );
+
+  const storedProfile =
+  localStorage.getItem(
+    PROFILE_STORAGE_KEY,
   );
 
       const courses = storedCourses
@@ -149,14 +161,25 @@ const safeWeightsByCourse =
     ? weightsByCourse
     : {};
 
+    const parsedProfile = storedProfile
+  ? (JSON.parse(
+      storedProfile,
+    ) as Partial<StudentProfile>)
+  : {};
+
+const safeProfile: StudentProfile = {
+  ...DEFAULT_STUDENT_PROFILE,
+  ...parsedProfile,
+};
+
       // eslint-disable-next-line react-hooks/set-state-in-effect
      setDashboardData({
   courses: safeCourses,
   assignments: safeAssignments,
   studySessions: safeStudySessions,
   grades: safeGrades,
-  weightsByCourse:
-    safeWeightsByCourse,
+  weightsByCourse: safeWeightsByCourse,
+  profile: safeProfile,
 });
     } catch (error) {
       console.error(
@@ -182,6 +205,7 @@ const {
   studySessions,
   grades,
   weightsByCourse,
+  profile,
 } = dashboardData;
 
   const completedAssignments =
@@ -196,23 +220,42 @@ const {
         !assignment.completed,
     );
 
-
-    const completedStudySessions =
+    const completedSessionsThisWeek =
   studySessions.filter(
-    (session) => session.completed,
+    (session) =>
+      session.completed &&
+      isDateInCurrentWeek(session.date),
   );
+
+const completedMinutesThisWeek =
+  completedSessionsThisWeek.reduce(
+    (total, session) =>
+      total + session.durationMinutes,
+    0,
+  );
+
+const weeklyStudyGoal =
+  profile.weeklyStudyGoalMinutes;
+
+
+
+const weeklyStudyPercentage =
+  weeklyStudyGoal === 0
+    ? 0
+    : Math.min(
+        100,
+        Math.round(
+          (completedMinutesThisWeek /
+            weeklyStudyGoal) *
+            100,
+        ),
+      );
 
 const scheduledStudySessions =
   studySessions.filter(
     (session) => !session.completed,
   );
 
-const completedStudyMinutes =
-  completedStudySessions.reduce(
-    (total, session) =>
-      total + session.durationMinutes,
-    0,
-  );
 
 const upcomingStudySessions =
   scheduledStudySessions
@@ -293,6 +336,8 @@ const weightedCourseSummaries =
           weights,
         );
 
+      
+
       return {
         course,
         weightedAverage,
@@ -322,7 +367,10 @@ const overallWeightedAverage =
       );
 
   return (
-    <main className="px-6 py-8">
+    <main
+  id="main-content"
+  className="px-6 py-8"
+>
       <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="AP Courses"
@@ -339,11 +387,13 @@ const overallWeightedAverage =
         />
 
         <StatCard
-  title="Study Time"
+  title="Study Time This Week"
   value={formatStudyMinutes(
-    completedStudyMinutes,
+    completedMinutesThisWeek,
   )}
-  description="Completed across all sessions"
+  description={`Goal: ${formatStudyMinutes(
+    weeklyStudyGoal,
+  )}`}
 />
 
         <StatCard
@@ -409,19 +459,26 @@ const overallWeightedAverage =
         
 
         <DashboardProgressSummary
-          courseProgress={
-            averageProgress
-          }
-          assignmentCompletion={
-            assignmentCompletion
-          }
-          completedAssignments={
-            completedAssignments.length
-          }
-          totalAssignments={
-            assignments.length
-          }
-        />
+  courseProgress={averageProgress}
+  assignmentCompletion={
+    assignmentCompletion
+  }
+  completedAssignments={
+    completedAssignments.length
+  }
+  totalAssignments={
+    assignments.length
+  }
+  weeklyStudyPercentage={
+    weeklyStudyPercentage
+  }
+  completedStudyMinutes={
+    completedMinutesThisWeek
+  }
+  weeklyStudyGoal={
+    weeklyStudyGoal
+  }
+/>
       </section>
 
       <div className="mt-8">
@@ -607,6 +664,9 @@ type DashboardProgressSummaryProps = {
   assignmentCompletion: number;
   completedAssignments: number;
   totalAssignments: number;
+  weeklyStudyPercentage: number;
+  completedStudyMinutes: number;
+  weeklyStudyGoal: number;
 };
 
 function DashboardProgressSummary({
@@ -614,6 +674,9 @@ function DashboardProgressSummary({
   assignmentCompletion,
   completedAssignments,
   totalAssignments,
+  weeklyStudyPercentage,
+  completedStudyMinutes,
+  weeklyStudyGoal,
 }: DashboardProgressSummaryProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -622,20 +685,32 @@ function DashboardProgressSummary({
       </h2>
 
       <div className="mt-6 space-y-7">
-        <ProgressRow
-          label="Average course progress"
-          percentage={courseProgress}
-          description={`${courseProgress}%`}
-        />
+  <ProgressRow
+    label="Average course progress"
+    percentage={courseProgress}
+    description={`${courseProgress}%`}
+  />
 
-        <ProgressRow
-          label="Assignments completed"
-          percentage={
-            assignmentCompletion
-          }
-          description={`${completedAssignments}/${totalAssignments}`}
-        />
-      </div>
+  <ProgressRow
+    label="Assignments completed"
+    percentage={
+      assignmentCompletion
+    }
+    description={`${completedAssignments}/${totalAssignments}`}
+  />
+
+  <ProgressRow
+    label="Weekly study goal"
+    percentage={
+      weeklyStudyPercentage
+    }
+    description={`${formatStudyMinutes(
+      completedStudyMinutes,
+    )}/${formatStudyMinutes(
+      weeklyStudyGoal,
+    )}`}
+  />
+</div>
     </section>
   );
 }
@@ -663,7 +738,14 @@ function ProgressRow({
         </span>
       </div>
 
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+      <div
+  role="progressbar"
+  aria-label={label}
+  aria-valuemin={0}
+  aria-valuemax={100}
+  aria-valuenow={percentage}
+  className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200"
+>
         <div
           className="h-full rounded-full bg-blue-600 transition-all"
           style={{

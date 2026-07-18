@@ -69,3 +69,55 @@ export function formatDate(
     },
   ).format(date);
 }
+
+export function getStartOfCurrentWeek() {
+  const today = startOfToday();
+
+  const dayOfWeek = today.getDay();
+
+  const daysSinceMonday =
+    dayOfWeek === 0
+      ? 6
+      : dayOfWeek - 1;
+
+  const startOfWeek = new Date(today);
+
+  startOfWeek.setDate(
+    today.getDate() - daysSinceMonday,
+  );
+
+  return startOfWeek;
+}
+
+export function getEndOfCurrentWeek() {
+  const endOfWeek =
+    getStartOfCurrentWeek();
+
+  endOfWeek.setDate(
+    endOfWeek.getDate() + 6,
+  );
+
+  endOfWeek.setHours(
+    23,
+    59,
+    59,
+    999,
+  );
+
+  return endOfWeek;
+}
+
+export function isDateInCurrentWeek(
+  dateString: string,
+) {
+  const date = parseDateOnly(dateString);
+  const startOfWeek =
+    getStartOfCurrentWeek();
+  const endOfWeek =
+    getEndOfCurrentWeek();
+
+  return (
+    date >= startOfWeek &&
+    date <= endOfWeek
+  );
+}

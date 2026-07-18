@@ -1,6 +1,94 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.dark body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+/*
+  Temporary global dark-mode bridge.
+
+  These selectors update existing components that already use
+  Tailwind's slate and white utility classes.
+*/
+
+.dark .bg-white {
+  background-color: #0f172a;
+}
+
+.dark .bg-slate-50 {
+  background-color: #020617;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155;
+}
+
+.dark .text-slate-900 {
+  color: #f8fafc;
+}
+
+.dark .text-slate-800 {
+  color: #e2e8f0;
+}
+
+.dark .text-slate-700 {
+  color: #cbd5e1;
+}
+
+.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .text-slate-500 {
+  color: #94a3b8;
+}
+
+.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+.dark .border-slate-300 {
+  border-color: #475569;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #475569;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #60a5fa;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -24,4 +112,100 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.dark body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+.dark .bg-white {
+  background-color: #0f172a;
+}
+
+.dark .bg-slate-50 {
+  background-color: #020617;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155;
+}
+
+.dark .text-slate-900 {
+  color: #f8fafc;
+}
+
+.dark .text-slate-800 {
+  color: #e2e8f0;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .text-slate-500 {
+  color: #94a3b8;
+}
+
+.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+.dark .border-slate-300 {
+  border-color: #475569;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #0f172a;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
+:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  scroll-margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

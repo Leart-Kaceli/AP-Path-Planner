@@ -4,7 +4,7 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-slate-50 md:flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 md:flex">
       <DashboardSidebar />
 
       <div className="min-w-0 flex-1">

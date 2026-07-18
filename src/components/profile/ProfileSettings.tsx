@@ -8,6 +8,7 @@ import {
 
 import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
 import { PROFILE_STORAGE_KEY } from "@/constants/storage";
+import { applyTheme } from "@/utils/theme";
 
 import type {
   StudentProfile,
@@ -487,24 +488,5 @@ function capitalize(value: string) {
   return (
     value.charAt(0).toUpperCase() +
     value.slice(1)
-  );
-}
-
-function applyTheme(
-  theme: ThemePreference,
-) {
-  const prefersDark =
-    window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-
-  const shouldUseDark =
-    theme === "dark" ||
-    (theme === "system" &&
-      prefersDark);
-
-  document.documentElement.classList.toggle(
-    "dark",
-    shouldUseDark,
   );
 }

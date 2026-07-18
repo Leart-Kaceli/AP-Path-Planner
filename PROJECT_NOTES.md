@@ -747,3 +747,73 @@ Learned how to:
 - Build a mobile sidebar menu
 - Add dashboard weekly-study-goal progress
 - Improve accessibility and keyboard navigation
+
+# Day 12 Completed
+
+## Global Theme System
+
+- Moved theme logic into a reusable utility
+- Created a global theme initializer
+- Applied saved appearance preferences on every page
+- Added light, dark, and system theme support
+- Added system-theme change detection
+- Added browser color-scheme synchronization
+- Added app-wide dark-mode styling
+- Added dark styling for cards, text, borders, and form controls
+
+## Mobile Navigation
+
+- Rebuilt the dashboard sidebar for mobile screens
+- Added a hamburger navigation button
+- Added an off-screen sliding sidebar
+- Added a mobile overlay
+- Added automatic closing after navigation
+- Preserved route-aware active-link highlighting
+- Added keyboard-accessible menu controls
+
+## Weekly Study Goal
+
+- Loaded the saved weekly study goal
+- Calculated completed study minutes for the current week
+- Added a weekly study progress percentage
+- Added weekly study time to the dashboard statistics
+- Added weekly study progress to Overall Progress
+- Limited progress bars to a maximum visual width of 100%
+
+## Accessibility
+
+- Added aria-expanded to the mobile-menu button
+- Added aria-controls to connect the button and navigation
+- Added aria-current to the active navigation link
+- Added an accessible navigation label
+- Added progress-bar roles and values
+- Added a skip-to-content link
+- Added global keyboard focus styling
+- Added reduced-motion support
+- Tested keyboard-only navigation
+
+## React and Next.js Concepts Learned
+
+- Creating reusable browser utilities
+- Initializing app-wide client preferences
+- Listening for system media-query changes
+- Building responsive controlled navigation
+- Route-aware mobile navigation
+- Calculating date ranges
+- Deriving weekly progress from saved data
+- Improving semantic HTML and ARIA attributes
+
+## Current Limitations
+
+- Weekly completion is based on the scheduled session date
+- Study sessions do not yet store a completedAt timestamp
+- Some dark-mode styling uses a temporary global CSS bridge
+- Feature pages do not yet share one complete application layout
+
+## Day 13 Goals
+
+- Create a shared authenticated-style application layout
+- Display the sidebar on Courses, Assignments, Planner, Grades, and Profile
+- Add a completedAt timestamp to study sessions
+- Add assignment and study-session overdue indicators
+- Improve confirmation dialogs
