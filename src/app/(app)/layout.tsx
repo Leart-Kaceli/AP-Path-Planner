@@ -1,15 +1,18 @@
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
-export default function DashboardPage() {
+type AppLayoutProps = {
+  children: React.ReactNode;
+};
+
+export default function AppLayout({
+  children,
+}: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 md:flex">
       <DashboardSidebar />
 
       <div className="min-w-0 flex-1">
-        <DashboardHeader />
-        <DashboardOverview />
+        {children}
       </div>
     </div>
   );

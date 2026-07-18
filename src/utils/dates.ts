@@ -121,3 +121,24 @@ export function isDateInCurrentWeek(
     date <= endOfWeek
   );
 }
+
+export function isDateTimeInCurrentWeek(
+  dateTimeString: string,
+) {
+  const date = new Date(dateTimeString);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const startOfWeek =
+    getStartOfCurrentWeek();
+
+  const endOfWeek =
+    getEndOfCurrentWeek();
+
+  return (
+    date >= startOfWeek &&
+    date <= endOfWeek
+  );
+}

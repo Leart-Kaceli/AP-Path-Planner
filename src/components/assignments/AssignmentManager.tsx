@@ -11,6 +11,7 @@ import AssignmentFilters, {
 } from "@/components/assignments/AssignmentFilters";
 
 import AssignmentForm from "@/components/assignments/AssignmentForm";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import ManagedAssignmentCard from "@/components/assignments/ManagedAssignmentCard";
 
@@ -60,6 +61,11 @@ export default function AssignmentManager() {
     useState<Assignment[]>(
       initialAssignments,
     );
+
+    const [
+  assignmentPendingDeletion,
+  setAssignmentPendingDeletion,
+] = useState<Assignment | null>(null);
 
   const [
     hasLoadedAssignments,
@@ -224,44 +230,47 @@ export default function AssignmentManager() {
     );
   }
 
-  function deleteAssignment(
-    assignmentId: string,
-  ) {
-    const assignmentToDelete =
-      assignments.find(
-        (assignment) =>
-          assignment.id === assignmentId,
-      );
+  function requestAssignmentDeletion(
+  assignmentId: string,
+) {
+  const assignment = assignments.find(
+    (currentAssignment) =>
+      currentAssignment.id === assignmentId,
+  );
 
-    if (!assignmentToDelete) {
-      return;
-    }
-
-    const shouldDelete =
-      window.confirm(
-        `Delete "${assignmentToDelete.title}"?`,
-      );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    setAssignments(
-      (currentAssignments) =>
-        currentAssignments.filter(
-          (assignment) =>
-            assignment.id !==
-            assignmentId,
-        ),
-    );
-
-    if (
-      assignmentToEdit?.id ===
-      assignmentId
-    ) {
-      setAssignmentToEdit(null);
-    }
+  if (!assignment) {
+    return;
   }
+
+  setAssignmentPendingDeletion(assignment);
+}
+
+function confirmAssignmentDeletion() {
+  if (!assignmentPendingDeletion) {
+    return;
+  }
+
+  const assignmentId =
+    assignmentPendingDeletion.id;
+
+
+  setAssignments((currentAssignments) =>
+    currentAssignments.filter(
+      (assignment) =>
+        assignment.id !== assignmentId,
+    ),
+  );
+
+  if (
+    assignmentToEdit?.id === assignmentId
+  ) {
+    setAssignmentToEdit(null);
+  }
+
+  setAssignmentPendingDeletion(null);
+} 
+    
+
 
   function clearCompletedAssignments() {
     const completedCount =
@@ -486,8 +495,8 @@ export default function AssignmentManager() {
                     startEditingAssignment
                   }
                   onDelete={
-                    deleteAssignment
-                  }
+  requestAssignmentDeletion
+}
                 />
               ),
             )}
@@ -505,6 +514,25 @@ export default function AssignmentManager() {
           </div>
         )}
       </section>
+      <ConfirmDialog
+  open={
+    assignmentPendingDeletion !== null
+  }
+  title="Delete assignment?"
+  description={
+    assignmentPendingDeletion
+      ? `Delete "${assignmentPendingDeletion.title}"? This action cannot be undone.`
+      : ""
+  }
+  confirmText="Delete Assignment"
+  destructive
+  onConfirm={
+    confirmAssignmentDeletion
+  }
+  onCancel={() =>
+    setAssignmentPendingDeletion(null)
+  }
+/>
     </div>
   );
 }

@@ -1,5 +1,8 @@
 import type { StudySession } from "@/types/studySession";
 import { formatDate } from "@/utils/dates";
+import {
+  getStudySessionTiming,
+} from "@/utils/studySessions";
 
 type StudySessionCardProps = {
   session: StudySession;
@@ -37,12 +40,25 @@ function formatDuration(minutes: number) {
   return `${hours} hr ${remainingMinutes} min`;
 }
 
+const timingStyles = {
+  Completed:
+    "bg-green-100 text-green-700",
+  Overdue:
+    "bg-red-100 text-red-700",
+  Today:
+    "bg-amber-100 text-amber-700",
+  Upcoming:
+    "bg-blue-100 text-blue-700",
+};
+
 export default function StudySessionCard({
   session,
   onToggleComplete,
   onEdit,
   onDelete,
 }: StudySessionCardProps) {
+  const timing =
+  getStudySessionTiming(session);
   return (
     <article
       className={`rounded-2xl border bg-white p-6 shadow-sm transition ${
@@ -85,16 +101,12 @@ export default function StudySessionCard({
             </div>
 
             <span
-              className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                session.completed
-                  ? "bg-green-100 text-green-700"
-                  : "bg-blue-100 text-blue-700"
-              }`}
-            >
-              {session.completed
-                ? "Completed"
-                : "Scheduled"}
-            </span>
+  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+    timingStyles[timing]
+  }`}
+>
+  {timing}
+</span>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">

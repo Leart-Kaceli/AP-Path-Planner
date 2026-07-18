@@ -13,6 +13,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
 import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
+import { normalizeStudySession } from "@/utils/studySessions";
 
 import {
   ASSIGNMENT_STORAGE_KEY,
@@ -29,7 +30,7 @@ import {
   calculatePointAverage,
   calculateWeightedAverage,
 } from "@/utils/grades";
-import { isDateInCurrentWeek } from "@/utils/dates";
+import { isDateTimeInCurrentWeek } from "@/utils/dates";
 
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
@@ -136,7 +137,9 @@ const weightsByCourse =
 
 const safeStudySessions =
   Array.isArray(studySessions)
-    ? studySessions
+    ? studySessions.map(
+        normalizeStudySession,
+      )
     : [];
 
       const safeCourses =
@@ -224,7 +227,10 @@ const {
   studySessions.filter(
     (session) =>
       session.completed &&
-      isDateInCurrentWeek(session.date),
+      session.completedAt !== null &&
+      isDateTimeInCurrentWeek(
+        session.completedAt,
+      ),
   );
 
 const completedMinutesThisWeek =

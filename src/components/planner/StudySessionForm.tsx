@@ -83,18 +83,20 @@ export default function StudySessionForm({
     }
 
     const savedSession: StudySession = {
-      id:
-        sessionToEdit?.id ??
-        crypto.randomUUID(),
-      course,
-      topic: trimmedTopic,
-      date,
-      startTime,
-      durationMinutes: durationNumber,
-      completed:
-        sessionToEdit?.completed ?? false,
-      notes: trimmedNotes,
-    };
+  id:
+    sessionToEdit?.id ??
+    crypto.randomUUID(),
+  course,
+  topic: trimmedTopic,
+  date,
+  startTime,
+  durationMinutes: durationNumber,
+  completed:
+    sessionToEdit?.completed ?? false,
+  completedAt:
+    sessionToEdit?.completedAt ?? null,
+  notes: trimmedNotes,
+};
 
     onSaveSession(savedSession);
 

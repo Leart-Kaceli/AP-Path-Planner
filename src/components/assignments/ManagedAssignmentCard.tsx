@@ -1,4 +1,7 @@
 import type { Assignment } from "@/types/assignment";
+import {
+  getAssignmentTiming,
+} from "@/utils/dates";
 
 type ManagedAssignmentCardProps = {
   assignment: Assignment;
@@ -30,12 +33,29 @@ function formatDueDate(dueDate: string) {
   ).format(date);
 }
 
+const timingStyles = {
+  Overdue: "bg-red-100 text-red-700",
+  "Due Today":
+    "bg-orange-100 text-orange-700",
+  "Due Soon":
+    "bg-amber-100 text-amber-700",
+  Upcoming:
+    "bg-slate-100 text-slate-700",
+  Completed:
+    "bg-green-100 text-green-700",
+};
+
 export default function ManagedAssignmentCard({
   assignment,
   onToggleComplete,
   onEdit,
   onDelete,
 }: ManagedAssignmentCardProps) {
+  const timing = getAssignmentTiming(
+    assignment.dueDate,
+    assignment.completed,
+  );
+
   return (
     <article
       className={`rounded-2xl border bg-white p-6 shadow-sm transition ${
@@ -86,7 +106,16 @@ export default function ManagedAssignmentCard({
             >
               {assignment.priority}
             </span>
+            <span
+  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+    timingStyles[timing]
+  }`}
+>
+  {timing}
+</span>
           </div>
+
+
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             <p>

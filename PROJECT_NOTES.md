@@ -817,3 +817,69 @@ Learned how to:
 - Add a completedAt timestamp to study sessions
 - Add assignment and study-session overdue indicators
 - Improve confirmation dialogs
+
+# Day 13 Completed
+
+## Shared Application Layout
+
+- Created a shared application route group
+- Moved Dashboard, Courses, Assignments, Planner, Grades, and Profile into the shared group
+- Added one shared sidebar layout
+- Preserved all existing URLs
+- Removed duplicate Dashboard sidebar code
+- Removed unnecessary Return to Dashboard buttons
+- Improved navigation consistency across the application
+
+## Study Completion Tracking
+
+- Added completedAt to study sessions
+- Recorded the exact completion timestamp
+- Cleared completedAt when sessions are marked incomplete
+- Added migration support for older saved sessions
+- Updated weekly study calculations to use completion time
+- Improved the accuracy of weekly study-goal progress
+
+## Deadline Indicators
+
+- Added assignment timing labels
+- Added Overdue, Due Today, Due Soon, Upcoming, and Completed states
+- Added study-session timing labels
+- Added Overdue, Today, Upcoming, and Completed states
+- Added reusable timing styles
+
+## Confirmation Dialogs
+
+- Created a reusable native confirmation dialog
+- Replaced assignment deletion browser confirmations
+- Replaced study-session deletion browser confirmations
+- Added Escape-key dismissal
+- Added dark-mode dialog styling
+- Added destructive-action styling
+- Improved mobile confirmation behavior
+
+## React and Next.js Concepts Learned
+
+- Route groups
+- Nested shared layouts
+- Shared route UI
+- Data migration for existing localStorage records
+- ISO timestamps
+- Derived deadline status
+- Native dialog integration
+- Synchronizing React with browser-controlled elements
+- Reusable destructive-action components
+
+## Current Limitations
+
+- Older completed study sessions use their scheduled time as an estimated completion time
+- Courses and grades still use basic browser confirmation boxes
+- Assignment completion does not yet store completedAt
+- Data remains limited to the current browser
+
+## Day 14 Goals
+
+- Replace all remaining browser confirmation boxes
+- Add assignment completedAt timestamps
+- Add notification and reminder settings
+- Add data export and import
+- Add a settings-based danger zone

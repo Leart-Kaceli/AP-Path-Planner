@@ -6,5 +6,6 @@ export type StudySession = {
   startTime: string;
   durationMinutes: number;
   completed: boolean;
+  completedAt: string | null;
   notes: string;
 };

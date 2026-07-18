@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { normalizeStudySession } from "@/utils/studySessions";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import StudyPlannerFilters, {
   type StudyStatusFilter,
@@ -19,9 +21,15 @@ import type { StudySession } from "@/types/studySession";
 
 const initialSessions: StudySession[] = [];
 
+
 export default function StudyPlannerManager() {
   const [sessions, setSessions] =
     useState<StudySession[]>(initialSessions);
+
+    const [
+  sessionPendingDeletion,
+  setSessionPendingDeletion,
+] = useState<StudySession | null>(null);
 
   const [courseNames, setCourseNames] =
     useState<string[]>([]);
@@ -54,11 +62,14 @@ export default function StudyPlannerManager() {
         ) as StudySession[];
 
         if (Array.isArray(parsedSessions)) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setSessions(parsedSessions);
-        }
+  const normalizedSessions =
+    parsedSessions.map(
+      normalizeStudySession,
+    );
+// eslint-disable-next-line react-hooks/set-state-in-effect
+  setSessions(normalizedSessions);
+}
       }
-
       const storedCourses =
         localStorage.getItem(
           COURSE_STORAGE_KEY,
@@ -146,48 +157,66 @@ export default function StudyPlannerManager() {
   }
 
   function toggleSessionComplete(
-    sessionId: string,
+  sessionId: string,
+) {
+  setSessions((currentSessions) =>
+    currentSessions.map((session) => {
+      if (session.id !== sessionId) {
+        return session;
+      }
+
+      const isCompleting =
+        !session.completed;
+
+      return {
+        ...session,
+        completed: isCompleting,
+        completedAt: isCompleting
+          ? new Date().toISOString()
+          : null,
+      };
+    }),
+  );
+}
+
+  function requestSessionDeletion(
+  sessionId: string,
+) {
+  const session = sessions.find(
+    (currentSession) =>
+      currentSession.id === sessionId,
+  );
+
+  if (!session) {
+    return;
+  }
+
+  setSessionPendingDeletion(session);
+}
+
+function confirmSessionDeletion() {
+  if (!sessionPendingDeletion) {
+    return;
+  }
+
+  const sessionId =
+    sessionPendingDeletion.id;
+
+  setSessions((currentSessions) =>
+    currentSessions.filter(
+      (session) =>
+        session.id !== sessionId,
+    ),
+  );
+
+  if (
+    sessionToEdit?.id === sessionId
   ) {
-    setSessions((currentSessions) =>
-      currentSessions.map((session) =>
-        session.id === sessionId
-          ? {
-              ...session,
-              completed: !session.completed,
-            }
-          : session,
-      ),
-    );
+    setSessionToEdit(null);
   }
 
-  function deleteSession(sessionId: string) {
-    const sessionToDelete = sessions.find(
-      (session) => session.id === sessionId,
-    );
-
-    if (!sessionToDelete) {
-      return;
-    }
-
-    const shouldDelete = window.confirm(
-      `Delete "${sessionToDelete.topic}"?`,
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    setSessions((currentSessions) =>
-      currentSessions.filter(
-        (session) =>
-          session.id !== sessionId,
-      ),
-    );
-
-    if (sessionToEdit?.id === sessionId) {
-      setSessionToEdit(null);
-    }
-  }
+  setSessionPendingDeletion(null);
+}
 
   function clearCompletedSessions() {
     const completedCount = sessions.filter(
@@ -341,12 +370,12 @@ export default function StudyPlannerManager() {
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-4 text-sm">
             <span className="font-medium text-slate-600">
-              Completed study time
-            </span>
+  Completed scheduled time
+</span>
 
             <span className="font-semibold text-slate-900">
-              {formatMinutes(completedMinutes)} of{" "}
-              {formatMinutes(totalPlannedMinutes)}
+              {formatMinutes(completedMinutes)} completed out of{" "}
+{formatMinutes(totalPlannedMinutes)} scheduled
             </span>
           </div>
 
@@ -416,7 +445,7 @@ export default function StudyPlannerManager() {
                   onEdit={
                     startEditingSession
                   }
-                  onDelete={deleteSession}
+                  onDelete={requestSessionDeletion}
                 />
               ),
             )}
@@ -434,6 +463,25 @@ export default function StudyPlannerManager() {
           </div>
         )}
       </section>
+      <ConfirmDialog
+  open={
+    sessionPendingDeletion !== null
+  }
+  title="Delete study session?"
+  description={
+    sessionPendingDeletion
+      ? `Delete "${sessionPendingDeletion.topic}"? This action cannot be undone.`
+      : ""
+  }
+  confirmText="Delete Session"
+  destructive
+  onConfirm={
+    confirmSessionDeletion
+  }
+  onCancel={() =>
+    setSessionPendingDeletion(null)
+  }
+/>
     </div>
   );
 }
@@ -457,6 +505,7 @@ function StudyStatCard({
         {value}
       </p>
     </article>
+
   );
 }
 
