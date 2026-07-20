@@ -1,4 +1,7 @@
-export type AssignmentPriority = "Low" | "Medium" | "High";
+export type AssignmentPriority =
+  | "Low"
+  | "Medium"
+  | "High";
 
 export type Assignment = {
   id: string;
@@ -7,5 +10,6 @@ export type Assignment = {
   dueDate: string;
   priority: AssignmentPriority;
   completed: boolean;
+  completedAt: string | null;
   notes: string;
 };

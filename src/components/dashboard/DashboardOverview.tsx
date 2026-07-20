@@ -14,6 +14,7 @@ import DashboardStudySession from "@/components/dashboard/DashboardStudySession"
 import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
 import { normalizeStudySession } from "@/utils/studySessions";
+import { normalizeAssignment } from "@/utils/assignments";
 
 import {
   ASSIGNMENT_STORAGE_KEY,
@@ -30,7 +31,10 @@ import {
   calculatePointAverage,
   calculateWeightedAverage,
 } from "@/utils/grades";
-import { isDateTimeInCurrentWeek } from "@/utils/dates";
+import {
+  isDateTimeInCurrentWeek,
+  isDateTimeToday,
+} from "@/utils/dates";
 
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
@@ -148,9 +152,11 @@ const safeStudySessions =
           : [];
 
       const safeAssignments =
-        Array.isArray(assignments)
-          ? assignments
-          : [];
+  Array.isArray(assignments)
+    ? assignments.map(
+        normalizeAssignment,
+      )
+    : [];
 
         const safeGrades =
   Array.isArray(grades)
@@ -216,6 +222,15 @@ const {
       (assignment) =>
         assignment.completed,
     );
+
+    const assignmentsCompletedToday =
+  completedAssignments.filter(
+    (assignment) =>
+      assignment.completedAt !== null &&
+      isDateTimeToday(
+        assignment.completedAt,
+      ),
+  );
 
   const activeAssignments =
     assignments.filter(
@@ -385,12 +400,12 @@ const overallWeightedAverage =
         />
 
         <StatCard
-          title="Active Tasks"
-          value={String(
-            activeAssignments.length,
-          )}
-          description="Assignments remaining"
-        />
+  title="Active Tasks"
+  value={String(
+    activeAssignments.length,
+  )}
+  description={`${assignmentsCompletedToday.length} completed today`}
+/>
 
         <StatCard
   title="Study Time This Week"

@@ -64,17 +64,19 @@ export default function AssignmentForm({
     }
 
     const savedAssignment: Assignment = {
-      id:
-        assignmentToEdit?.id ??
-        crypto.randomUUID(),
-      title: trimmedTitle,
-      course,
-      dueDate,
-      priority,
-      completed:
-        assignmentToEdit?.completed ?? false,
-      notes: trimmedNotes,
-    };
+  id:
+    assignmentToEdit?.id ??
+    crypto.randomUUID(),
+  title: trimmedTitle,
+  course,
+  dueDate,
+  priority,
+  completed:
+    assignmentToEdit?.completed ?? false,
+  completedAt:
+    assignmentToEdit?.completedAt ?? null,
+  notes: trimmedNotes,
+};
 
     onSaveAssignment(savedAssignment);
 

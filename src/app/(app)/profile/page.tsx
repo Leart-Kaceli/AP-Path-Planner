@@ -1,6 +1,8 @@
 
 
 import ProfileSettings from "@/components/profile/ProfileSettings";
+import DangerZone from "@/components/profile/DangerZone";
+import DataManagement from "@/components/profile/DataManagement";
 
 export default function ProfilePage() {
   return (
@@ -29,9 +31,13 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <ProfileSettings />
-      </div>
+      <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
+  <ProfileSettings />
+
+  <DataManagement />
+
+  <DangerZone />
+</div>
     </main>
   );
 }

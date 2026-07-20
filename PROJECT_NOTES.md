@@ -883,3 +883,78 @@ Learned how to:
 - Add notification and reminder settings
 - Add data export and import
 - Add a settings-based danger zone
+
+# Day 14 Completed
+
+## Assignment Completion History
+
+- Added completedAt timestamps to assignments
+- Recorded the exact assignment completion time
+- Cleared completedAt when assignments were marked incomplete
+- Added migration support for older saved assignments
+- Normalized assignments in the Assignment Manager
+- Normalized assignments on the dashboard
+- Added assignments-completed-today dashboard information
+
+## Confirmation Dialog Improvements
+
+- Replaced Clear Completed assignment browser confirmations
+- Replaced Clear Completed study-session browser confirmations
+- Reused the custom ConfirmDialog component
+- Added destructive confirmation language
+- Improved keyboard and dark-mode behavior
+
+## Reminder Preferences
+
+- Added assignment reminder preferences
+- Added study-session reminder preferences
+- Added reminder timing options
+- Added same-day, one-day, and two-day settings
+- Saved reminder settings with the profile
+- Merged older profile data with new defaults
+
+## Data Backup
+
+- Added a versioned application backup format
+- Exported all local app data to JSON
+- Added dated backup filenames
+- Added backup validation
+- Added JSON backup importing
+- Restored courses, assignments, sessions, grades, weights, and profile
+- Added confirmation before replacing existing data
+
+## Danger Zone
+
+- Added a Profile Danger Zone
+- Added Delete All App Data
+- Removed all app storage keys safely
+- Added a destructive confirmation dialog
+- Recommended exporting a backup before deletion
+
+## React and TypeScript Concepts Learned
+
+- Data schema versioning
+- Generic localStorage reading functions
+- JSON file creation
+- Browser Blob and object URLs
+- Hidden file inputs
+- File text parsing
+- Type guards for imported data
+- Safe restoration of application state
+- Reusable destructive confirmation patterns
+
+## Current Limitations
+
+- Reminder preferences do not create browser notifications yet
+- Backup validation checks structure but not every nested property
+- Data remains stored locally in the current browser
+- Imported data requires a page refresh
+- Firebase will later provide cloud synchronization
+
+## Day 15 Goals
+
+- Display reminder alerts in the dashboard
+- Add a notification center
+- Add assignment and session reminder calculations
+- Add dismissible alerts
+- Add a backup version migration system

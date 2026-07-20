@@ -11,6 +11,7 @@ import { PROFILE_STORAGE_KEY } from "@/constants/storage";
 import { applyTheme } from "@/utils/theme";
 
 import type {
+  ReminderTiming,
   StudentProfile,
   ThemePreference,
 } from "@/types/profile";
@@ -315,6 +316,113 @@ export default function ProfileSettings() {
             >
               Appearance
             </label>
+
+            <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+  <div>
+    <h3 className="font-semibold text-slate-900">
+      Reminders
+    </h3>
+
+    <p className="mt-1 text-sm text-slate-600">
+      Choose which reminders you would like
+      AP Path Planner to display.
+    </p>
+  </div>
+
+  <div className="mt-5 space-y-4">
+    <label className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        checked={
+          profile.assignmentRemindersEnabled
+        }
+        onChange={(event) =>
+          updateProfile(
+            "assignmentRemindersEnabled",
+            event.target.checked,
+          )
+        }
+        className="mt-1 h-5 w-5 rounded border-slate-300 accent-blue-600"
+      />
+
+      <span>
+        <span className="block font-medium text-slate-900">
+          Assignment reminders
+        </span>
+
+        <span className="mt-1 block text-sm text-slate-600">
+          Show reminders for approaching
+          assignment deadlines.
+        </span>
+      </span>
+    </label>
+
+    <label className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        checked={
+          profile.studyRemindersEnabled
+        }
+        onChange={(event) =>
+          updateProfile(
+            "studyRemindersEnabled",
+            event.target.checked,
+          )
+        }
+        className="mt-1 h-5 w-5 rounded border-slate-300 accent-blue-600"
+      />
+
+      <span>
+        <span className="block font-medium text-slate-900">
+          Study-session reminders
+        </span>
+
+        <span className="mt-1 block text-sm text-slate-600">
+          Show reminders for scheduled study
+          sessions.
+        </span>
+      </span>
+    </label>
+
+    <div>
+      <label
+        htmlFor="reminder-timing"
+        className="text-sm font-medium text-slate-700"
+      >
+        Reminder timing
+      </label>
+
+      <select
+        id="reminder-timing"
+        value={profile.reminderTiming}
+        onChange={(event) =>
+          updateProfile(
+            "reminderTiming",
+            event.target
+              .value as ReminderTiming,
+          )
+        }
+        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="none">
+          No reminder
+        </option>
+
+        <option value="same-day">
+          Same day
+        </option>
+
+        <option value="one-day">
+          One day before
+        </option>
+
+        <option value="two-days">
+          Two days before
+        </option>
+      </select>
+    </div>
+  </div>
+</section>
 
             <select
               id="theme-preference"

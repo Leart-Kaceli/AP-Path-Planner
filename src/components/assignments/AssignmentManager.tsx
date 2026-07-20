@@ -12,6 +12,7 @@ import AssignmentFilters, {
 
 import AssignmentForm from "@/components/assignments/AssignmentForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { normalizeAssignment } from "@/utils/assignments";
 
 import ManagedAssignmentCard from "@/components/assignments/ManagedAssignmentCard";
 
@@ -32,6 +33,7 @@ const initialAssignments: Assignment[] = [
     dueDate: "2026-07-18",
     priority: "High",
     completed: false,
+    completedAt: null,
     notes:
       "Complete problems 1–20 and review incorrect answers.",
   },
@@ -42,6 +44,7 @@ const initialAssignments: Assignment[] = [
     dueDate: "2026-07-21",
     priority: "Medium",
     completed: false,
+    completedAt: null,
     notes:
       "Include calculations, graph, and conclusion.",
   },
@@ -52,6 +55,7 @@ const initialAssignments: Assignment[] = [
     dueDate: "2026-07-24",
     priority: "Low",
     completed: true,
+    completedAt: null,
     notes: "",
   },
 ];
@@ -66,6 +70,12 @@ export default function AssignmentManager() {
   assignmentPendingDeletion,
   setAssignmentPendingDeletion,
 ] = useState<Assignment | null>(null);
+
+
+const [
+  isClearCompletedDialogOpen,
+  setIsClearCompletedDialogOpen,
+] = useState(false);
 
   const [
     hasLoadedAssignments,
@@ -109,10 +119,15 @@ export default function AssignmentManager() {
             parsedAssignments,
           )
         ) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setAssignments(
-            parsedAssignments,
-          );
+         const normalizedAssignments =
+  parsedAssignments.map(
+    normalizeAssignment,
+  );
+
+// eslint-disable-next-line react-hooks/set-state-in-effect
+setAssignments(
+  normalizedAssignments,
+);
         }
       }
 
@@ -213,22 +228,33 @@ export default function AssignmentManager() {
   }
 
   function toggleAssignmentComplete(
-    assignmentId: string,
-  ) {
-    setAssignments(
-      (currentAssignments) =>
-        currentAssignments.map(
-          (assignment) =>
-            assignment.id === assignmentId
-              ? {
-                  ...assignment,
-                  completed:
-                    !assignment.completed,
-                }
-              : assignment,
-        ),
-    );
-  }
+  assignmentId: string,
+) {
+  setAssignments(
+    (currentAssignments) =>
+      currentAssignments.map(
+        (assignment) => {
+          if (
+            assignment.id !==
+            assignmentId
+          ) {
+            return assignment;
+          }
+
+          const isCompleting =
+            !assignment.completed;
+
+          return {
+            ...assignment,
+            completed: isCompleting,
+            completedAt: isCompleting
+              ? new Date().toISOString()
+              : null,
+          };
+        },
+      ),
+  );
+}
 
   function requestAssignmentDeletion(
   assignmentId: string,
@@ -272,40 +298,29 @@ function confirmAssignmentDeletion() {
     
 
 
-  function clearCompletedAssignments() {
-    const completedCount =
-      assignments.filter(
-        (assignment) =>
-          assignment.completed,
-      ).length;
-
-    if (completedCount === 0) {
-      return;
-    }
-
-    const shouldClear =
-      window.confirm(
-        `Delete ${completedCount} completed assignment${
-          completedCount === 1 ? "" : "s"
-        }?`,
-      );
-
-    if (!shouldClear) {
-      return;
-    }
-
-    setAssignments(
-      (currentAssignments) =>
-        currentAssignments.filter(
-          (assignment) =>
-            !assignment.completed,
-        ),
-    );
-
-    if (assignmentToEdit?.completed) {
-      setAssignmentToEdit(null);
-    }
+  function requestClearCompletedAssignments() {
+  if (completedCount === 0) {
+    return;
   }
+
+  setIsClearCompletedDialogOpen(true);
+}
+
+function confirmClearCompletedAssignments() {
+  setAssignments(
+    (currentAssignments) =>
+      currentAssignments.filter(
+        (assignment) =>
+          !assignment.completed,
+      ),
+  );
+
+  if (assignmentToEdit?.completed) {
+    setAssignmentToEdit(null);
+  }
+
+  setIsClearCompletedDialogOpen(false);
+}
 
   const normalizedSearch =
     searchTerm.trim().toLowerCase();
@@ -471,8 +486,8 @@ function confirmAssignmentDeletion() {
             <button
               type="button"
               onClick={
-                clearCompletedAssignments
-              }
+  requestClearCompletedAssignments
+}
               className="w-fit text-sm font-semibold text-red-600 transition hover:text-red-700"
             >
               Clear Completed
@@ -515,6 +530,8 @@ function confirmAssignmentDeletion() {
         )}
       </section>
       <ConfirmDialog
+
+      
   open={
     assignmentPendingDeletion !== null
   }
@@ -531,6 +548,26 @@ function confirmAssignmentDeletion() {
   }
   onCancel={() =>
     setAssignmentPendingDeletion(null)
+  }
+
+  
+/>
+
+<ConfirmDialog
+  open={
+    isClearCompletedDialogOpen
+  }
+  title="Clear completed assignments?"
+  description={`Delete ${completedCount} completed assignment${
+    completedCount === 1 ? "" : "s"
+  }? This action cannot be undone.`}
+  confirmText="Clear Completed"
+  destructive
+  onConfirm={
+    confirmClearCompletedAssignments
+  }
+  onCancel={() =>
+    setIsClearCompletedDialogOpen(false)
   }
 />
     </div>

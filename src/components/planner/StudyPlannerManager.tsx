@@ -31,6 +31,11 @@ export default function StudyPlannerManager() {
   setSessionPendingDeletion,
 ] = useState<StudySession | null>(null);
 
+const [
+  isClearCompletedDialogOpen,
+  setIsClearCompletedDialogOpen,
+] = useState(false);
+
   const [courseNames, setCourseNames] =
     useState<string[]>([]);
 
@@ -218,35 +223,28 @@ function confirmSessionDeletion() {
   setSessionPendingDeletion(null);
 }
 
-  function clearCompletedSessions() {
-    const completedCount = sessions.filter(
-      (session) => session.completed,
-    ).length;
-
-    if (completedCount === 0) {
-      return;
-    }
-
-    const shouldClear = window.confirm(
-      `Delete ${completedCount} completed study session${
-        completedCount === 1 ? "" : "s"
-      }?`,
-    );
-
-    if (!shouldClear) {
-      return;
-    }
-
-    setSessions((currentSessions) =>
-      currentSessions.filter(
-        (session) => !session.completed,
-      ),
-    );
-
-    if (sessionToEdit?.completed) {
-      setSessionToEdit(null);
-    }
+  function requestClearCompletedSessions() {
+  if (completedSessions.length === 0) {
+    return;
   }
+
+  setIsClearCompletedDialogOpen(true);
+}
+
+function confirmClearCompletedSessions() {
+  setSessions((currentSessions) =>
+    currentSessions.filter(
+      (session) =>
+        !session.completed,
+    ),
+  );
+
+  if (sessionToEdit?.completed) {
+    setSessionToEdit(null);
+  }
+
+  setIsClearCompletedDialogOpen(false);
+}
 
   const normalizedSearch =
     searchTerm.trim().toLowerCase();
@@ -424,7 +422,9 @@ function confirmSessionDeletion() {
           {completedSessions.length > 0 && (
             <button
               type="button"
-              onClick={clearCompletedSessions}
+             onClick={
+  requestClearCompletedSessions
+}
               className="w-fit text-sm font-semibold text-red-600 transition hover:text-red-700"
             >
               Clear Completed
@@ -482,7 +482,29 @@ function confirmSessionDeletion() {
     setSessionPendingDeletion(null)
   }
 />
+
+<ConfirmDialog
+  open={
+    isClearCompletedDialogOpen
+  }
+  title="Clear completed sessions?"
+  description={`Delete ${completedSessions.length} completed study session${
+    completedSessions.length === 1
+      ? ""
+      : "s"
+  }? This action cannot be undone.`}
+  confirmText="Clear Completed"
+  destructive
+  onConfirm={
+    confirmClearCompletedSessions
+  }
+  onCancel={() =>
+    setIsClearCompletedDialogOpen(false)
+  }
+/>
     </div>
+
+    
   );
 }
 
