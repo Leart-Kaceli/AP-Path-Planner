@@ -958,3 +958,81 @@ Learned how to:
 - Add assignment and session reminder calculations
 - Add dismissible alerts
 - Add a backup version migration system
+
+# Day 15 Completed
+
+## Reminder Calculations
+
+- Created assignment reminder calculations
+- Created study-session reminder calculations
+- Added overdue, today, and upcoming reminder states
+- Used Profile reminder preferences
+- Added same-day, one-day, and two-day reminder windows
+- Excluded completed assignments and sessions
+- Sorted reminders by event date and time
+
+## Notification Center
+
+- Added a global notification bell
+- Added notification-count badges
+- Added a notification center panel
+- Added assignment reminder links
+- Added study-session reminder links
+- Added urgency badges
+- Added mobile and dark-mode styling
+- Added close-overlay behavior
+- Added accessible labels and expanded state
+
+## Dismissible Notifications
+
+- Added individual notification dismissal
+- Added Dismiss All
+- Saved dismissed notification IDs
+- Preserved dismissed reminders after refresh
+- Used date-based notification IDs
+- Allowed rescheduled items to create new reminders
+
+## Backup Migration
+
+- Updated the backup schema to version 2
+- Added dismissed notification IDs to backups
+- Added migration support for version-1 backups
+- Updated backup restoration
+- Updated backup import handling
+- Preserved older backup compatibility
+
+## Data Management
+
+- Included dismissed reminders in exports
+- Included dismissed reminders in imports
+- Cleared notification data in the Danger Zone
+- Kept application backups versioned
+
+## React and TypeScript Concepts Learned
+
+- Derived notification data
+- Reminder-window calculations
+- Calendar-day differences
+- Global client controllers
+- Dismissed-item persistence
+- Versioned data migrations
+- Legacy-data compatibility
+- Accessible floating controls
+- Overlay notification panels
+
+## Current Limitations
+
+- Notifications appear only inside the app
+- Browser push notifications are not enabled
+- Notification data updates after refresh
+- Dismissed IDs may accumulate over time
+- Reminder timing is shared across assignments and sessions
+
+## Day 16 Goals
+
+- Refresh notifications without reloading
+- Add a notification refresh event
+- Add separate assignment and session reminder timing
+- Clean old dismissed notification IDs
+- Add notification grouping
+- Add dashboard reminder cards

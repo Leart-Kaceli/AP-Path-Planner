@@ -39,18 +39,18 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="bg-white px-6 py-24">
+    <section id="features" className="bg-white py-24 dark:bg-slate-900">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
             Everything in one place
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
             Tools designed for AP success
           </h2>
 
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-slate-900 dark:text-white">
             Stay organized, study consistently, and understand your progress
             throughout the school year.
           </p>
@@ -70,7 +70,7 @@ export default function Features() {
                 {feature.title}
               </h3>
 
-              <p className="mt-3 leading-7 text-slate-600">
+              <p className="mt-3 leading-7 text-slate-900 dark:text-white">
                 {feature.description}
               </p>
             </article>

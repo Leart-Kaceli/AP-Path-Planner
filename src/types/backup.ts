@@ -8,7 +8,7 @@ import type { StudentProfile } from "@/types/profile";
 import type { StudySession } from "@/types/studySession";
 
 export type AppBackup = {
-  version: 1;
+  version: 2;
   exportedAt: string;
   courses: Course[];
   assignments: Assignment[];
@@ -16,4 +16,5 @@ export type AppBackup = {
   grades: GradeEntry[];
   gradeWeights: CourseGradeWeights;
   profile: StudentProfile;
+  dismissedNotificationIds: string[];
 };

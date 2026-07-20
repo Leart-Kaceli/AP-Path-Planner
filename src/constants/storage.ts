@@ -15,3 +15,6 @@ export const GRADE_WEIGHT_STORAGE_KEY =
 
 export const PROFILE_STORAGE_KEY =
   "ap-path-planner-profile";
+
+export const DISMISSED_NOTIFICATION_STORAGE_KEY =
+  "ap-path-planner-dismissed-notifications";

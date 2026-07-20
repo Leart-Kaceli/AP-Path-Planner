@@ -11,6 +11,7 @@ import {
   GRADE_WEIGHT_STORAGE_KEY,
   PROFILE_STORAGE_KEY,
   STUDY_SESSION_STORAGE_KEY,
+  DISMISSED_NOTIFICATION_STORAGE_KEY,
 } from "@/constants/storage";
 
 export default function DangerZone() {
@@ -21,13 +22,14 @@ export default function DangerZone() {
 
   function clearAllAppData() {
     const storageKeys = [
-      COURSE_STORAGE_KEY,
-      ASSIGNMENT_STORAGE_KEY,
-      STUDY_SESSION_STORAGE_KEY,
-      GRADE_STORAGE_KEY,
-      GRADE_WEIGHT_STORAGE_KEY,
-      PROFILE_STORAGE_KEY,
-    ];
+  COURSE_STORAGE_KEY,
+  ASSIGNMENT_STORAGE_KEY,
+  STUDY_SESSION_STORAGE_KEY,
+  GRADE_STORAGE_KEY,
+  GRADE_WEIGHT_STORAGE_KEY,
+  PROFILE_STORAGE_KEY,
+  DISMISSED_NOTIFICATION_STORAGE_KEY,
+];
 
     storageKeys.forEach((storageKey) => {
       localStorage.removeItem(storageKey);

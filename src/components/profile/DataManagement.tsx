@@ -10,7 +10,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import {
   downloadAppBackup,
-  isValidAppBackup,
+  migrateAppBackup,
   restoreAppBackup,
 } from "@/utils/backup";
 
@@ -70,19 +70,26 @@ export default function DataManagement() {
       const parsedBackup: unknown =
         JSON.parse(fileText);
 
-      if (
-        !isValidAppBackup(parsedBackup)
-      ) {
+     const migratedBackup =
+  migrateAppBackup(parsedBackup);
+
+if (!migratedBackup) {
+  setMessage(
+    "This file is not a valid AP Path Planner backup.",
+  );
+
+  return;
+}
+
+setBackupPendingImport(
+  migratedBackup,
+);
         setMessage(
           "This file is not a valid AP Path Planner backup.",
         );
         return;
       }
-
-      setBackupPendingImport(
-        parsedBackup,
-      );
-    } catch (error) {
+     catch (error) {
       console.error(
         "Could not read backup file:",
         error,

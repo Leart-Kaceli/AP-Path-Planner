@@ -2,20 +2,20 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="bg-gradient-to-b from-blue-50 to-white">
+    <section className="flex min-h-[calc(100vh-5rem)] items-center bg-gradient-to-b from-blue-50 to-white px-6 py-20 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
       <div className="mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-6 rounded-full border border-blue-200 bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
           Built for ambitious AP students
         </div>
 
-        <h1 className="max-w-4xl text-5xl font-bold tracking-tight text-slate-900 md:text-7xl">
-          Your Success Starts with a Plan
-        </h1>
+        <h1 className="text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl dark:text-white">
+  Your Success Starts With a Plan
+</h1>
 
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
-          Organize your AP classes, track assignments, build personalized study
-          schedules, and monitor your academic progress in one place.
-        </p>
+        <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300">
+  Organize your AP classes, track assignments, build personalized study
+  schedules, and monitor your academic progress in one place.
+</p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link

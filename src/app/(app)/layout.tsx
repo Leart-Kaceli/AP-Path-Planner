@@ -1,4 +1,5 @@
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import NotificationController from "@/components/notifications/NotificationController";
 
 type AppLayoutProps = {
   children: React.ReactNode;
@@ -14,6 +15,8 @@ export default function AppLayout({
       <div className="min-w-0 flex-1">
         {children}
       </div>
+
+      <NotificationController />
     </div>
   );
 }

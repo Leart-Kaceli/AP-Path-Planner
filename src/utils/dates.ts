@@ -163,3 +163,39 @@ export function isDateTimeToday(
       today.getDate()
   );
 }
+
+export function getStartOfToday() {
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  return today;
+}
+
+export function getDifferenceInCalendarDays(
+  date: Date,
+  comparisonDate: Date,
+) {
+  const normalizedDate = new Date(date);
+
+  normalizedDate.setHours(0, 0, 0, 0);
+
+  const normalizedComparisonDate =
+    new Date(comparisonDate);
+
+  normalizedComparisonDate.setHours(
+    0,
+    0,
+    0,
+    0,
+  );
+
+  const millisecondsPerDay =
+    1000 * 60 * 60 * 24;
+
+  return Math.round(
+    (normalizedDate.getTime() -
+      normalizedComparisonDate.getTime()) /
+      millisecondsPerDay,
+  );
+}

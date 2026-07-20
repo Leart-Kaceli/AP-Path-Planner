@@ -1,6 +1,7 @@
 import {
   ASSIGNMENT_STORAGE_KEY,
   COURSE_STORAGE_KEY,
+  DISMISSED_NOTIFICATION_STORAGE_KEY,
   GRADE_STORAGE_KEY,
   GRADE_WEIGHT_STORAGE_KEY,
   PROFILE_STORAGE_KEY,
@@ -64,29 +65,31 @@ function readObject<T extends object>(
 
 export function createAppBackup(): AppBackup {
   return {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    courses:
-      readArray<Course>(
-        COURSE_STORAGE_KEY,
-      ),
-    assignments:
-      readArray<Assignment>(
-        ASSIGNMENT_STORAGE_KEY,
-      ),
-    studySessions:
-      readArray<StudySession>(
-        STUDY_SESSION_STORAGE_KEY,
-      ),
-    grades:
-      readArray<GradeEntry>(
-        GRADE_STORAGE_KEY,
-      ),
+
+    courses: readArray<Course>(
+      COURSE_STORAGE_KEY,
+    ),
+
+    assignments: readArray<Assignment>(
+      ASSIGNMENT_STORAGE_KEY,
+    ),
+
+    studySessions: readArray<StudySession>(
+      STUDY_SESSION_STORAGE_KEY,
+    ),
+
+    grades: readArray<GradeEntry>(
+      GRADE_STORAGE_KEY,
+    ),
+
     gradeWeights:
       readObject<CourseGradeWeights>(
         GRADE_WEIGHT_STORAGE_KEY,
         {},
       ),
+
     profile: {
       ...DEFAULT_STUDENT_PROFILE,
       ...readObject<
@@ -96,6 +99,11 @@ export function createAppBackup(): AppBackup {
         {},
       ),
     },
+
+    dismissedNotificationIds:
+      readArray<string>(
+        DISMISSED_NOTIFICATION_STORAGE_KEY,
+      ),
   };
 }
 
@@ -135,6 +143,49 @@ export function downloadAppBackup() {
   URL.revokeObjectURL(url);
 }
 
+type LegacyAppBackupV1 = {
+  version: 1;
+  exportedAt: string;
+  courses: AppBackup["courses"];
+  assignments: AppBackup["assignments"];
+  studySessions: AppBackup["studySessions"];
+  grades: AppBackup["grades"];
+  gradeWeights: AppBackup["gradeWeights"];
+  profile: AppBackup["profile"];
+};
+
+export function migrateAppBackup(
+  value: unknown,
+): AppBackup | null {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+
+  const possibleBackup =
+    value as Record<string, unknown>;
+
+  if (possibleBackup.version === 2) {
+    return value as AppBackup;
+  }
+
+  if (possibleBackup.version === 1) {
+    const legacyBackup =
+      value as LegacyAppBackupV1;
+
+    return {
+      ...legacyBackup,
+      version: 2,
+      dismissedNotificationIds: [],
+    };
+  }
+
+  return null;
+}
+
 export function restoreAppBackup(
   backup: AppBackup,
 ) {
@@ -142,6 +193,13 @@ export function restoreAppBackup(
     COURSE_STORAGE_KEY,
     JSON.stringify(backup.courses),
   );
+
+  localStorage.setItem(
+  DISMISSED_NOTIFICATION_STORAGE_KEY,
+  JSON.stringify(
+    backup.dismissedNotificationIds,
+  ),
+);
 
   localStorage.setItem(
     ASSIGNMENT_STORAGE_KEY,
@@ -178,40 +236,39 @@ export function restoreAppBackup(
 export function isValidAppBackup(
   value: unknown,
 ): value is AppBackup {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  const migratedBackup =
+    migrateAppBackup(value);
+
+  if (!migratedBackup) {
     return false;
   }
 
-  const possibleBackup =
-    value as Partial<AppBackup>;
-
   return (
-    possibleBackup.version === 1 &&
     Array.isArray(
-      possibleBackup.courses,
+      migratedBackup.courses,
     ) &&
     Array.isArray(
-      possibleBackup.assignments,
+      migratedBackup.assignments,
     ) &&
     Array.isArray(
-      possibleBackup.studySessions,
+      migratedBackup.studySessions,
     ) &&
     Array.isArray(
-      possibleBackup.grades,
+      migratedBackup.grades,
     ) &&
     Boolean(
-      possibleBackup.gradeWeights &&
-        typeof possibleBackup.gradeWeights ===
-          "object",
+      migratedBackup.gradeWeights &&
+        typeof migratedBackup
+          .gradeWeights === "object",
     ) &&
     Boolean(
-      possibleBackup.profile &&
-        typeof possibleBackup.profile ===
+      migratedBackup.profile &&
+        typeof migratedBackup.profile ===
           "object",
+    ) &&
+    Array.isArray(
+      migratedBackup
+        .dismissedNotificationIds,
     )
   );
 }
