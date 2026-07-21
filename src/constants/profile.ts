@@ -8,5 +8,8 @@ export const DEFAULT_STUDENT_PROFILE: StudentProfile = {
   theme: "system",
   assignmentRemindersEnabled: true,
   studyRemindersEnabled: true,
-  reminderTiming: "one-day",
+  assignmentReminderTiming:
+    "one-day",
+  studyReminderTiming:
+    "one-day",
 };

@@ -1,3 +1,12 @@
+import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
+
+import {
+  ASSIGNMENT_STORAGE_KEY,
+  DISMISSED_NOTIFICATION_STORAGE_KEY,
+  PROFILE_STORAGE_KEY,
+  STUDY_SESSION_STORAGE_KEY,
+} from "@/constants/storage";
+
 import type { Assignment } from "@/types/assignment";
 import type { AppNotification } from "@/types/notification";
 import type {
@@ -6,10 +15,32 @@ import type {
 } from "@/types/profile";
 import type { StudySession } from "@/types/studySession";
 
+import { normalizeAssignment } from "@/utils/assignments";
+
 import {
   getDifferenceInCalendarDays,
   getStartOfToday,
 } from "@/utils/dates";
+
+import { normalizeStudySession } from "@/utils/studySessions";
+
+const VALID_REMINDER_TIMINGS: ReminderTiming[] = [
+  "none",
+  "same-day",
+  "one-day",
+  "two-days",
+];
+
+function isReminderTiming(
+  value: unknown,
+): value is ReminderTiming {
+  return (
+    typeof value === "string" &&
+    VALID_REMINDER_TIMINGS.includes(
+      value as ReminderTiming,
+    )
+  );
+}
 
 function getReminderDayLimit(
   reminderTiming: ReminderTiming,
@@ -91,14 +122,15 @@ export function createAssignmentNotifications(
 ): AppNotification[] {
   if (
     !profile.assignmentRemindersEnabled ||
-    profile.reminderTiming === "none"
+    profile.assignmentReminderTiming ===
+      "none"
   ) {
     return [];
   }
 
   const reminderDayLimit =
     getReminderDayLimit(
-      profile.reminderTiming,
+      profile.assignmentReminderTiming,
     );
 
   const today = getStartOfToday();
@@ -157,14 +189,14 @@ export function createStudySessionNotifications(
 ): AppNotification[] {
   if (
     !profile.studyRemindersEnabled ||
-    profile.reminderTiming === "none"
+    profile.studyReminderTiming === "none"
   ) {
     return [];
   }
 
   const reminderDayLimit =
     getReminderDayLimit(
-      profile.reminderTiming,
+      profile.studyReminderTiming,
     );
 
   const today = getStartOfToday();
@@ -222,7 +254,7 @@ export function createAppNotifications(
   assignments: Assignment[],
   sessions: StudySession[],
   profile: StudentProfile,
-) {
+): AppNotification[] {
   const assignmentNotifications =
     createAssignmentNotifications(
       assignments,
@@ -243,4 +275,160 @@ export function createAppNotifications(
       notificationB.eventDateTime,
     ),
   );
+}
+
+function readStoredArray<T>(
+  storageKey: string,
+): T[] {
+  try {
+    const storedValue =
+      localStorage.getItem(storageKey);
+
+    if (!storedValue) {
+      return [];
+    }
+
+    const parsedValue: unknown =
+      JSON.parse(storedValue);
+
+    return Array.isArray(parsedValue)
+      ? (parsedValue as T[])
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export type LoadedNotificationData = {
+  notifications: AppNotification[];
+  dismissedNotificationIds: string[];
+};
+
+export function loadNotificationData():
+  LoadedNotificationData {
+  const assignments =
+    readStoredArray<Assignment>(
+      ASSIGNMENT_STORAGE_KEY,
+    ).map(normalizeAssignment);
+
+  const studySessions =
+    readStoredArray<StudySession>(
+      STUDY_SESSION_STORAGE_KEY,
+    ).map(normalizeStudySession);
+
+  let profile: StudentProfile = {
+    ...DEFAULT_STUDENT_PROFILE,
+  };
+
+  try {
+    const storedProfile =
+      localStorage.getItem(
+        PROFILE_STORAGE_KEY,
+      );
+
+    if (storedProfile) {
+      const parsedProfile = JSON.parse(
+        storedProfile,
+      ) as Partial<StudentProfile> & {
+        reminderTiming?: unknown;
+      };
+
+      const legacyReminderTiming =
+        isReminderTiming(
+          parsedProfile.reminderTiming,
+        )
+          ? parsedProfile.reminderTiming
+          : null;
+
+      profile = {
+        ...DEFAULT_STUDENT_PROFILE,
+        ...parsedProfile,
+
+        assignmentRemindersEnabled:
+          parsedProfile
+            .assignmentRemindersEnabled ??
+          DEFAULT_STUDENT_PROFILE
+            .assignmentRemindersEnabled,
+
+        studyRemindersEnabled:
+          parsedProfile
+            .studyRemindersEnabled ??
+          DEFAULT_STUDENT_PROFILE
+            .studyRemindersEnabled,
+
+        assignmentReminderTiming:
+          isReminderTiming(
+            parsedProfile
+              .assignmentReminderTiming,
+          )
+            ? parsedProfile
+                .assignmentReminderTiming
+            : legacyReminderTiming ??
+              DEFAULT_STUDENT_PROFILE
+                .assignmentReminderTiming,
+
+        studyReminderTiming:
+          isReminderTiming(
+            parsedProfile.studyReminderTiming,
+          )
+            ? parsedProfile
+                .studyReminderTiming
+            : legacyReminderTiming ??
+              DEFAULT_STUDENT_PROFILE
+                .studyReminderTiming,
+      };
+    }
+  } catch (error) {
+    console.error(
+      "Could not load notification profile:",
+      error,
+    );
+
+    profile = {
+      ...DEFAULT_STUDENT_PROFILE,
+    };
+  }
+
+  const generatedNotifications =
+    createAppNotifications(
+      assignments,
+      studySessions,
+      profile,
+    );
+
+  const storedDismissed =
+    readStoredArray<string>(
+      DISMISSED_NOTIFICATION_STORAGE_KEY,
+    ).filter(
+      (value): value is string =>
+        typeof value === "string",
+    );
+
+  const generatedNotificationIds =
+    new Set(
+      generatedNotifications.map(
+        (notification) =>
+          notification.id,
+      ),
+    );
+
+  const cleanedDismissedIds =
+    storedDismissed.filter((id) =>
+      generatedNotificationIds.has(id),
+    );
+
+  const visibleNotifications =
+    generatedNotifications.filter(
+      (notification) =>
+        !cleanedDismissedIds.includes(
+          notification.id,
+        ),
+    );
+
+  return {
+    notifications:
+      visibleNotifications,
+    dismissedNotificationIds:
+      cleanedDismissedIds,
+  };
 }

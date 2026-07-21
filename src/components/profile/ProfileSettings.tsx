@@ -16,6 +16,10 @@ import type {
   ThemePreference,
 } from "@/types/profile";
 
+import {
+  notifyAppDataChanged,
+} from "@/utils/appEvents";
+
 export default function ProfileSettings() {
   const [profile, setProfile] =
     useState<StudentProfile>(
@@ -116,7 +120,7 @@ export default function ProfileSettings() {
         PROFILE_STORAGE_KEY,
         JSON.stringify(savedProfile),
       );
-
+      notifyAppDataChanged();
       setProfile(savedProfile);
       applyTheme(savedProfile.theme);
       setMessage("Profile saved successfully.");
@@ -149,7 +153,7 @@ export default function ProfileSettings() {
         DEFAULT_STUDENT_PROFILE,
       ),
     );
-
+    notifyAppDataChanged();
     applyTheme(
       DEFAULT_STUDENT_PROFILE.theme,
     );
@@ -392,34 +396,92 @@ export default function ProfileSettings() {
         Reminder timing
       </label>
 
-      <select
-        id="reminder-timing"
-        value={profile.reminderTiming}
-        onChange={(event) =>
-          updateProfile(
-            "reminderTiming",
-            event.target
-              .value as ReminderTiming,
-          )
-        }
-        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="none">
-          No reminder
-        </option>
+      <div>
+  <label
+    htmlFor="assignment-reminder-timing"
+    className="text-sm font-medium text-slate-700"
+  >
+    Assignment reminder timing
+  </label>
 
-        <option value="same-day">
-          Same day
-        </option>
+  <select
+    id="assignment-reminder-timing"
+    value={
+      profile.assignmentReminderTiming
+    }
+    onChange={(event) =>
+      updateProfile(
+        "assignmentReminderTiming",
+        event.target
+          .value as ReminderTiming,
+      )
+    }
+    disabled={
+      !profile
+        .assignmentRemindersEnabled
+    }
+    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <option value="none">
+      No reminder
+    </option>
 
-        <option value="one-day">
-          One day before
-        </option>
+    <option value="same-day">
+      Same day
+    </option>
 
-        <option value="two-days">
-          Two days before
-        </option>
-      </select>
+    <option value="one-day">
+      One day before
+    </option>
+
+    <option value="two-days">
+      Two days before
+    </option>
+  </select>
+</div>
+
+<div>
+  <label
+    htmlFor="study-reminder-timing"
+    className="text-sm font-medium text-slate-700"
+  >
+    Study-session reminder timing
+  </label>
+
+  <select
+    id="study-reminder-timing"
+    value={
+      profile.studyReminderTiming
+    }
+    onChange={(event) =>
+      updateProfile(
+        "studyReminderTiming",
+        event.target
+          .value as ReminderTiming,
+      )
+    }
+    disabled={
+      !profile.studyRemindersEnabled
+    }
+    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <option value="none">
+      No reminder
+    </option>
+
+    <option value="same-day">
+      Same day
+    </option>
+
+    <option value="one-day">
+      One day before
+    </option>
+
+    <option value="two-days">
+      Two days before
+    </option>
+  </select>
+</div>
     </div>
   </div>
 </section>

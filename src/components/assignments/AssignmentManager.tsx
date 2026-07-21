@@ -22,6 +22,9 @@ import {
   ASSIGNMENT_STORAGE_KEY,
   COURSE_STORAGE_KEY,
 } from "@/constants/storage";
+import {
+  notifyAppDataChanged,
+} from "@/utils/appEvents";
 
 
 
@@ -160,25 +163,27 @@ setAssignments(
   }, []);
 
   useEffect(() => {
-    if (!hasLoadedAssignments) {
-      return;
-    }
+  if (!hasLoadedAssignments) {
+    return;
+  }
 
-    try {
-      localStorage.setItem(
-        ASSIGNMENT_STORAGE_KEY,
-        JSON.stringify(assignments),
-      );
-    } catch (error) {
-      console.error(
-        "Could not save assignments:",
-        error,
-      );
-    }
-  }, [
-    assignments,
-    hasLoadedAssignments,
-  ]);
+  try {
+    localStorage.setItem(
+      ASSIGNMENT_STORAGE_KEY,
+      JSON.stringify(assignments),
+    );
+
+    notifyAppDataChanged();
+  } catch (error) {
+    console.error(
+      "Could not save assignments:",
+      error,
+    );
+  }
+}, [
+  assignments,
+  hasLoadedAssignments,
+]);
 
   function saveAssignment(
     assignment: Assignment,

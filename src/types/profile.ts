@@ -17,5 +17,8 @@ export type StudentProfile = {
   theme: ThemePreference;
   assignmentRemindersEnabled: boolean;
   studyRemindersEnabled: boolean;
-  reminderTiming: ReminderTiming;
+  assignmentReminderTiming:
+    ReminderTiming;
+  studyReminderTiming:
+    ReminderTiming;
 };

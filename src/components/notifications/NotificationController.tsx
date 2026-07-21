@@ -7,45 +7,22 @@ import {
 
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 
-import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
 
 import {
-  ASSIGNMENT_STORAGE_KEY,
   DISMISSED_NOTIFICATION_STORAGE_KEY,
-  PROFILE_STORAGE_KEY,
-  STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
-import type { Assignment } from "@/types/assignment";
 import type { AppNotification } from "@/types/notification";
-import type { StudentProfile } from "@/types/profile";
-import type { StudySession } from "@/types/studySession";
 
-import { normalizeAssignment } from "@/utils/assignments";
-import { createAppNotifications } from "@/utils/notifications";
-import { normalizeStudySession } from "@/utils/studySessions";
+import {
+  loadNotificationData,
+} from "@/utils/notifications";
 
-function readArray<T>(
-  storageKey: string,
-) {
-  try {
-    const storedValue =
-      localStorage.getItem(storageKey);
+import {
+  APP_DATA_CHANGED_EVENT,
+} from "@/utils/appEvents";
 
-    if (!storedValue) {
-      return [] as T[];
-    }
 
-    const parsedValue: unknown =
-      JSON.parse(storedValue);
-
-    return Array.isArray(parsedValue)
-      ? (parsedValue as T[])
-      : [];
-  } catch {
-    return [] as T[];
-  }
-}
 
 export default function NotificationController() {
   const [isOpen, setIsOpen] =
@@ -64,86 +41,58 @@ export default function NotificationController() {
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-  useEffect(() => {
-    try {
-      const assignments =
-        readArray<Assignment>(
-          ASSIGNMENT_STORAGE_KEY,
-        ).map(normalizeAssignment);
+    function refreshNotifications() {
+  try {
+    const loadedData =
+      loadNotificationData();
 
-      const studySessions =
-        readArray<StudySession>(
-          STUDY_SESSION_STORAGE_KEY,
-        ).map(normalizeStudySession);
+    setDismissedNotificationIds(
+      loadedData
+        .dismissedNotificationIds,
+    );
 
-      const storedProfile =
-        localStorage.getItem(
-          PROFILE_STORAGE_KEY,
-        );
+    setNotifications(
+      loadedData.notifications,
+    );
+  } catch (error) {
+    console.error(
+      "Could not refresh notifications:",
+      error,
+    );
+  }
+}
 
-      const parsedProfile =
-        storedProfile
-          ? (JSON.parse(
-              storedProfile,
-            ) as Partial<StudentProfile>)
-          : {};
+ useEffect(() => {
+  const loadedData =
+    loadNotificationData();
 
-      const profile: StudentProfile = {
-        ...DEFAULT_STUDENT_PROFILE,
-        ...parsedProfile,
-      };
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setDismissedNotificationIds(
+    loadedData.dismissedNotificationIds,
+  );
 
-      const storedDismissed =
-        localStorage.getItem(
-          DISMISSED_NOTIFICATION_STORAGE_KEY,
-        );
+  setNotifications(
+    loadedData.notifications,
+  );
 
-      const parsedDismissed =
-        storedDismissed
-          ? (JSON.parse(
-              storedDismissed,
-            ) as unknown)
-          : [];
+  setHasLoaded(true);
 
-      const safeDismissed =
-        Array.isArray(parsedDismissed)
-          ? parsedDismissed.filter(
-              (
-                value,
-              ): value is string =>
-                typeof value === "string",
-            )
-          : [];
+  function handleAppDataChanged() {
+    refreshNotifications();
+  }
 
-      const generatedNotifications =
-        createAppNotifications(
-          assignments,
-          studySessions,
-          profile,
-        );
+  window.addEventListener(
+    APP_DATA_CHANGED_EVENT,
+    handleAppDataChanged,
+  );
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDismissedNotificationIds(
-        safeDismissed,
-      );
-
-      setNotifications(
-        generatedNotifications.filter(
-          (notification) =>
-            !safeDismissed.includes(
-              notification.id,
-            ),
-        ),
-      );
-    } catch (error) {
-      console.error(
-        "Could not load notifications:",
-        error,
-      );
-    } finally {
-      setHasLoaded(true);
-    }
-  }, []);
+  return () => {
+    window.removeEventListener(
+      APP_DATA_CHANGED_EVENT,
+      handleAppDataChanged,
+    );
+  };
+}, []);
 
   useEffect(() => {
     if (!hasLoaded) {

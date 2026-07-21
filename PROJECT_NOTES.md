@@ -1036,3 +1036,76 @@ Learned how to:
 - Clean old dismissed notification IDs
 - Add notification grouping
 - Add dashboard reminder cards
+
+# Day 16 Completed
+
+## Live Notification Refresh
+
+- Created a reusable app-data-change event
+- Refreshed notifications without reloading
+- Triggered updates after assignment changes
+- Triggered updates after study-session changes
+- Triggered updates after profile changes
+- Updated notification counts immediately
+- Updated dashboard reminders immediately
+
+## Separate Reminder Settings
+
+- Added assignment-specific reminder timing
+- Added study-session-specific reminder timing
+- Added separate Profile selectors
+- Disabled timing selectors when reminders are off
+- Preserved compatibility with the older shared reminder setting
+- Updated assignment reminder calculations
+- Updated study-session reminder calculations
+
+## Notification Cleanup
+
+- Removed outdated dismissed notification IDs
+- Kept only dismissals belonging to active generated reminders
+- Saved the cleaned dismissal list
+- Prevented old dismissal data from accumulating indefinitely
+
+## Notification Grouping
+
+- Grouped reminders into Overdue, Today, and Upcoming
+- Added notification-group headings
+- Preserved reminder links and dismissal controls
+- Improved notification scanning and organization
+
+## Dashboard Reminder Summary
+
+- Added reminder counts to the dashboard
+- Added Overdue, Today, and Upcoming totals
+- Displayed the first three reminders
+- Added direct links to assignment and planner pages
+- Added an all-caught-up state
+- Added live dashboard reminder updates
+
+## React and TypeScript Concepts Learned
+
+- Custom browser events
+- Event-driven component synchronization
+- Reusable localStorage loaders
+- Backward-compatible profile fields
+- Derived notification groups
+- Cleaning persistent application data
+- Reusing notification data in multiple components
+- Effect cleanup for custom event listeners
+
+## Current Limitations
+
+- Notification state still relies on browser localStorage
+- Changes from another browser tab may need a storage-event listener
+- The dashboard and notification controller each maintain their own notification state
+- Browser push notifications are not enabled
+- Old reminder profile fields remain in saved JSON until the profile is saved again
+
+## Day 17 Goals
+
+- Add cross-tab synchronization
+- Add browser notification permission controls
+- Add optional browser notifications
+- Add notification timestamps
+- Add a notification snooze feature
+- Improve notification state sharing

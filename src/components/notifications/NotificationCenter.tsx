@@ -40,6 +40,27 @@ export default function NotificationCenter({
     return null;
   }
 
+  const overdueNotifications =
+  notifications.filter(
+    (notification) =>
+      notification.urgency ===
+      "overdue",
+  );
+
+const todayNotifications =
+  notifications.filter(
+    (notification) =>
+      notification.urgency ===
+      "today",
+  );
+
+const upcomingNotifications =
+  notifications.filter(
+    (notification) =>
+      notification.urgency ===
+      "upcoming",
+  );
+
   return (
     <>
       <button
@@ -82,67 +103,34 @@ export default function NotificationCenter({
 
         {notifications.length > 0 ? (
           <>
-            <div className="divide-y divide-slate-200 dark:divide-slate-700">
-              {notifications.map(
-                (notification) => (
-                  <article
-                    key={notification.id}
-                    className="p-5"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            urgencyStyles[
-                              notification
-                                .urgency
-                            ]
-                          }`}
-                        >
-                          {
-                            urgencyLabels[
-                              notification
-                                .urgency
-                            ]
-                          }
-                        </span>
+            <div>
+  <NotificationGroup
+    title="Overdue"
+    notifications={
+      overdueNotifications
+    }
+    onClose={onClose}
+    onDismiss={onDismiss}
+  />
 
-                        <h3 className="mt-3 font-semibold text-slate-900 dark:text-white">
-                          {notification.title}
-                        </h3>
+  <NotificationGroup
+    title="Today"
+    notifications={
+      todayNotifications
+    }
+    onClose={onClose}
+    onDismiss={onDismiss}
+  />
 
-                        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                          {
-                            notification.description
-                          }
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onDismiss(
-                            notification.id,
-                          )
-                        }
-                        aria-label={`Dismiss ${notification.title}`}
-                        className="shrink-0 text-sm font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-
-                    <Link
-                      href={notification.href}
-                      onClick={onClose}
-                      className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                    >
-                      View details
-                    </Link>
-                  </article>
-                ),
-              )}
-            </div>
+  <NotificationGroup
+    title="Upcoming"
+    notifications={
+      upcomingNotifications
+    }
+    onClose={onClose}
+    onDismiss={onDismiss}
+  />
+</div>
 
             <div className="border-t border-slate-200 p-5 dark:border-slate-700">
               <button
@@ -168,5 +156,95 @@ export default function NotificationCenter({
         )}
       </aside>
     </>
+  );
+}
+
+type NotificationGroupProps = {
+  title: string;
+  notifications: AppNotification[];
+  onClose: () => void;
+  onDismiss: (
+    notificationId: string,
+  ) => void;
+};
+
+function NotificationGroup({
+  title,
+  notifications,
+  onClose,
+  onDismiss,
+}: NotificationGroupProps) {
+  if (notifications.length === 0) {
+    return null;
+  }
+
+  return (
+    <section>
+      <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-950">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          {title}
+        </h3>
+      </div>
+
+      <div className="divide-y divide-slate-200 dark:divide-slate-700">
+        {notifications.map(
+          (notification) => (
+            <article
+              key={notification.id}
+              className="p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      urgencyStyles[
+                        notification.urgency
+                      ]
+                    }`}
+                  >
+                    {
+                      urgencyLabels[
+                        notification.urgency
+                      ]
+                    }
+                  </span>
+
+                  <h4 className="mt-3 font-semibold text-slate-900 dark:text-white">
+                    {notification.title}
+                  </h4>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {
+                      notification.description
+                    }
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    onDismiss(
+                      notification.id,
+                    )
+                  }
+                  aria-label={`Dismiss ${notification.title}`}
+                  className="shrink-0 text-sm font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400"
+                >
+                  Dismiss
+                </button>
+              </div>
+
+              <Link
+                href={notification.href}
+                onClick={onClose}
+                className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              >
+                View details
+              </Link>
+            </article>
+          ),
+        )}
+      </div>
+    </section>
   );
 }

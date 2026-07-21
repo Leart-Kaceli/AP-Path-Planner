@@ -19,6 +19,10 @@ import {
 import type { Course } from "@/types/course";
 import type { StudySession } from "@/types/studySession";
 
+import {
+  notifyAppDataChanged,
+} from "@/utils/appEvents";
+
 const initialSessions: StudySession[] = [];
 
 
@@ -113,6 +117,7 @@ const [
         STUDY_SESSION_STORAGE_KEY,
         JSON.stringify(sessions),
       );
+      notifyAppDataChanged();
     } catch (error) {
       console.error(
         "Could not save study sessions:",

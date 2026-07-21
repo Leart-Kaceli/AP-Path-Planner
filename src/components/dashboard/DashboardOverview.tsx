@@ -15,6 +15,7 @@ import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
 import { normalizeStudySession } from "@/utils/studySessions";
 import { normalizeAssignment } from "@/utils/assignments";
+import DashboardReminderSummary from "@/components/dashboard/DashboardReminderSummary";
 
 import {
   ASSIGNMENT_STORAGE_KEY,
@@ -45,6 +46,18 @@ import type {
 } from "@/types/grade";
 import type { StudentProfile } from "@/types/profile";
 
+import {
+  loadNotificationData,
+} from "@/utils/notifications";
+
+import type {
+  AppNotification,
+} from "@/types/notification";
+
+import {
+  APP_DATA_CHANGED_EVENT,
+} from "@/utils/appEvents";
+
 type LoadedDashboardData = {
   courses: Course[];
   assignments: Assignment[];
@@ -65,6 +78,10 @@ const emptyDashboardData: LoadedDashboardData = {
 
 export default function DashboardOverview() {
 
+ const [
+  dashboardNotifications,
+  setDashboardNotifications,
+] = useState<AppNotification[]>([]);
 
 const [dashboardData, setDashboardData] =
   useState<LoadedDashboardData>(
@@ -73,6 +90,8 @@ const [dashboardData, setDashboardData] =
 
   const [hasLoaded, setHasLoaded] =
     useState(false);
+
+   
 
   useEffect(() => {
     try {
@@ -100,6 +119,8 @@ const storedGradeWeights =
   localStorage.getItem(
     GRADE_WEIGHT_STORAGE_KEY,
   );
+  
+
 
   const storedProfile =
   localStorage.getItem(
@@ -181,6 +202,9 @@ const safeProfile: StudentProfile = {
   ...parsedProfile,
 };
 
+const loadedNotificationData =
+  loadNotificationData();
+
       // eslint-disable-next-line react-hooks/set-state-in-effect
      setDashboardData({
   courses: safeCourses,
@@ -190,6 +214,36 @@ const safeProfile: StudentProfile = {
   weightsByCourse: safeWeightsByCourse,
   profile: safeProfile,
 });
+
+const refreshedNotifications =
+  loadNotificationData();
+
+
+setDashboardNotifications(
+  loadedNotificationData.notifications,
+);
+
+function handleAppDataChanged() {
+  
+
+  setDashboardNotifications(
+    refreshedNotifications.notifications,
+  );
+}
+
+window.addEventListener(
+  APP_DATA_CHANGED_EVENT,
+  handleAppDataChanged,
+);
+
+return () => {
+  window.removeEventListener(
+    APP_DATA_CHANGED_EVENT,
+    handleAppDataChanged,
+  );
+};
+
+
     } catch (error) {
       console.error(
         "Could not load dashboard data:",
@@ -502,6 +556,8 @@ const overallWeightedAverage =
 />
       </section>
 
+      
+
       <div className="mt-8">
   <DashboardGradeSummary
     pointAverage={overallPointAverage}
@@ -513,6 +569,16 @@ const overallWeightedAverage =
     }
   />
 </div>
+
+<div className="mt-8">
+  <DashboardReminderSummary
+    notifications={
+      dashboardNotifications
+    }
+  />
+</div>
+
+
 
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
