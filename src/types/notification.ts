@@ -16,3 +16,8 @@ export type AppNotification = {
   href: string;
   eventDateTime: string;
 };
+
+export type SnoozedNotification = {
+  notificationId: string;
+  snoozedUntil: string;
+};

@@ -47,16 +47,8 @@ import type {
 import type { StudentProfile } from "@/types/profile";
 
 import {
-  loadNotificationData,
-} from "@/utils/notifications";
-
-import type {
-  AppNotification,
-} from "@/types/notification";
-
-import {
-  APP_DATA_CHANGED_EVENT,
-} from "@/utils/appEvents";
+  useNotifications,
+} from "@/components/notifications/NotificationProvider";
 
 type LoadedDashboardData = {
   courses: Course[];
@@ -78,10 +70,10 @@ const emptyDashboardData: LoadedDashboardData = {
 
 export default function DashboardOverview() {
 
- const [
-  dashboardNotifications,
-  setDashboardNotifications,
-] = useState<AppNotification[]>([]);
+  const {
+  notifications:
+    dashboardNotifications,
+} = useNotifications();
 
 const [dashboardData, setDashboardData] =
   useState<LoadedDashboardData>(
@@ -202,8 +194,6 @@ const safeProfile: StudentProfile = {
   ...parsedProfile,
 };
 
-const loadedNotificationData =
-  loadNotificationData();
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
      setDashboardData({
@@ -215,33 +205,16 @@ const loadedNotificationData =
   profile: safeProfile,
 });
 
-const refreshedNotifications =
-  loadNotificationData();
+setDashboardData({
+  courses: safeCourses,
+  assignments: safeAssignments,
+  studySessions: safeStudySessions,
+  grades: safeGrades,
+  weightsByCourse: safeWeightsByCourse,
+  profile: safeProfile,
+});
 
-
-setDashboardNotifications(
-  loadedNotificationData.notifications,
-);
-
-function handleAppDataChanged() {
-  
-
-  setDashboardNotifications(
-    refreshedNotifications.notifications,
-  );
-}
-
-window.addEventListener(
-  APP_DATA_CHANGED_EVENT,
-  handleAppDataChanged,
-);
-
-return () => {
-  window.removeEventListener(
-    APP_DATA_CHANGED_EVENT,
-    handleAppDataChanged,
-  );
-};
+setHasLoaded(true);
 
 
     } catch (error) {

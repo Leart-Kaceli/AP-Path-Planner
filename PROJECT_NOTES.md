@@ -1109,3 +1109,72 @@ Learned how to:
 - Add notification timestamps
 - Add a notification snooze feature
 - Improve notification state sharing
+
+# Day 17 Completed
+
+## Shared Notification State
+
+- Created a global NotificationProvider
+- Moved reminder state out of NotificationController
+- Shared the same notification state with the dashboard
+- Removed duplicate notification-loading logic
+- Added a reusable useNotifications hook
+- Kept dismissal and refresh behavior centralized
+
+## Cross-Tab Synchronization
+
+- Added browser storage-event support
+- Synced reminders between multiple tabs
+- Updated the dashboard after changes in another tab
+- Updated the notification bell across tabs
+- Preserved custom same-tab app events
+
+## Notification Snoozing
+
+- Added one-hour snoozing
+- Added one-day snoozing
+- Saved snoozed reminder timestamps
+- Hid reminders while snoozed
+- Restored reminders after snooze expiration
+- Removed expired snooze records during loading
+
+## Browser Notifications
+
+- Added browser-notification settings
+- Added assignment browser-alert settings
+- Added study-session browser-alert settings
+- Added notification-permission controls
+- Sent optional system notifications
+- Prevented duplicate browser alerts
+- Preserved in-app reminders when browser permission was denied
+
+## Notification Timestamps
+
+- Added formatted assignment due dates
+- Added formatted session times
+- Added safe timestamp parsing
+- Displayed notification timing in the notification center
+
+## Backup Version 3
+
+- Added snoozed reminders to backups
+- Added sent browser-notification IDs to backups
+- Migrated version-2 backups to version 3
+- Migrated version-1 backups to version 3
+- Updated backup validation and restoration
+
+## Current Limitations
+
+- Browser notifications only work while the app is open
+- Browser permission must be granted manually
+- Snooze options are currently limited to one hour and one day
+- Browser notification clicks do not yet navigate to the related page
+- Sent notification IDs may need periodic cleanup
+
+## Day 18 Goals
+
+- Add browser-notification click navigation
+- Add custom snooze date and time
+- Add notification-settings status information
+- Add calendar views
+- Add assignment and study-session calendar integration

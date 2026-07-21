@@ -68,18 +68,50 @@ export default function ProfileSettings() {
   }, []);
 
   function updateProfile<
-    Key extends keyof StudentProfile,
-  >(
-    key: Key,
-    value: StudentProfile[Key],
-  ) {
-    setProfile((currentProfile) => ({
-      ...currentProfile,
-      [key]: value,
-    }));
+  Key extends keyof StudentProfile,
+>(
+  key: Key,
+  value: StudentProfile[Key],
+) {
+  setProfile((currentProfile) => ({
+    ...currentProfile,
+    [key]: value,
+  }));
 
-    setMessage("");
+  setMessage("");
+}
+
+async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    setMessage(
+      "Browser notifications are not supported.",
+    );
+    return;
   }
+
+  const permission =
+    await Notification.requestPermission();
+
+  if (permission === "granted") {
+    updateProfile(
+      "browserNotificationsEnabled",
+      true,
+    );
+
+    setMessage(
+      "Browser notifications were enabled.",
+    );
+  } else {
+    updateProfile(
+      "browserNotificationsEnabled",
+      false,
+    );
+
+    setMessage(
+      "Browser notification permission was not granted.",
+    );
+  }
+}
 
   function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -440,6 +472,99 @@ export default function ProfileSettings() {
   </select>
 </div>
 
+<div className="border-t border-slate-200 pt-5 dark:border-slate-700">
+  <h4 className="font-semibold text-slate-900 dark:text-white">
+    Browser notifications
+  </h4>
+
+  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+    Allow AP Path Planner to display system
+    notifications while the app is open.
+  </p>
+
+  <label className="mt-4 flex items-start gap-3">
+    <input
+      type="checkbox"
+      checked={
+        profile
+          .browserNotificationsEnabled
+      }
+      onChange={(event) =>
+        updateProfile(
+          "browserNotificationsEnabled",
+          event.target.checked,
+        )
+      }
+      className="mt-1 h-5 w-5 accent-blue-600"
+    />
+
+    <span className="font-medium text-slate-900 dark:text-white">
+      Enable browser notifications
+    </span>
+  </label>
+
+  <label className="mt-4 flex items-start gap-3">
+    <input
+      type="checkbox"
+      checked={
+        profile
+          .browserNotificationsForAssignments
+      }
+      disabled={
+        !profile
+          .browserNotificationsEnabled
+      }
+      onChange={(event) =>
+        updateProfile(
+          "browserNotificationsForAssignments",
+          event.target.checked,
+        )
+      }
+      className="mt-1 h-5 w-5 accent-blue-600 disabled:opacity-50"
+    />
+
+    <span className="font-medium text-slate-900 dark:text-white">
+      Assignment browser alerts
+    </span>
+  </label>
+
+  <label className="mt-4 flex items-start gap-3">
+    <input
+      type="checkbox"
+      checked={
+        profile
+          .browserNotificationsForStudySessions
+      }
+      disabled={
+        !profile
+          .browserNotificationsEnabled
+      }
+      onChange={(event) =>
+        updateProfile(
+          "browserNotificationsForStudySessions",
+          event.target.checked,
+        )
+      }
+      className="mt-1 h-5 w-5 accent-blue-600 disabled:opacity-50"
+    />
+
+    <span className="font-medium text-slate-900 dark:text-white">
+      Study-session browser alerts
+    </span>
+  </label>
+  <button
+  type="button"
+  onClick={
+    requestNotificationPermission
+  }
+  className="mt-5 rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+>
+  Request Browser Permission
+</button>
+</div>
+
+
+
 <div>
   <label
     htmlFor="study-reminder-timing"
@@ -660,3 +785,5 @@ function capitalize(value: string) {
     value.slice(1)
   );
 }
+
+

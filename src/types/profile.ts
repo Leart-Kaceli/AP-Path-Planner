@@ -15,10 +15,22 @@ export type StudentProfile = {
   graduationYear: string;
   weeklyStudyGoalMinutes: number;
   theme: ThemePreference;
+
   assignmentRemindersEnabled: boolean;
   studyRemindersEnabled: boolean;
+
   assignmentReminderTiming:
     ReminderTiming;
+
   studyReminderTiming:
     ReminderTiming;
+
+  browserNotificationsEnabled:
+    boolean;
+
+  browserNotificationsForAssignments:
+    boolean;
+
+  browserNotificationsForStudySessions:
+    boolean;
 };

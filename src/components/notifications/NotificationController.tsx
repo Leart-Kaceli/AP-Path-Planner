@@ -1,148 +1,23 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useState } from "react";
 
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 
-
 import {
-  DISMISSED_NOTIFICATION_STORAGE_KEY,
-} from "@/constants/storage";
-
-import type { AppNotification } from "@/types/notification";
-
-import {
-  loadNotificationData,
-} from "@/utils/notifications";
-
-import {
-  APP_DATA_CHANGED_EVENT,
-} from "@/utils/appEvents";
-
-
+  useNotifications,
+} from "@/components/notifications/NotificationProvider";
 
 export default function NotificationController() {
   const [isOpen, setIsOpen] =
     useState(false);
 
-  const [
+  const {
     notifications,
-    setNotifications,
-  ] = useState<AppNotification[]>([]);
-
-  const [
-    dismissedNotificationIds,
-    setDismissedNotificationIds,
-  ] = useState<string[]>([]);
-
-  const [hasLoaded, setHasLoaded] =
-    useState(false);
-
-    function refreshNotifications() {
-  try {
-    const loadedData =
-      loadNotificationData();
-
-    setDismissedNotificationIds(
-      loadedData
-        .dismissedNotificationIds,
-    );
-
-    setNotifications(
-      loadedData.notifications,
-    );
-  } catch (error) {
-    console.error(
-      "Could not refresh notifications:",
-      error,
-    );
-  }
-}
-
- useEffect(() => {
-  const loadedData =
-    loadNotificationData();
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  setDismissedNotificationIds(
-    loadedData.dismissedNotificationIds,
-  );
-
-  setNotifications(
-    loadedData.notifications,
-  );
-
-  setHasLoaded(true);
-
-  function handleAppDataChanged() {
-    refreshNotifications();
-  }
-
-  window.addEventListener(
-    APP_DATA_CHANGED_EVENT,
-    handleAppDataChanged,
-  );
-
-  return () => {
-    window.removeEventListener(
-      APP_DATA_CHANGED_EVENT,
-      handleAppDataChanged,
-    );
-  };
-}, []);
-
-  useEffect(() => {
-    if (!hasLoaded) {
-      return;
-    }
-
-    localStorage.setItem(
-      DISMISSED_NOTIFICATION_STORAGE_KEY,
-      JSON.stringify(
-        dismissedNotificationIds,
-      ),
-    );
-  }, [
-    dismissedNotificationIds,
-    hasLoaded,
-  ]);
-
-  function dismissNotification(
-    notificationId: string,
-  ) {
-    setNotifications(
-      (currentNotifications) =>
-        currentNotifications.filter(
-          (notification) =>
-            notification.id !==
-            notificationId,
-        ),
-    );
-
-    setDismissedNotificationIds(
-      (currentIds) => [
-        ...currentIds,
-        notificationId,
-      ],
-    );
-  }
-
-  function dismissAllNotifications() {
-    setDismissedNotificationIds(
-      (currentIds) => [
-        ...currentIds,
-        ...notifications.map(
-          (notification) =>
-            notification.id,
-        ),
-      ],
-    );
-
-    setNotifications([]);
-  }
+    dismissNotification,
+    dismissAllNotifications,
+    snoozeNotification,
+  } = useNotifications();
 
   return (
     <>
@@ -182,6 +57,9 @@ export default function NotificationController() {
         }
         onDismissAll={
           dismissAllNotifications
+        }
+        onSnooze={
+          snoozeNotification
         }
       />
     </>

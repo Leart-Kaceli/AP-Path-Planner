@@ -5,6 +5,8 @@ import {
   GRADE_STORAGE_KEY,
   GRADE_WEIGHT_STORAGE_KEY,
   PROFILE_STORAGE_KEY,
+  SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
+  SNOOZED_NOTIFICATION_STORAGE_KEY,
   STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
@@ -17,55 +19,66 @@ import type {
   CourseGradeWeights,
   GradeEntry,
 } from "@/types/grade";
+import type {
+  SnoozedNotification,
+} from "@/types/notification";
 import type { StudentProfile } from "@/types/profile";
 import type { StudySession } from "@/types/studySession";
 
 function readArray<T>(
   storageKey: string,
 ): T[] {
-  const storedValue =
-    localStorage.getItem(storageKey);
+  try {
+    const storedValue =
+      localStorage.getItem(storageKey);
 
-  if (!storedValue) {
+    if (!storedValue) {
+      return [];
+    }
+
+    const parsedValue: unknown =
+      JSON.parse(storedValue);
+
+    return Array.isArray(parsedValue)
+      ? (parsedValue as T[])
+      : [];
+  } catch {
     return [];
   }
-
-  const parsedValue: unknown =
-    JSON.parse(storedValue);
-
-  return Array.isArray(parsedValue)
-    ? (parsedValue as T[])
-    : [];
 }
 
 function readObject<T extends object>(
   storageKey: string,
   fallback: T,
 ): T {
-  const storedValue =
-    localStorage.getItem(storageKey);
+  try {
+    const storedValue =
+      localStorage.getItem(storageKey);
 
-  if (!storedValue) {
+    if (!storedValue) {
+      return fallback;
+    }
+
+    const parsedValue: unknown =
+      JSON.parse(storedValue);
+
+    if (
+      !parsedValue ||
+      typeof parsedValue !== "object" ||
+      Array.isArray(parsedValue)
+    ) {
+      return fallback;
+    }
+
+    return parsedValue as T;
+  } catch {
     return fallback;
   }
-
-  const parsedValue: unknown =
-    JSON.parse(storedValue);
-
-  if (
-    !parsedValue ||
-    typeof parsedValue !== "object" ||
-    Array.isArray(parsedValue)
-  ) {
-    return fallback;
-  }
-
-  return parsedValue as T;
 }
 
 export function createAppBackup(): AppBackup {
   return {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
 
     courses: readArray<Course>(
@@ -76,9 +89,10 @@ export function createAppBackup(): AppBackup {
       ASSIGNMENT_STORAGE_KEY,
     ),
 
-    studySessions: readArray<StudySession>(
-      STUDY_SESSION_STORAGE_KEY,
-    ),
+    studySessions:
+      readArray<StudySession>(
+        STUDY_SESSION_STORAGE_KEY,
+      ),
 
     grades: readArray<GradeEntry>(
       GRADE_STORAGE_KEY,
@@ -103,6 +117,16 @@ export function createAppBackup(): AppBackup {
     dismissedNotificationIds:
       readArray<string>(
         DISMISSED_NOTIFICATION_STORAGE_KEY,
+      ),
+
+    snoozedNotifications:
+      readArray<SnoozedNotification>(
+        SNOOZED_NOTIFICATION_STORAGE_KEY,
+      ),
+
+    sentBrowserNotificationIds:
+      readArray<string>(
+        SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
       ),
   };
 }
@@ -138,7 +162,9 @@ export function downloadAppBackup() {
   anchor.download =
     `ap-path-planner-backup-${dateText}.json`;
 
+  document.body.appendChild(anchor);
   anchor.click();
+  anchor.remove();
 
   URL.revokeObjectURL(url);
 }
@@ -147,11 +173,30 @@ type LegacyAppBackupV1 = {
   version: 1;
   exportedAt: string;
   courses: AppBackup["courses"];
-  assignments: AppBackup["assignments"];
-  studySessions: AppBackup["studySessions"];
+  assignments:
+    AppBackup["assignments"];
+  studySessions:
+    AppBackup["studySessions"];
   grades: AppBackup["grades"];
-  gradeWeights: AppBackup["gradeWeights"];
+  gradeWeights:
+    AppBackup["gradeWeights"];
   profile: AppBackup["profile"];
+};
+
+type LegacyAppBackupV2 = {
+  version: 2;
+  exportedAt: string;
+  courses: AppBackup["courses"];
+  assignments:
+    AppBackup["assignments"];
+  studySessions:
+    AppBackup["studySessions"];
+  grades: AppBackup["grades"];
+  gradeWeights:
+    AppBackup["gradeWeights"];
+  profile: AppBackup["profile"];
+  dismissedNotificationIds:
+    string[];
 };
 
 export function migrateAppBackup(
@@ -168,8 +213,20 @@ export function migrateAppBackup(
   const possibleBackup =
     value as Record<string, unknown>;
 
-  if (possibleBackup.version === 2) {
+  if (possibleBackup.version === 3) {
     return value as AppBackup;
+  }
+
+  if (possibleBackup.version === 2) {
+    const legacyBackup =
+      value as LegacyAppBackupV2;
+
+    return {
+      ...legacyBackup,
+      version: 3,
+      snoozedNotifications: [],
+      sentBrowserNotificationIds: [],
+    };
   }
 
   if (possibleBackup.version === 1) {
@@ -178,8 +235,10 @@ export function migrateAppBackup(
 
     return {
       ...legacyBackup,
-      version: 2,
+      version: 3,
       dismissedNotificationIds: [],
+      snoozedNotifications: [],
+      sentBrowserNotificationIds: [],
     };
   }
 
@@ -193,13 +252,6 @@ export function restoreAppBackup(
     COURSE_STORAGE_KEY,
     JSON.stringify(backup.courses),
   );
-
-  localStorage.setItem(
-  DISMISSED_NOTIFICATION_STORAGE_KEY,
-  JSON.stringify(
-    backup.dismissedNotificationIds,
-  ),
-);
 
   localStorage.setItem(
     ASSIGNMENT_STORAGE_KEY,
@@ -231,6 +283,27 @@ export function restoreAppBackup(
     PROFILE_STORAGE_KEY,
     JSON.stringify(backup.profile),
   );
+
+  localStorage.setItem(
+    DISMISSED_NOTIFICATION_STORAGE_KEY,
+    JSON.stringify(
+      backup.dismissedNotificationIds,
+    ),
+  );
+
+  localStorage.setItem(
+    SNOOZED_NOTIFICATION_STORAGE_KEY,
+    JSON.stringify(
+      backup.snoozedNotifications,
+    ),
+  );
+
+  localStorage.setItem(
+    SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
+    JSON.stringify(
+      backup.sentBrowserNotificationIds,
+    ),
+  );
 }
 
 export function isValidAppBackup(
@@ -259,16 +332,30 @@ export function isValidAppBackup(
     Boolean(
       migratedBackup.gradeWeights &&
         typeof migratedBackup
-          .gradeWeights === "object",
+          .gradeWeights === "object" &&
+        !Array.isArray(
+          migratedBackup.gradeWeights,
+        ),
     ) &&
     Boolean(
       migratedBackup.profile &&
         typeof migratedBackup.profile ===
-          "object",
+          "object" &&
+        !Array.isArray(
+          migratedBackup.profile,
+        ),
     ) &&
     Array.isArray(
       migratedBackup
         .dismissedNotificationIds,
+    ) &&
+    Array.isArray(
+      migratedBackup
+        .snoozedNotifications,
+    ) &&
+    Array.isArray(
+      migratedBackup
+        .sentBrowserNotificationIds,
     )
   );
 }

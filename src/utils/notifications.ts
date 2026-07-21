@@ -4,11 +4,15 @@ import {
   ASSIGNMENT_STORAGE_KEY,
   DISMISSED_NOTIFICATION_STORAGE_KEY,
   PROFILE_STORAGE_KEY,
+  SNOOZED_NOTIFICATION_STORAGE_KEY,
   STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
 import type { Assignment } from "@/types/assignment";
-import type { AppNotification } from "@/types/notification";
+import type {
+  AppNotification,
+  SnoozedNotification,
+} from "@/types/notification";
 import type {
   ReminderTiming,
   StudentProfile,
@@ -302,6 +306,9 @@ function readStoredArray<T>(
 export type LoadedNotificationData = {
   notifications: AppNotification[];
   dismissedNotificationIds: string[];
+  snoozedNotifications:
+    SnoozedNotification[];
+
 };
 
 export function loadNotificationData():
@@ -315,6 +322,43 @@ export function loadNotificationData():
     readStoredArray<StudySession>(
       STUDY_SESSION_STORAGE_KEY,
     ).map(normalizeStudySession);
+
+    const storedSnoozed =
+  readStoredArray<SnoozedNotification>(
+    SNOOZED_NOTIFICATION_STORAGE_KEY,
+  ).filter(
+    (value) =>
+      value &&
+      typeof value === "object" &&
+      typeof value.notificationId ===
+        "string" &&
+      typeof value.snoozedUntil ===
+        "string",
+  );
+
+  const now = new Date();
+
+const activeSnoozedNotifications =
+  storedSnoozed.filter((item) => {
+    const snoozedUntil = new Date(
+      item.snoozedUntil,
+    );
+
+    return (
+      !Number.isNaN(
+        snoozedUntil.getTime(),
+      ) &&
+      snoozedUntil > now
+    );
+  });
+
+  const activeSnoozedIds =
+  new Set(
+    activeSnoozedNotifications.map(
+      (item) =>
+        item.notificationId,
+    ),
+  );
 
   let profile: StudentProfile = {
     ...DEFAULT_STUDENT_PROFILE,
@@ -418,17 +462,45 @@ export function loadNotificationData():
     );
 
   const visibleNotifications =
-    generatedNotifications.filter(
-      (notification) =>
-        !cleanedDismissedIds.includes(
-          notification.id,
-        ),
-    );
+  generatedNotifications.filter(
+    (notification) =>
+      !cleanedDismissedIds.includes(
+        notification.id,
+      ) &&
+      !activeSnoozedIds.has(
+        notification.id,
+      ),
+  );
+
 
   return {
-    notifications:
-      visibleNotifications,
-    dismissedNotificationIds:
-      cleanedDismissedIds,
-  };
+  notifications:
+    visibleNotifications,
+
+  dismissedNotificationIds:
+    cleanedDismissedIds,
+
+  snoozedNotifications:
+    activeSnoozedNotifications,
+};
+}
+
+export function formatNotificationDateTime(
+  dateTimeString: string,
+) {
+  const date = new Date(dateTimeString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown time";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+  ).format(date);
 }

@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import {
+  formatNotificationDateTime,
+} from "@/utils/notifications";
 
 import type { AppNotification } from "@/types/notification";
 
@@ -12,6 +15,10 @@ type NotificationCenterProps = {
     notificationId: string,
   ) => void;
   onDismissAll: () => void;
+  onSnooze: (
+    notificationId: string,
+    snoozedUntil: Date,
+  ) => void;
 };
 
 const urgencyStyles = {
@@ -35,6 +42,7 @@ export default function NotificationCenter({
   onClose,
   onDismiss,
   onDismissAll,
+  onSnooze,
 }: NotificationCenterProps) {
   if (!open) {
     return null;
@@ -111,6 +119,7 @@ const upcomingNotifications =
     }
     onClose={onClose}
     onDismiss={onDismiss}
+    onSnooze={onSnooze}
   />
 
   <NotificationGroup
@@ -120,6 +129,7 @@ const upcomingNotifications =
     }
     onClose={onClose}
     onDismiss={onDismiss}
+    onSnooze={onSnooze}
   />
 
   <NotificationGroup
@@ -129,6 +139,7 @@ const upcomingNotifications =
     }
     onClose={onClose}
     onDismiss={onDismiss}
+    onSnooze={onSnooze}
   />
 </div>
 
@@ -166,6 +177,10 @@ type NotificationGroupProps = {
   onDismiss: (
     notificationId: string,
   ) => void;
+  onSnooze: (
+    notificationId: string,
+    snoozedUntil: Date,
+  ) => void;
 };
 
 function NotificationGroup({
@@ -173,6 +188,7 @@ function NotificationGroup({
   notifications,
   onClose,
   onDismiss,
+  onSnooze,
 }: NotificationGroupProps) {
   if (notifications.length === 0) {
     return null;
@@ -193,32 +209,88 @@ function NotificationGroup({
               key={notification.id}
               className="p-5"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      urgencyStyles[
-                        notification.urgency
-                      ]
-                    }`}
-                  >
-                    {
-                      urgencyLabels[
-                        notification.urgency
-                      ]
-                    }
-                  </span>
+              <span
+                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                  urgencyStyles[
+                    notification.urgency
+                  ]
+                }`}
+              >
+                {
+                  urgencyLabels[
+                    notification.urgency
+                  ]
+                }
+              </span>
 
-                  <h4 className="mt-3 font-semibold text-slate-900 dark:text-white">
-                    {notification.title}
-                  </h4>
+              <h4 className="mt-3 font-semibold text-slate-900 dark:text-white">
+                {notification.title}
+              </h4>
 
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    {
-                      notification.description
-                    }
-                  </p>
-                </div>
+              <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {
+                  notification.description
+                }
+              </p>
+
+              <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                {formatNotificationDateTime(
+                  notification.eventDateTime,
+                )}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-4">
+                <Link
+                  href={
+                    notification.href
+                  }
+                  onClick={onClose}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                >
+                  View details
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const snoozedUntil =
+                      new Date();
+
+                    snoozedUntil.setHours(
+                      snoozedUntil.getHours() +
+                        1,
+                    );
+
+                    onSnooze(
+                      notification.id,
+                      snoozedUntil,
+                    );
+                  }}
+                  className="text-sm font-semibold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                >
+                  Snooze 1 hour
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const snoozedUntil =
+                      new Date();
+
+                    snoozedUntil.setDate(
+                      snoozedUntil.getDate() +
+                        1,
+                    );
+
+                    onSnooze(
+                      notification.id,
+                      snoozedUntil,
+                    );
+                  }}
+                  className="text-sm font-semibold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                >
+                  Snooze 1 day
+                </button>
 
                 <button
                   type="button"
@@ -228,19 +300,11 @@ function NotificationGroup({
                     )
                   }
                   aria-label={`Dismiss ${notification.title}`}
-                  className="shrink-0 text-sm font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400"
+                  className="text-sm font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Dismiss
                 </button>
               </div>
-
-              <Link
-                href={notification.href}
-                onClick={onClose}
-                className="mt-4 inline-block text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                View details
-              </Link>
             </article>
           ),
         )}
