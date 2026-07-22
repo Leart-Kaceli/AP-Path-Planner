@@ -1178,3 +1178,129 @@ Learned how to:
 - Add notification-settings status information
 - Add calendar views
 - Add assignment and study-session calendar integration
+
+# Day 18 Completed
+
+## Browser Notification Navigation
+
+- Added click handling to browser notifications
+- Closed system notifications after clicking
+- Focused the AP Path Planner browser window
+- Navigated assignment alerts to the Assignments page
+- Navigated study-session alerts to the Study Planner
+- Reused the existing notification href field
+
+## Custom Notification Snoozing
+
+- Created a reusable SnoozeDialog component
+- Added custom date-and-time snoozing
+- Kept the existing one-hour snooze option
+- Kept the existing one-day snooze option
+- Added validation for invalid dates
+- Prevented snoozing to a past time
+- Saved custom snooze timestamps in localStorage
+- Restored reminders after the custom snooze expires
+
+## Notification Status Information
+
+- Added browser-notification support status
+- Added browser-permission status
+- Displayed granted, blocked, and not-requested states
+- Added assignment browser-alert status
+- Added study-session browser-alert status
+- Updated permission status immediately after a permission request
+
+## Calendar Types and Utilities
+
+- Created a shared CalendarEvent type
+- Converted assignments into calendar events
+- Converted study sessions into calendar events
+- Used assignment dueDate values
+- Used study-session date and startTime values
+- Added local date-key formatting
+- Added month-grid generation
+- Added current-day detection
+- Added month comparison helpers
+- Added readable time formatting
+- Sorted calendar events by date and time
+
+## Calendar Interface
+
+- Created the Calendar page
+- Created the main Calendar component
+- Created CalendarHeader
+- Created CalendarDay
+- Created CalendarEvent
+- Added previous-month navigation
+- Added next-month navigation
+- Added a Today button
+- Added weekday headings
+- Added assignment and study-session legends
+- Added responsive horizontal scrolling
+- Added dark-mode styling
+- Added completed-event styling
+
+## Calendar Integration
+
+- Loaded assignments from localStorage
+- Loaded study sessions from localStorage
+- Normalized stored assignment data
+- Normalized stored study-session data
+- Added same-tab app-data event support
+- Added cross-tab storage-event support
+- Linked assignment events to Assignments
+- Linked study-session events to Study Planner
+- Added Calendar to the dashboard sidebar
+
+## New Files
+
+- src/types/calendar.ts
+- src/utils/calendar.ts
+- src/components/notifications/SnoozeDialog.tsx
+- src/components/calendar/Calendar.tsx
+- src/components/calendar/CalendarHeader.tsx
+- src/components/calendar/CalendarDay.tsx
+- src/components/calendar/CalendarEvent.tsx
+- src/app/(app)/calendar/page.tsx
+
+## Updated Files
+
+- src/utils/browserNotifications.ts
+- src/components/notifications/NotificationCenter.tsx
+- src/components/profile/ProfileSettings.tsx
+- src/components/dashboard/DashboardSidebar.tsx
+- PROJECT_NOTES.md
+
+## React and TypeScript Concepts Learned
+
+- Modal dialog state
+- datetime-local form inputs
+- Date validation
+- Shared calendar event types
+- Adapting multiple data types into one interface
+- Month-grid date calculations
+- Local-date formatting
+- Calendar event filtering
+- Browser Notification click handlers
+- Window focus and navigation
+- Reusable status rows
+- Responsive calendar layouts
+
+## Current Limitations
+
+- Browser notifications still require the app to be open
+- Browser notification permission may need to be changed through browser settings after it is blocked
+- Calendar events currently open their general feature pages rather than a specific item editor
+- Calendar currently provides a month view only
+- Events cannot be created directly from a calendar day
+- Large numbers of events may make calendar cells tall
+- Calendar filters are not yet available
+
+## Day 19 Goals
+
+- Add calendar event filters
+- Add selected-day details
+- Add calendar event counts and summaries
+- Add direct event editing from the calendar
+- Add dashboard calendar preview
+- Improve browser-notification sent-ID cleanup

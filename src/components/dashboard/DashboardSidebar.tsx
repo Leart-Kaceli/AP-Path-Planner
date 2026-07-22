@@ -18,13 +18,17 @@ const navigationItems = [
     href: "/assignments",
   },
   {
-    name: "Study Planner",
-    href: "/planner",
-  },
-  {
-    name: "Grades",
-    href: "/grades",
-  },
+  name: "Study Planner",
+  href: "/planner",
+},
+{
+  name: "Calendar",
+  href: "/calendar",
+},
+{
+  name: "Grades",
+  href: "/grades",
+},
   {
     name: "Profile",
     href: "/profile",

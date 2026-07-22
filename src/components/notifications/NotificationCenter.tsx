@@ -1,6 +1,11 @@
 "use client";
 
+import {
+  useState,
+} from "react";
+
 import Link from "next/link";
+import SnoozeDialog from "@/components/notifications/SnoozeDialog";
 import {
   formatNotificationDateTime,
 } from "@/utils/notifications";
@@ -44,6 +49,12 @@ export default function NotificationCenter({
   onDismissAll,
   onSnooze,
 }: NotificationCenterProps) {
+    const [
+    notificationToSnooze,
+    setNotificationToSnooze,
+  ] = useState<AppNotification | null>(
+    null,
+  );
   if (!open) {
     return null;
   }
@@ -120,6 +131,9 @@ const upcomingNotifications =
     onClose={onClose}
     onDismiss={onDismiss}
     onSnooze={onSnooze}
+    onCustomSnooze={
+  setNotificationToSnooze
+}
   />
 
   <NotificationGroup
@@ -130,6 +144,9 @@ const upcomingNotifications =
     onClose={onClose}
     onDismiss={onDismiss}
     onSnooze={onSnooze}
+    onCustomSnooze={
+  setNotificationToSnooze
+}
   />
 
   <NotificationGroup
@@ -140,6 +157,9 @@ const upcomingNotifications =
     onClose={onClose}
     onDismiss={onDismiss}
     onSnooze={onSnooze}
+    onCustomSnooze={
+  setNotificationToSnooze
+}
   />
 </div>
 
@@ -166,6 +186,17 @@ const upcomingNotifications =
           </div>
         )}
       </aside>
+            <SnoozeDialog
+        notification={
+          notificationToSnooze
+        }
+        onClose={() =>
+          setNotificationToSnooze(
+            null,
+          )
+        }
+        onConfirm={onSnooze}
+      />
     </>
   );
 }
@@ -181,6 +212,9 @@ type NotificationGroupProps = {
     notificationId: string,
     snoozedUntil: Date,
   ) => void;
+  onCustomSnooze: (
+    notification: AppNotification,
+  ) => void;
 };
 
 function NotificationGroup({
@@ -189,6 +223,7 @@ function NotificationGroup({
   onClose,
   onDismiss,
   onSnooze,
+  onCustomSnooze,
 }: NotificationGroupProps) {
   if (notifications.length === 0) {
     return null;
@@ -291,6 +326,18 @@ function NotificationGroup({
                 >
                   Snooze 1 day
                 </button>
+
+                <button
+  type="button"
+  onClick={() =>
+    onCustomSnooze(
+      notification,
+    )
+  }
+  className="text-sm font-semibold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+>
+  Choose date and time
+</button>
 
                 <button
                   type="button"

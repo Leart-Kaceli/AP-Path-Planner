@@ -48,12 +48,23 @@ export function sendBrowserNotification(
     return;
   }
 
-  new Notification(
-    notification.title,
-    {
-      body:
-        notification.description,
-      tag: notification.id,
-    },
-  );
+  const browserNotification =
+    new Notification(
+      notification.title,
+      {
+        body:
+          notification.description,
+        tag: notification.id,
+      },
+    );
+
+  browserNotification.onclick = () => {
+    browserNotification.close();
+
+    window.focus();
+
+    window.location.assign(
+      notification.href,
+    );
+  };
 }

@@ -20,6 +20,10 @@ import {
   notifyAppDataChanged,
 } from "@/utils/appEvents";
 
+type BrowserNotificationPermission =
+  | NotificationPermission
+  | "unsupported";
+
 export default function ProfileSettings() {
   const [profile, setProfile] =
     useState<StudentProfile>(
@@ -32,12 +36,26 @@ export default function ProfileSettings() {
   const [message, setMessage] =
     useState("");
 
+    const [
+  notificationPermission,
+  setNotificationPermission,
+] =
+  useState<BrowserNotificationPermission>(
+    "unsupported",
+  );
   useEffect(() => {
     try {
+        if ("Notification" in window) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setNotificationPermission(
+          Notification.permission,
+        );
+      }
       const storedProfile =
         localStorage.getItem(
           PROFILE_STORAGE_KEY,
         );
+        
 
       if (storedProfile) {
         const parsedProfile = JSON.parse(
@@ -49,7 +67,6 @@ export default function ProfileSettings() {
           ...parsedProfile,
         };
 
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProfile(loadedProfile);
         applyTheme(loadedProfile.theme);
       } else {
@@ -91,6 +108,10 @@ async function requestNotificationPermission() {
 
   const permission =
     await Notification.requestPermission();
+
+      setNotificationPermission(
+    permission,
+  );
 
   if (permission === "granted") {
     updateProfile(
@@ -482,6 +503,78 @@ async function requestNotificationPermission() {
     notifications while the app is open.
   </p>
 
+  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-950">
+  <NotificationStatusRow
+    label="Browser support"
+    value={
+      notificationPermission ===
+      "unsupported"
+        ? "Not supported"
+        : "Supported"
+    }
+    positive={
+      notificationPermission !==
+      "unsupported"
+    }
+  />
+
+  <NotificationStatusRow
+    label="Permission"
+    value={
+      notificationPermission ===
+      "granted"
+        ? "Granted"
+        : notificationPermission ===
+            "denied"
+          ? "Blocked"
+          : notificationPermission ===
+              "default"
+            ? "Not requested"
+            : "Unavailable"
+    }
+    positive={
+      notificationPermission ===
+      "granted"
+    }
+  />
+
+  <NotificationStatusRow
+    label="Assignment alerts"
+    value={
+      profile
+        .browserNotificationsEnabled &&
+      profile
+        .browserNotificationsForAssignments
+        ? "Enabled"
+        : "Disabled"
+    }
+    positive={
+      profile
+        .browserNotificationsEnabled &&
+      profile
+        .browserNotificationsForAssignments
+    }
+  />
+
+  <NotificationStatusRow
+    label="Study-session alerts"
+    value={
+      profile
+        .browserNotificationsEnabled &&
+      profile
+        .browserNotificationsForStudySessions
+        ? "Enabled"
+        : "Disabled"
+    }
+    positive={
+      profile
+        .browserNotificationsEnabled &&
+      profile
+        .browserNotificationsForStudySessions
+    }
+  />
+</div>
+
   <label className="mt-4 flex items-start gap-3">
     <input
       type="checkbox"
@@ -783,6 +876,35 @@ function capitalize(value: string) {
   return (
     value.charAt(0).toUpperCase() +
     value.slice(1)
+  );
+}
+type NotificationStatusRowProps = {
+  label: string;
+  value: string;
+  positive?: boolean;
+};
+
+function NotificationStatusRow({
+  label,
+  value,
+  positive = false,
+}: NotificationStatusRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-700">
+      <span className="text-sm text-slate-600 dark:text-slate-300">
+        {label}
+      </span>
+
+      <span
+        className={`text-right text-sm font-semibold ${
+          positive
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-slate-900 dark:text-white"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 
