@@ -14,15 +14,24 @@ type CalendarDayProps = {
   date: Date;
   displayedMonth: Date;
   events: CalendarEventType[];
+  selectedDateKey: string;
+  onSelectDate: (
+    date: Date,
+  ) => void;
 };
 
 export default function CalendarDay({
   date,
   displayedMonth,
   events,
+  selectedDateKey,
+  onSelectDate,
 }: CalendarDayProps) {
   const dateKey =
     formatDateKey(date);
+
+    const isSelected =
+  dateKey === selectedDateKey;
 
   const dayEvents =
     events.filter(
@@ -41,15 +50,25 @@ export default function CalendarDay({
 
   return (
     <div
-      className={`min-h-36 border-b border-r border-slate-200 p-2 align-top dark:border-slate-700 ${
+  className={`min-h-36 border-b border-r border-slate-200 p-2 align-top transition dark:border-slate-700 ${
+    isSelected
+      ? "ring-2 ring-inset ring-blue-500"
+      : ""
+  } ${
         belongsToDisplayedMonth
           ? "bg-white dark:bg-slate-900"
           : "bg-slate-50 dark:bg-slate-950"
       }`}
     >
       <div className="flex items-center justify-between">
-        <span
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+        <button
+  type="button"
+  onClick={() =>
+    onSelectDate(date)
+  }
+  aria-label={`Select ${date.toLocaleDateString()}`}
+  aria-pressed={isSelected}
+  className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition hover:ring-2 hover:ring-blue-300 ${
             today
               ? "bg-blue-600 text-white"
               : belongsToDisplayedMonth
@@ -58,7 +77,7 @@ export default function CalendarDay({
           }`}
         >
           {date.getDate()}
-        </span>
+        </button>
 
         {dayEvents.length > 0 && (
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">

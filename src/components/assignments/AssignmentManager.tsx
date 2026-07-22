@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -25,6 +26,11 @@ import {
 import {
   notifyAppDataChanged,
 } from "@/utils/appEvents";
+
+import {
+  useSearchParams,
+} from "next/navigation";
+
 
 
 
@@ -64,6 +70,12 @@ const initialAssignments: Assignment[] = [
 ];
 
 export default function AssignmentManager() {
+
+  const searchParams =
+  useSearchParams();
+
+const handledEditId =
+  useRef<string | null>(null);
   const [assignments, setAssignments] =
     useState<Assignment[]>(
       initialAssignments,
@@ -183,6 +195,51 @@ setAssignments(
 }, [
   assignments,
   hasLoadedAssignments,
+]);
+
+useEffect(() => {
+  if (!hasLoadedAssignments) {
+    return;
+  }
+
+  const requestedEditId =
+    searchParams.get("edit");
+
+  if (
+    !requestedEditId ||
+    handledEditId.current ===
+      requestedEditId
+  ) {
+    return;
+  }
+
+  const requestedAssignment =
+    assignments.find(
+      (assignment) =>
+        assignment.id ===
+        requestedEditId,
+    );
+
+  if (!requestedAssignment) {
+    return;
+  }
+
+  handledEditId.current =
+    requestedEditId;
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setAssignmentToEdit(
+    requestedAssignment,
+  );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}, [
+  assignments,
+  hasLoadedAssignments,
+  searchParams,
 ]);
 
   function saveAssignment(

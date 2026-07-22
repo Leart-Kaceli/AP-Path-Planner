@@ -12,3 +12,8 @@ export type CalendarEvent = {
   completed: boolean;
   href: string;
 };
+
+export type CalendarFilter =
+  | "all"
+  | "assignment"
+  | "study-session";

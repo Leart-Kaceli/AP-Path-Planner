@@ -1304,3 +1304,104 @@ Learned how to:
 - Add direct event editing from the calendar
 - Add dashboard calendar preview
 - Improve browser-notification sent-ID cleanup
+
+# Day 19 Completed
+
+## Calendar Event Filters
+
+- Added All, Assignments, and Study Sessions filters
+- Added accessible pressed-state filter buttons
+- Added event totals to each calendar filter
+- Preserved the complete event collection while filtering displayed events
+
+## Selected-Day Details
+
+- Added selectable calendar dates
+- Added selected-day highlighting
+- Created a selected-day detail panel
+- Displayed assignments and study sessions for the selected day
+- Added selected-day event counts
+- Added completed-event indicators
+- Added direct editing links
+
+## Calendar Event Summaries
+
+- Added monthly total event count
+- Added monthly assignment count
+- Added monthly study-session count
+- Added active and completed event summaries
+- Updated summaries when navigating between months
+
+## Direct Calendar Editing
+
+- Added item IDs to calendar event URLs
+- Opened assignment events directly in the assignment editor
+- Opened study-session events directly in the study-session editor
+- Added query-parameter handling to feature managers
+- Preserved general Assignments and Planner routes
+
+## Dashboard Calendar Preview
+
+- Created a dashboard calendar-preview component
+- Displayed the next five upcoming events
+- Combined assignment and study-session events
+- Added event type, course, date, and time information
+- Added direct editing links
+- Added an Open Calendar link
+- Added an empty calendar-preview state
+
+## Browser Notification Cleanup
+
+- Cleaned inactive sent browser-notification IDs
+- Preserved IDs for current notifications
+- Preserved IDs for dismissed notifications
+- Preserved IDs for snoozed notifications
+- Prevented stale sent IDs from accumulating
+- Continued preventing duplicate browser alerts
+
+## New Files
+
+- src/components/calendar/SelectedDayPanel.tsx
+- src/components/dashboard/DashboardCalendarPreview.tsx
+
+## Updated Files
+
+- src/types/calendar.ts
+- src/utils/calendar.ts
+- src/components/calendar/Calendar.tsx
+- src/components/calendar/CalendarDay.tsx
+- src/components/assignments/AssignmentManager.tsx
+- src/components/planner/StudyPlannerManager.tsx
+- src/components/dashboard/DashboardOverview.tsx
+- src/components/notifications/NotificationProvider.tsx
+- PROJECT_NOTES.md
+
+## React and TypeScript Concepts Learned
+
+- Typed calendar filter state
+- Selected-date state
+- Derived selected-day event data
+- Query-parameter navigation
+- Next.js useSearchParams
+- useRef for one-time URL handling
+- Direct deep-link editing
+- Combining multiple data types into dashboard previews
+- Set-based persistent-data cleanup
+- Accessible pressed-state controls
+
+## Current Limitations
+
+- Calendar currently provides only a month view
+- Events cannot be created directly from a calendar day
+- Direct editing depends on URL query parameters
+- Browser notifications still require the app to be open
+- Calendar cells may grow tall when many events share one date
+
+## Day 20 Goals
+
+- Add event creation from selected calendar dates
+- Add week and agenda calendar views
+- Add calendar search
+- Add calendar event overflow handling
+- Improve direct-edit URL cleanup
+- Begin preparing data services for Firebase

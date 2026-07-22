@@ -145,15 +145,38 @@ export default function NotificationProvider({
 
     const profile = loadProfile();
 
-const sentIds =
+const storedSentIds =
   loadSentBrowserNotificationIds();
 
-const newSentIds = [...sentIds];
+const knownNotificationIds =
+  new Set([
+    ...loadedData.notifications.map(
+      (notification) =>
+        notification.id,
+    ),
+    ...loadedData
+      .dismissedNotificationIds,
+    ...loadedData.snoozedNotifications.map(
+      (item) =>
+        item.notificationId,
+    ),
+  ]);
+
+const cleanedSentIds =
+  storedSentIds.filter(
+    (notificationId) =>
+      knownNotificationIds.has(
+        notificationId,
+      ),
+  );
+
+const nextSentIds =
+  new Set(cleanedSentIds);
 
 loadedData.notifications.forEach(
   (notification) => {
     if (
-      sentIds.includes(
+      nextSentIds.has(
         notification.id,
       )
     ) {
@@ -173,7 +196,7 @@ loadedData.notifications.forEach(
       notification,
     );
 
-    newSentIds.push(
+    nextSentIds.add(
       notification.id,
     );
   },
@@ -181,7 +204,9 @@ loadedData.notifications.forEach(
 
 localStorage.setItem(
   SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
-  JSON.stringify(newSentIds),
+  JSON.stringify(
+    Array.from(nextSentIds),
+  ),
 );
 
     setNotifications(

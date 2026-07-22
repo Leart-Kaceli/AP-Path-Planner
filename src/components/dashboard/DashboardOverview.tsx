@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import Link from "next/link";
+import DashboardCalendarPreview from "@/components/dashboard/DashboardCalendarPreview";
 
 import AssignmentCard from "@/components/dashboard/AssignmentCard";
 import CourseCard from "@/components/dashboard/CourseCard";
@@ -551,6 +552,14 @@ const overallWeightedAverage =
   />
 </div>
 
+<div className="mt-8">
+  <DashboardCalendarPreview
+    assignments={assignments}
+    studySessions={
+      studySessions
+    }
+  />
+</div>
 
 
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

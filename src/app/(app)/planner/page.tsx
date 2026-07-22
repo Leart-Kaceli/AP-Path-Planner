@@ -1,12 +1,13 @@
+import { Suspense } from "react";
 
 import StudyPlannerManager from "@/components/planner/StudyPlannerManager";
 
 export default function PlannerPage() {
   return (
     <main
-  id="main-content"
-  className="min-h-screen bg-slate-50"
->
+      id="main-content"
+      className="min-h-screen bg-slate-50"
+    >
       <header className="border-b border-slate-200 bg-white px-6 py-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -23,13 +24,17 @@ export default function PlannerPage() {
               your completed study time.
             </p>
           </div>
-
-          
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <StudyPlannerManager />
+        <Suspense
+          fallback={
+            <div className="h-[500px] animate-pulse rounded-2xl bg-slate-200" />
+          }
+        >
+          <StudyPlannerManager />
+        </Suspense>
       </div>
     </main>
   );

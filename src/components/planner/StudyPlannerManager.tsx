@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { normalizeStudySession } from "@/utils/studySessions";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
@@ -23,10 +27,21 @@ import {
   notifyAppDataChanged,
 } from "@/utils/appEvents";
 
+import {
+  useSearchParams,
+} from "next/navigation";
+
+
 const initialSessions: StudySession[] = [];
 
 
 export default function StudyPlannerManager() {
+  const searchParams =
+    useSearchParams();
+
+  const handledEditId =
+    useRef<string | null>(null);
+
   const [sessions, setSessions] =
     useState<StudySession[]>(initialSessions);
 
@@ -125,6 +140,51 @@ const [
       );
     }
   }, [sessions, hasLoaded]);
+
+  useEffect(() => {
+  if (!hasLoaded) {
+    return;
+  }
+
+  const requestedEditId =
+    searchParams.get("edit");
+
+  if (
+    !requestedEditId ||
+    handledEditId.current ===
+      requestedEditId
+  ) {
+    return;
+  }
+
+  const requestedSession =
+    sessions.find(
+      (session) =>
+        session.id ===
+        requestedEditId,
+    );
+
+  if (!requestedSession) {
+    return;
+  }
+
+  handledEditId.current =
+    requestedEditId;
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setSessionToEdit(
+    requestedSession,
+  );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}, [
+  sessions,
+  hasLoaded,
+  searchParams,
+]);
 
   function saveSession(
     session: StudySession,

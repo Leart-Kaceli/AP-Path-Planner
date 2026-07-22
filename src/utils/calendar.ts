@@ -25,7 +25,9 @@ export function getCalendarEvents(
         time: null,
         completed:
           assignment.completed,
-        href: "/assignments",
+        href: `/assignments?edit=${encodeURIComponent(
+  assignment.id,
+)}`,
       }),
     );
 
@@ -40,7 +42,9 @@ export function getCalendarEvents(
         time: session.startTime,
         completed:
           session.completed,
-        href: "/planner",
+        href: `/planner?edit=${encodeURIComponent(
+  session.id,
+)}`,
       }),
     );
 
