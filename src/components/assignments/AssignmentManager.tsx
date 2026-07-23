@@ -13,14 +13,12 @@ import AssignmentFilters, {
 
 import AssignmentForm from "@/components/assignments/AssignmentForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { normalizeAssignment } from "@/utils/assignments";
 
 import ManagedAssignmentCard from "@/components/assignments/ManagedAssignmentCard";
 
 import type { Assignment } from "@/types/assignment";
 import type { Course } from "@/types/course";
 import {
-  ASSIGNMENT_STORAGE_KEY,
   COURSE_STORAGE_KEY,
 } from "@/constants/storage";
 import {
@@ -28,8 +26,16 @@ import {
 } from "@/utils/appEvents";
 
 import {
+  usePathname,
+  useRouter,
   useSearchParams,
 } from "next/navigation";
+
+
+import {
+  loadAssignments,
+  saveAssignments,
+} from "@/services/assignmentService";
 
 
 
@@ -71,11 +77,18 @@ const initialAssignments: Assignment[] = [
 
 export default function AssignmentManager() {
 
+  const router = useRouter();
+const pathname = usePathname();
+
   const searchParams =
   useSearchParams();
 
 const handledEditId =
   useRef<string | null>(null);
+
+const requestedCreateDate =
+  searchParams.get("date") ?? "";
+
   const [assignments, setAssignments] =
     useState<Assignment[]>(
       initialAssignments,
@@ -119,32 +132,14 @@ const [
   useEffect(() => {
     try {
       const storedAssignments =
-        localStorage.getItem(
-          ASSIGNMENT_STORAGE_KEY,
-        );
+  loadAssignments();
 
-      if (storedAssignments) {
-        const parsedAssignments =
-          JSON.parse(
-            storedAssignments,
-          ) as Assignment[];
-
-        if (
-          Array.isArray(
-            parsedAssignments,
-          )
-        ) {
-         const normalizedAssignments =
-  parsedAssignments.map(
-    normalizeAssignment,
+if (storedAssignments.length > 0) {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setAssignments(
+    storedAssignments,
   );
-
-// eslint-disable-next-line react-hooks/set-state-in-effect
-setAssignments(
-  normalizedAssignments,
-);
-        }
-      }
+}
 
       const storedCourses =
         localStorage.getItem(
@@ -180,10 +175,7 @@ setAssignments(
   }
 
   try {
-    localStorage.setItem(
-      ASSIGNMENT_STORAGE_KEY,
-      JSON.stringify(assignments),
-    );
+    saveAssignments(assignments);
 
     notifyAppDataChanged();
   } catch (error) {
@@ -195,6 +187,9 @@ setAssignments(
 }, [
   assignments,
   hasLoadedAssignments,
+  pathname,
+  router,
+  searchParams,
 ]);
 
 useEffect(() => {
@@ -232,6 +227,13 @@ useEffect(() => {
     requestedAssignment,
   );
 
+  router.replace(
+  pathname,
+  {
+    scroll: false,
+  },
+);
+
   window.scrollTo({
     top: 0,
     behavior: "smooth",
@@ -240,6 +242,29 @@ useEffect(() => {
   assignments,
   hasLoadedAssignments,
   searchParams,
+  pathname,
+  router,
+]);
+
+useEffect(() => {
+  if (
+    !hasLoadedAssignments ||
+    !requestedCreateDate
+  ) {
+    return;
+  }
+
+  router.replace(
+    pathname,
+    {
+      scroll: false,
+    },
+  );
+}, [
+  hasLoadedAssignments,
+  pathname,
+  requestedCreateDate,
+  router,
 ]);
 
   function saveAssignment(
@@ -454,14 +479,17 @@ function confirmClearCompletedAssignments() {
   return (
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
       <AssignmentForm
-        key={
-          assignmentToEdit?.id ??
-          "new-assignment"
-        }
-        assignmentToEdit={
-          assignmentToEdit
-        }
-        courseNames={courseNames}
+  key={
+    assignmentToEdit?.id ??
+    `new-assignment-${requestedCreateDate}`
+  }
+  assignmentToEdit={
+    assignmentToEdit
+  }
+  initialDate={
+    requestedCreateDate
+  }
+  courseNames={courseNames}
         onSaveAssignment={
           saveAssignment
         }

@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { normalizeStudySession } from "@/utils/studySessions";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import StudyPlannerFilters, {
@@ -17,7 +16,6 @@ import StudySessionForm from "@/components/planner/StudySessionForm";
 
 import {
   COURSE_STORAGE_KEY,
-  STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
 import type { Course } from "@/types/course";
@@ -28,19 +26,38 @@ import {
 } from "@/utils/appEvents";
 
 import {
+  usePathname,
+  useRouter,
   useSearchParams,
 } from "next/navigation";
+
+import {
+  loadStudySessions,
+  saveStudySessions,
+} from "@/services/studySessionService";
 
 
 const initialSessions: StudySession[] = [];
 
 
 export default function StudyPlannerManager() {
+
+  const router = useRouter();
+const pathname = usePathname();
+
   const searchParams =
     useSearchParams();
 
   const handledEditId =
     useRef<string | null>(null);
+
+  const [
+  requestedCreateDate,
+] = useState(
+  () =>
+    searchParams.get("date") ??
+    "",
+);
 
   const [sessions, setSessions] =
     useState<StudySession[]>(initialSessions);
@@ -75,25 +92,15 @@ const [
 
   useEffect(() => {
     try {
-      const storedSessions =
-        localStorage.getItem(
-          STUDY_SESSION_STORAGE_KEY,
-        );
+     const storedSessions =
+  loadStudySessions();
 
-      if (storedSessions) {
-        const parsedSessions = JSON.parse(
-          storedSessions,
-        ) as StudySession[];
-
-        if (Array.isArray(parsedSessions)) {
-  const normalizedSessions =
-    parsedSessions.map(
-      normalizeStudySession,
-    );
-// eslint-disable-next-line react-hooks/set-state-in-effect
-  setSessions(normalizedSessions);
+if (
+  storedSessions.length > 0
+) {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setSessions(storedSessions);
 }
-      }
       const storedCourses =
         localStorage.getItem(
           COURSE_STORAGE_KEY,
@@ -128,10 +135,7 @@ const [
     }
 
     try {
-      localStorage.setItem(
-        STUDY_SESSION_STORAGE_KEY,
-        JSON.stringify(sessions),
-      );
+      saveStudySessions(sessions);
       notifyAppDataChanged();
     } catch (error) {
       console.error(
@@ -176,6 +180,13 @@ const [
     requestedSession,
   );
 
+  router.replace(
+  pathname,
+  {
+    scroll: false,
+  },
+);
+
   window.scrollTo({
     top: 0,
     behavior: "smooth",
@@ -184,6 +195,29 @@ const [
   sessions,
   hasLoaded,
   searchParams,
+  pathname,
+  router,
+]);
+
+useEffect(() => {
+  if (
+    !hasLoaded ||
+    !requestedCreateDate
+  ) {
+    return;
+  }
+
+  router.replace(
+    pathname,
+    {
+      scroll: false,
+    },
+  );
+}, [
+  hasLoaded,
+  pathname,
+  requestedCreateDate,
+  router,
 ]);
 
   function saveSession(
@@ -391,12 +425,17 @@ function confirmClearCompletedSessions() {
   return (
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
       <StudySessionForm
-        key={
-          sessionToEdit?.id ??
-          "new-study-session"
-        }
-        sessionToEdit={sessionToEdit}
-        courseNames={courseNames}
+  key={
+    sessionToEdit?.id ??
+    `new-study-session-${requestedCreateDate}`
+  }
+  sessionToEdit={
+    sessionToEdit
+  }
+  initialDate={
+    requestedCreateDate
+  }
+  courseNames={courseNames}
         onSaveSession={saveSession}
         onCancelEdit={cancelEditingSession}
       />

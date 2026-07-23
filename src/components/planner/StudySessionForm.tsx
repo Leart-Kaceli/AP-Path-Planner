@@ -5,13 +5,17 @@ import type { StudySession } from "@/types/studySession";
 
 type StudySessionFormProps = {
   sessionToEdit: StudySession | null;
+  initialDate: string;
   courseNames: string[];
-  onSaveSession: (session: StudySession) => void;
+  onSaveSession: (
+    session: StudySession,
+  ) => void;
   onCancelEdit: () => void;
 };
 
 export default function StudySessionForm({
   sessionToEdit,
+  initialDate,
   courseNames,
   onSaveSession,
   onCancelEdit,
@@ -25,8 +29,9 @@ export default function StudySessionForm({
   );
 
   const [date, setDate] = useState(
-    sessionToEdit?.date ?? "",
-  );
+  sessionToEdit?.date ??
+    initialDate,
+);
 
   const [startTime, setStartTime] = useState(
     sessionToEdit?.startTime ?? "",

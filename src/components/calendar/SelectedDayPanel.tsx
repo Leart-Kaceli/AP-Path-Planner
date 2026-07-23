@@ -17,6 +17,17 @@ export default function SelectedDayPanel({
   selectedDate,
   events,
 }: SelectedDayPanelProps) {
+
+  const selectedDateKey = [
+  selectedDate.getFullYear(),
+  String(
+    selectedDate.getMonth() + 1,
+  ).padStart(2, "0"),
+  String(
+    selectedDate.getDate(),
+  ).padStart(2, "0"),
+].join("-");
+
   const formattedDate =
     new Intl.DateTimeFormat(
       "en-US",
@@ -63,6 +74,26 @@ export default function SelectedDayPanel({
                 } scheduled.`}
           </p>
         </div>
+
+        <div className="flex flex-wrap gap-2">
+  <Link
+    href={`/assignments?date=${encodeURIComponent(
+      selectedDateKey,
+    )}`}
+    className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+  >
+    Add Assignment
+  </Link>
+
+  <Link
+    href={`/planner?date=${encodeURIComponent(
+      selectedDateKey,
+    )}`}
+    className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+  >
+    Add Study Session
+  </Link>
+</div>
 
         {events.length > 0 && (
           <div className="flex flex-wrap gap-2 text-xs font-semibold">

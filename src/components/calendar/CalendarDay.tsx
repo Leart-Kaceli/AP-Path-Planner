@@ -18,6 +18,9 @@ type CalendarDayProps = {
   onSelectDate: (
     date: Date,
   ) => void;
+  onShowAllEvents: (
+    date: Date,
+  ) => void;
 };
 
 export default function CalendarDay({
@@ -26,6 +29,7 @@ export default function CalendarDay({
   events,
   selectedDateKey,
   onSelectDate,
+  onShowAllEvents,
 }: CalendarDayProps) {
   const dateKey =
     formatDateKey(date);
@@ -38,6 +42,16 @@ export default function CalendarDay({
       (event) =>
         event.date === dateKey,
     );
+
+    const visibleEvents =
+  dayEvents.slice(0, 3);
+
+const hiddenEventCount =
+  Math.max(
+    dayEvents.length -
+      visibleEvents.length,
+    0,
+  );
 
   const belongsToDisplayedMonth =
     isSameMonth(
@@ -87,12 +101,23 @@ export default function CalendarDay({
       </div>
 
       <div className="mt-2 space-y-2">
-        {dayEvents.map((event) => (
+        {visibleEvents.map((event) => (
           <CalendarEvent
             key={event.id}
             event={event}
           />
         ))}
+        {hiddenEventCount > 0 && (
+  <button
+    type="button"
+    onClick={() =>
+      onShowAllEvents(date)
+    }
+    className="w-full rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-left text-xs font-semibold text-slate-600 transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"
+  >
+    +{hiddenEventCount} more
+  </button>
+)}
       </div>
     </div>
   );

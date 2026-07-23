@@ -8,42 +8,35 @@ import {
 import CalendarDay from "@/components/calendar/CalendarDay";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import SelectedDayPanel from "@/components/calendar/SelectedDayPanel";
+import CalendarAgendaView from "@/components/calendar/CalendarAgendaView";
+import CalendarViewControls from "@/components/calendar/CalendarViewControls";
+import CalendarWeekView from "@/components/calendar/CalendarWeekView";
 
 import {
   APP_DATA_CHANGED_EVENT,
 } from "@/utils/appEvents";
 
 import {
+  formatCalendarWeek,
   formatDateKey,
   getCalendarEvents,
   getMonthGridDates,
 } from "@/utils/calendar";
 
 import {
-  normalizeAssignment,
-} from "@/utils/assignments";
+  loadAssignments,
+} from "@/services/assignmentService";
 
 import {
-  normalizeStudySession,
-} from "@/utils/studySessions";
-
-import {
-  ASSIGNMENT_STORAGE_KEY,
-  STUDY_SESSION_STORAGE_KEY,
-} from "@/constants/storage";
-
-import type {
-  Assignment,
-} from "@/types/assignment";
+  loadStudySessions,
+} from "@/services/studySessionService";
 
 import type {
   CalendarEvent,
   CalendarFilter,
+  CalendarView,
 } from "@/types/calendar";
 
-import type {
-  StudySession,
-} from "@/types/studySession";
 
 const weekdayLabels = [
   "Sun",
@@ -55,29 +48,7 @@ const weekdayLabels = [
   "Sat",
 ];
 
-function loadStoredArray<T>(
-  storageKey: string,
-) {
-  try {
-    const storedValue =
-      localStorage.getItem(
-        storageKey,
-      );
 
-    if (!storedValue) {
-      return [] as T[];
-    }
-
-    const parsedValue: unknown =
-      JSON.parse(storedValue);
-
-    return Array.isArray(parsedValue)
-      ? (parsedValue as T[])
-      : [];
-  } catch {
-    return [] as T[];
-  }
-}
 
 export default function Calendar() {
   const [
@@ -104,27 +75,25 @@ export default function Calendar() {
   const [filter, setFilter] =
     useState<CalendarFilter>("all");
 
+    const [view, setView] =
+  useState<CalendarView>("month");
+
+  const [
+  calendarSearch,
+  setCalendarSearch,
+] = useState("");
+
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
   function loadCalendarData() {
-    const assignments =
-      loadStoredArray<Assignment>(
-        ASSIGNMENT_STORAGE_KEY,
-      ).map(normalizeAssignment);
-
-    const studySessions =
-      loadStoredArray<StudySession>(
-        STUDY_SESSION_STORAGE_KEY,
-      ).map(normalizeStudySession);
-
-    setEvents(
-      getCalendarEvents(
-        assignments,
-        studySessions,
-      ),
-    );
-  }
+  setEvents(
+    getCalendarEvents(
+      loadAssignments(),
+      loadStudySessions(),
+    ),
+  );
+}
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -163,27 +132,69 @@ export default function Calendar() {
     };
   }, []);
 
-  function showPreviousMonth() {
-    setDisplayedMonth(
-      (currentMonth) =>
-        new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() - 1,
-          1,
-        ),
+  function showPreviousPeriod() {
+  if (view === "week") {
+    const previousWeek =
+      new Date(selectedDate);
+
+    previousWeek.setDate(
+      selectedDate.getDate() - 7,
     );
+
+    setSelectedDate(previousWeek);
+
+    setDisplayedMonth(
+      new Date(
+        previousWeek.getFullYear(),
+        previousWeek.getMonth(),
+        1,
+      ),
+    );
+
+    return;
   }
 
-  function showNextMonth() {
-    setDisplayedMonth(
-      (currentMonth) =>
-        new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() + 1,
-          1,
-        ),
+  setDisplayedMonth(
+    (currentMonth) =>
+      new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth() - 1,
+        1,
+      ),
+  );
+}
+
+  function showNextPeriod() {
+  if (view === "week") {
+    const nextWeek =
+      new Date(selectedDate);
+
+    nextWeek.setDate(
+      selectedDate.getDate() + 7,
     );
+
+    setSelectedDate(nextWeek);
+
+    setDisplayedMonth(
+      new Date(
+        nextWeek.getFullYear(),
+        nextWeek.getMonth(),
+        1,
+      ),
+    );
+
+    return;
   }
+
+  setDisplayedMonth(
+    (currentMonth) =>
+      new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth() + 1,
+        1,
+      ),
+  );
+}
 
   function showCurrentMonth() {
     const today = new Date();
@@ -265,14 +276,43 @@ const activeEventCount =
   monthEvents.length -
   completedEventCount;
 
-  const filteredEvents =
-    events.filter((event) => {
-      if (filter === "all") {
-        return true;
-      }
+  const normalizedCalendarSearch =
+  calendarSearch
+    .trim()
+    .toLowerCase();
 
-      return event.kind === filter;
-    });
+const filteredEvents =
+  events.filter((event) => {
+    if (
+      filter !== "all" &&
+      event.kind !== filter
+    ) {
+      return false;
+    }
+
+    if (
+      normalizedCalendarSearch
+    ) {
+      const kindLabel =
+        event.kind ===
+        "assignment"
+          ? "assignment"
+          : "study session";
+
+      const searchableText =
+        `${event.title} ${event.course} ${kindLabel}`.toLowerCase();
+
+      if (
+        !searchableText.includes(
+          normalizedCalendarSearch,
+        )
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   const selectedDateKey =
     formatDateKey(selectedDate);
@@ -288,17 +328,41 @@ const activeEventCount =
     <div className="space-y-6">
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <CalendarHeader
-          displayedMonth={
-            displayedMonth
-          }
-          onPreviousMonth={
-            showPreviousMonth
-          }
-          onNextMonth={
-            showNextMonth
-          }
-          onToday={showCurrentMonth}
-        />
+  displayedMonth={
+    displayedMonth
+  }
+  onPreviousMonth={
+    showPreviousPeriod
+  }
+  onNextMonth={
+    showNextPeriod
+  }
+  onToday={showCurrentMonth}
+/>
+
+<div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+  <div>
+    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+      {view === "month"
+        ? "Month view"
+        : view === "week"
+          ? formatCalendarWeek(
+              selectedDate,
+            )
+          : "Monthly agenda"}
+    </p>
+
+    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      Choose how calendar events are
+      displayed.
+    </p>
+  </div>
+
+  <CalendarViewControls
+    view={view}
+    onViewChange={setView}
+  />
+</div>
 
         <div className="grid gap-3 border-b border-slate-200 bg-slate-50 p-5 sm:grid-cols-2 lg:grid-cols-4 dark:border-slate-700 dark:bg-slate-950">
   <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -344,6 +408,9 @@ const activeEventCount =
 </div>
 
         <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
           <div
             className="flex flex-wrap gap-2"
             aria-label="Calendar event filters"
@@ -431,6 +498,24 @@ const activeEventCount =
               </span>
             </button>
           </div>
+          <label className="block w-full lg:max-w-sm">
+    <span className="sr-only">
+      Search calendar events
+    </span>
+
+    <input
+      type="search"
+      value={calendarSearch}
+      onChange={(event) =>
+        setCalendarSearch(
+          event.target.value,
+        )
+      }
+      placeholder="Search title or course..."
+      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:ring-blue-900"
+    />
+  </label>
+</div>
 
           <div className="mt-4 flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -450,7 +535,7 @@ const activeEventCount =
             </div>
           </div>
         </div>
-
+        {view === "month" && (
         <div className="overflow-x-auto">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
@@ -470,26 +555,57 @@ const activeEventCount =
               {calendarDates.map(
                 (date) => (
                   <CalendarDay
-                    key={date.toISOString()}
-                    date={date}
-                    displayedMonth={
-                      displayedMonth
-                    }
-                    events={
-                      filteredEvents
-                    }
-                    selectedDateKey={
-                      selectedDateKey
-                    }
-                    onSelectDate={
-                      setSelectedDate
-                    }
-                  />
+  key={date.toISOString()}
+  date={date}
+  displayedMonth={
+    displayedMonth
+  }
+  events={filteredEvents}
+  selectedDateKey={
+    selectedDateKey
+  }
+  onSelectDate={
+    setSelectedDate
+  }
+  onShowAllEvents={
+    setSelectedDate
+  }
+/>
+                  
                 ),
               )}
             </div>
           </div>
         </div>
+        )}
+
+        {view === "week" && (
+  <CalendarWeekView
+    selectedDate={selectedDate}
+    events={filteredEvents}
+    onSelectDate={setSelectedDate}
+  />
+)}
+
+{view === "agenda" && (
+  <CalendarAgendaView
+  events={filteredEvents.filter(
+    (event) => {
+      const eventDate =
+        new Date(
+          `${event.date}T12:00:00`,
+        );
+
+      return (
+        eventDate.getFullYear() ===
+          displayedYear &&
+        eventDate.getMonth() ===
+          displayedMonthIndex
+      );
+    },
+  )}
+/>
+)}
       </section>
 
       <SelectedDayPanel

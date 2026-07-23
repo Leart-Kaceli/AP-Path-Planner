@@ -1405,3 +1405,83 @@ Learned how to:
 - Add calendar event overflow handling
 - Improve direct-edit URL cleanup
 - Begin preparing data services for Firebase
+
+# Day 20 Completed
+
+## Event Creation from Calendar Dates
+
+- Added assignment creation links to selected calendar dates
+- Added study-session creation links to selected calendar dates
+- Pre-filled assignment due dates from calendar selections
+- Pre-filled study-session dates from calendar selections
+- Preserved existing dates while editing events
+
+## Calendar Views
+
+- Added Month, Week, and Agenda views
+- Added accessible calendar-view controls
+- Added seven-day week rendering
+- Added grouped agenda rendering
+- Added view-aware previous and next navigation
+
+## Calendar Search
+
+- Added calendar event search
+- Added title matching
+- Added course matching
+- Added event-type matching
+- Applied search across Month, Week, and Agenda views
+
+## Calendar Overflow
+
+- Limited month cells to three visible events
+- Added remaining-event counts
+- Added selected-day access to hidden events
+- Prevented busy calendar rows from growing excessively
+
+## Direct-Edit URL Cleanup
+
+- Removed edit query parameters after opening forms
+- Removed date query parameters after pre-filling forms
+- Preserved form state during URL cleanup
+- Prevented stale query parameters from reopening editors
+
+## Data-Service Preparation
+
+- Added a generic local-storage service
+- Added an assignment data service
+- Added a study-session data service
+- Moved calendar data loading behind service functions
+- Began separating data access from React components
+- Prepared the project for a future Firebase implementation
+
+## New Files
+
+- src/components/calendar/CalendarViewControls.tsx
+- src/components/calendar/CalendarWeekView.tsx
+- src/components/calendar/CalendarAgendaView.tsx
+- src/services/localStorageService.ts
+- src/services/assignmentService.ts
+- src/services/studySessionService.ts
+
+## Updated Files
+
+- src/types/calendar.ts
+- src/utils/calendar.ts
+- src/components/calendar/Calendar.tsx
+- src/components/calendar/CalendarDay.tsx
+- src/components/calendar/SelectedDayPanel.tsx
+- src/components/assignments/AssignmentForm.tsx
+- src/components/assignments/AssignmentManager.tsx
+- src/components/planner/StudySessionForm.tsx
+- src/components/planner/StudyPlannerManager.tsx
+- PROJECT_NOTES.md
+
+## Day 21 Goals
+
+- Create data-service interfaces
+- Add Firebase project configuration
+- Add Firebase Authentication
+- Replace local-only profile state with authenticated-user state
+- Begin Firestore assignment storage
+- Add loading and error states for asynchronous services

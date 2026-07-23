@@ -198,3 +198,68 @@ export function formatCalendarTime(
     },
   ).format(date);
 }
+
+export function getWeekDates(
+  date: Date,
+) {
+  const weekStart = new Date(date);
+
+  weekStart.setDate(
+    date.getDate() - date.getDay(),
+  );
+
+  weekStart.setHours(12, 0, 0, 0);
+
+  return Array.from(
+    {
+      length: 7,
+    },
+    (_, index) => {
+      const weekDate =
+        new Date(weekStart);
+
+      weekDate.setDate(
+        weekStart.getDate() +
+          index,
+      );
+
+      return weekDate;
+    },
+  );
+}
+
+export function formatCalendarWeek(
+  date: Date,
+) {
+  const weekDates =
+    getWeekDates(date);
+
+  const firstDate =
+    weekDates[0];
+
+  const lastDate =
+    weekDates[
+      weekDates.length - 1
+    ];
+
+  const firstLabel =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+      },
+    ).format(firstDate);
+
+  const lastLabel =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      },
+    ).format(lastDate);
+
+  return `${firstLabel} – ${lastLabel}`;
+}

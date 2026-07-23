@@ -17,3 +17,8 @@ export type CalendarFilter =
   | "all"
   | "assignment"
   | "study-session";
+
+  export type CalendarView =
+  | "month"
+  | "week"
+  | "agenda";

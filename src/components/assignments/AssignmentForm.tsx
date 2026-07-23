@@ -8,13 +8,17 @@ import type {
 
 type AssignmentFormProps = {
   assignmentToEdit: Assignment | null;
+  initialDate: string;
   courseNames: string[];
-  onSaveAssignment: (assignment: Assignment) => void;
+  onSaveAssignment: (
+    assignment: Assignment,
+  ) => void;
   onCancelEdit: () => void;
 };
 
 export default function AssignmentForm({
   assignmentToEdit,
+  initialDate,
   courseNames,
   onSaveAssignment,
   onCancelEdit,
@@ -28,8 +32,9 @@ export default function AssignmentForm({
   );
 
   const [dueDate, setDueDate] = useState(
-    assignmentToEdit?.dueDate ?? "",
-  );
+  assignmentToEdit?.dueDate ??
+    initialDate,
+);
 
   const [priority, setPriority] =
     useState<AssignmentPriority>(
