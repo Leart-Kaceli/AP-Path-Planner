@@ -2,7 +2,6 @@
 
 import {
   useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -37,7 +36,9 @@ import {
   saveAssignments,
 } from "@/services/assignmentService";
 
-
+import {
+  useAuth,
+} from "@/hooks/useAuth";
 
 
 const initialAssignments: Assignment[] = [
@@ -77,17 +78,25 @@ const initialAssignments: Assignment[] = [
 
 export default function AssignmentManager() {
 
+  const {
+  user,
+  isLoading: isAuthLoading,
+} = useAuth();
+
   const router = useRouter();
 const pathname = usePathname();
 
   const searchParams =
   useSearchParams();
 
-const handledEditId =
-  useRef<string | null>(null);
 
-const requestedCreateDate =
-  searchParams.get("date") ?? "";
+const [
+  requestedCreateDate,
+] = useState(
+  () =>
+    searchParams.get("date") ??
+    "",
+);
 
   const [assignments, setAssignments] =
     useState<Assignment[]>(
@@ -110,6 +119,18 @@ const [
     setHasLoadedAssignments,
   ] = useState(false);
 
+  const [
+  isSavingAssignments,
+  setIsSavingAssignments,
+] = useState(false);
+
+const [
+  assignmentDataError,
+  setAssignmentDataError,
+] = useState<string | null>(
+  null,
+);
+
   const [assignmentToEdit, setAssignmentToEdit] =
     useState<Assignment | null>(null);
 
@@ -130,16 +151,34 @@ const [
     useState("");
 
   useEffect(() => {
+  if (isAuthLoading) {
+    return;
+  }
+
+  let isCancelled = false;
+
+  async function loadAssignmentData() {
+    setHasLoadedAssignments(false);
+    setAssignmentDataError(null);
+
     try {
       const storedAssignments =
-  loadAssignments();
+        await loadAssignments(
+          user?.uid,
+        );
 
-if (storedAssignments.length > 0) {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  setAssignments(
-    storedAssignments,
-  );
-}
+      if (isCancelled) {
+        return;
+      }
+
+      if (
+        storedAssignments.length >
+        0
+      ) {
+        setAssignments(
+          storedAssignments,
+        );
+      }
 
       const storedCourses =
         localStorage.getItem(
@@ -147,14 +186,20 @@ if (storedAssignments.length > 0) {
         );
 
       if (storedCourses) {
-        const parsedCourses = JSON.parse(
-          storedCourses,
-        ) as Course[];
+        const parsedCourses =
+          JSON.parse(
+            storedCourses,
+          ) as Course[];
 
-        if (Array.isArray(parsedCourses)) {
+        if (
+          Array.isArray(
+            parsedCourses,
+          )
+        ) {
           setCourseNames(
             parsedCourses.map(
-              (course) => course.name,
+              (course) =>
+                course.name,
             ),
           );
         }
@@ -164,32 +209,89 @@ if (storedAssignments.length > 0) {
         "Could not load assignments:",
         error,
       );
+
+      if (!isCancelled) {
+        setAssignmentDataError(
+          user
+            ? "Your cloud assignments could not be loaded."
+            : "Your saved assignments could not be loaded.",
+        );
+      }
     } finally {
-      setHasLoadedAssignments(true);
+      if (!isCancelled) {
+        setHasLoadedAssignments(
+          true,
+        );
+      }
     }
-  }, []);
+  }
+
+  void loadAssignmentData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+  user,
+]);
 
   useEffect(() => {
-  if (!hasLoadedAssignments) {
+  if (
+    !hasLoadedAssignments ||
+    isAuthLoading
+  ) {
     return;
   }
 
-  try {
-    saveAssignments(assignments);
+  let isCancelled = false;
 
-    notifyAppDataChanged();
-  } catch (error) {
-    console.error(
-      "Could not save assignments:",
-      error,
-    );
+  async function persistAssignments() {
+    setIsSavingAssignments(true);
+
+    setAssignmentDataError(null);
+
+    try {
+      await saveAssignments(
+        assignments,
+        user?.uid,
+      );
+
+      notifyAppDataChanged();
+    } catch (error) {
+      console.error(
+        "Could not save assignments:",
+        error,
+      );
+
+      if (!isCancelled) {
+        setAssignmentDataError(
+          user
+            ? "Your assignments could not be saved to the cloud."
+            : "Your assignments could not be saved on this device.",
+        );
+      }
+    } finally {
+      if (!isCancelled) {
+        setIsSavingAssignments(
+          false,
+        );
+      }
+    }
   }
+
+  void persistAssignments();
+
+  return () => {
+    isCancelled = true;
+  };
 }, [
   assignments,
   hasLoadedAssignments,
-  pathname,
-  router,
-  searchParams,
+  isAuthLoading,
+  user?.uid,
+  user,
 ]);
 
 useEffect(() => {
@@ -197,53 +299,33 @@ useEffect(() => {
     return;
   }
 
-  const requestedEditId =
-    searchParams.get("edit");
+  let isCancelled = false;
 
-  if (
-    !requestedEditId ||
-    handledEditId.current ===
-      requestedEditId
-  ) {
-    return;
+  async function persistAssignments() {
+    try {
+      await saveAssignments(
+        assignments,
+      );
+
+      if (!isCancelled) {
+        notifyAppDataChanged();
+      }
+    } catch (error) {
+      console.error(
+        "Could not save assignments:",
+        error,
+      );
+    }
   }
 
-  const requestedAssignment =
-    assignments.find(
-      (assignment) =>
-        assignment.id ===
-        requestedEditId,
-    );
+  void persistAssignments();
 
-  if (!requestedAssignment) {
-    return;
-  }
-
-  handledEditId.current =
-    requestedEditId;
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  setAssignmentToEdit(
-    requestedAssignment,
-  );
-
-  router.replace(
-  pathname,
-  {
-    scroll: false,
-  },
-);
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
+  return () => {
+    isCancelled = true;
+  };
 }, [
   assignments,
   hasLoadedAssignments,
-  searchParams,
-  pathname,
-  router,
 ]);
 
 useEffect(() => {
@@ -476,8 +558,59 @@ function confirmClearCompletedAssignments() {
         !assignment.completed,
     ).length;
 
+
+    if (
+  isAuthLoading ||
+  !hasLoadedAssignments
+) {
   return (
+    <div className="space-y-6">
+      <div className="h-80 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+    </div>
+  );
+}
+
+  return (
+
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
+      <div
+  aria-live="polite"
+  className="space-y-3"
+>
+  {user && (
+    <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+      Assignments are connected to{" "}
+      <span className="font-semibold">
+        {user.email}
+      </span>
+      .
+    </div>
+  )}
+
+  {!user && (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      You are signed out. Assignments
+      are being saved only on this
+      device.
+    </div>
+  )}
+
+  {isSavingAssignments && (
+    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+      Saving assignments...
+    </p>
+  )}
+
+  {assignmentDataError && (
+    <div
+      role="alert"
+      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+    >
+      {assignmentDataError}
+    </div>
+  )}
+</div>
       <AssignmentForm
   key={
     assignmentToEdit?.id ??

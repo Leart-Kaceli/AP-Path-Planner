@@ -1485,3 +1485,131 @@ Learned how to:
 - Replace local-only profile state with authenticated-user state
 - Begin Firestore assignment storage
 - Add loading and error states for asynchronous services
+
+# Day 21 Completed
+
+## Data-Service Interfaces
+
+- Created a generic asynchronous DataService interface
+- Added shared loadAll and saveAll service methods
+- Converted assignment data access to an asynchronous service contract
+- Preserved localStorage as a supported data source
+- Separated React components from storage implementation details
+
+## Firebase Configuration
+
+- Installed the modular Firebase JavaScript SDK
+- Created Firebase project environment variables
+- Added centralized Firebase application initialization
+- Added Firebase Authentication initialization
+- Added Cloud Firestore initialization
+- Prevented duplicate Firebase initialization during development reloads
+
+## Firebase Authentication
+
+- Enabled email-and-password authentication
+- Created a shared AuthProvider
+- Added authenticated-user state
+- Added authentication loading and error states
+- Added account creation
+- Added sign-in
+- Added sign-out
+- Added Firebase display-name support
+- Added a reusable useAuth hook
+- Added an authentication panel to the Profile page
+
+## Authenticated Profile State
+
+- Added Firebase account identity to profile settings
+- Displayed the authenticated email address
+- Synchronized profile names with Firebase Authentication
+- Preserved local planning preferences
+- Separated account identity from device-specific preferences
+
+## Firestore Assignment Storage
+
+- Created a Firestore assignment data service
+- Added per-user assignment collections
+- Loaded assignments using authenticated user IDs
+- Saved assignments using authenticated user IDs
+- Added first-sign-in migration from localStorage to Firestore
+- Preserved localStorage assignments for signed-out users
+- Added Firestore batch synchronization
+- Added user-specific Firestore Security Rules
+
+## Async Loading and Errors
+
+- Added authentication loading state
+- Added assignment loading state
+- Added assignment saving state
+- Added cloud data error messages
+- Added device-storage error messages
+- Added cancellation protection for asynchronous effects
+- Added accessible live status messaging
+
+## New Files
+
+- src/lib/firebase.ts
+- src/types/auth.ts
+- src/services/dataService.ts
+- src/services/firestoreAssignmentService.ts
+- src/components/auth/AuthProvider.tsx
+- src/components/auth/AuthPanel.tsx
+- src/hooks/useAuth.ts
+- .env.local
+
+## Updated Files
+
+- package.json
+- package-lock.json
+- src/app/(app)/layout.tsx
+- src/app/(app)/profile/page.tsx
+- src/components/profile/ProfileSettings.tsx
+- src/components/assignments/AssignmentManager.tsx
+- src/services/assignmentService.ts
+- PROJECT_NOTES.md
+
+## React, TypeScript, and Firebase Concepts Learned
+
+- Firebase modular SDK imports
+- Environment-variable configuration
+- Firebase Authentication
+- Authentication state observers
+- React Context providers
+- Custom context hooks
+- Authenticated user objects
+- Firebase display profiles
+- Cloud Firestore collections and documents
+- User-owned nested collections
+- Firestore batch writes
+- Firestore Security Rules
+- Asynchronous service interfaces
+- Promise-based data access
+- Storage implementation selection
+- First-login data migration
+- Loading and saving states
+- Async effect cancellation
+
+## Current Limitations
+
+- Only assignments have been migrated to Firestore
+- Courses remain in localStorage
+- Study sessions remain in localStorage
+- Grades remain in localStorage
+- Profile preferences remain mostly local
+- Assignment saving currently synchronizes the entire collection
+- Authentication currently supports email and password only
+- Password reset and email verification are not yet implemented
+- Signed-out data remains tied to one browser
+
+## Day 22 Goals
+
+- Move study sessions to Firestore
+- Move courses to Firestore
+- Create user profile documents
+- Store profile preferences in Firestore
+- Add password-reset support
+- Add email-verification status
+- Improve individual Firestore create, update, and delete operations
+- Add authentication-aware dashboard loading
+- Add Firestore error retry controls

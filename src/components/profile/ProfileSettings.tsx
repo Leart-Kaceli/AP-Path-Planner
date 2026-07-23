@@ -20,11 +20,24 @@ import {
   notifyAppDataChanged,
 } from "@/utils/appEvents";
 
+import {
+  updateProfile as updateFirebaseProfile,
+} from "firebase/auth";
+
+import {
+  useAuth,
+} from "@/hooks/useAuth";
+
 type BrowserNotificationPermission =
   | NotificationPermission
   | "unsupported";
 
 export default function ProfileSettings() {
+
+  const {
+  user,
+} = useAuth();
+
   const [profile, setProfile] =
     useState<StudentProfile>(
       DEFAULT_STUDENT_PROFILE,
@@ -63,9 +76,13 @@ export default function ProfileSettings() {
         ) as Partial<StudentProfile>;
 
         const loadedProfile: StudentProfile = {
-          ...DEFAULT_STUDENT_PROFILE,
-          ...parsedProfile,
-        };
+  ...DEFAULT_STUDENT_PROFILE,
+  ...parsedProfile,
+  name:
+    user?.displayName ??
+    parsedProfile.name ??
+    DEFAULT_STUDENT_PROFILE.name,
+};
 
         setProfile(loadedProfile);
         applyTheme(loadedProfile.theme);
@@ -82,7 +99,9 @@ export default function ProfileSettings() {
     } finally {
       setHasLoaded(true);
     }
-  }, []);
+  }, [
+  user?.displayName,
+]);
 
   function updateProfile<
   Key extends keyof StudentProfile,
@@ -134,9 +153,9 @@ async function requestNotificationPermission() {
   }
 }
 
-  function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(
+  event: FormEvent<HTMLFormElement>,
+) {
     event.preventDefault();
 
     const trimmedName =
@@ -169,6 +188,19 @@ async function requestNotificationPermission() {
     };
 
     try {
+      if (
+  user &&
+  user.displayName !==
+    trimmedName
+) {
+  await updateFirebaseProfile(
+    user,
+    {
+      displayName:
+        trimmedName,
+    },
+  );
+}
       localStorage.setItem(
         PROFILE_STORAGE_KEY,
         JSON.stringify(savedProfile),
@@ -247,6 +279,30 @@ async function requestNotificationPermission() {
             >
               Name
             </label>
+
+            {user && (
+  <div>
+    <label
+      htmlFor="profile-email"
+      className="text-sm font-medium text-slate-700 dark:text-slate-200"
+    >
+      Account Email
+    </label>
+
+    <input
+      id="profile-email"
+      type="email"
+      value={user.email ?? ""}
+      readOnly
+      className="mt-2 w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-100 px-4 py-3 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+    />
+
+    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+      This email comes from your
+      Firebase account.
+    </p>
+  </div>
+)}
 
             <input
               id="profile-name"

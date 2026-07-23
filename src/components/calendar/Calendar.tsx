@@ -12,9 +12,7 @@ import CalendarAgendaView from "@/components/calendar/CalendarAgendaView";
 import CalendarViewControls from "@/components/calendar/CalendarViewControls";
 import CalendarWeekView from "@/components/calendar/CalendarWeekView";
 
-import {
-  APP_DATA_CHANGED_EVENT,
-} from "@/utils/appEvents";
+
 
 import {
   formatCalendarWeek,
@@ -86,51 +84,46 @@ export default function Calendar() {
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-  function loadCalendarData() {
-  setEvents(
-    getCalendarEvents(
-      loadAssignments(),
-      loadStudySessions(),
-    ),
-  );
-}
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadCalendarData();
+  let isCancelled = false;
 
-    setHasLoaded(true);
+  async function loadData() {
+    try {
+      const assignments =
+        await loadAssignments();
 
-    function handleAppDataChanged() {
-      loadCalendarData();
-    }
+      const studySessions =
+        loadStudySessions();
 
-    function handleStorageChange() {
-      loadCalendarData();
-    }
+      if (isCancelled) {
+        return;
+      }
 
-    window.addEventListener(
-      APP_DATA_CHANGED_EVENT,
-      handleAppDataChanged,
-    );
-
-    window.addEventListener(
-      "storage",
-      handleStorageChange,
-    );
-
-    return () => {
-      window.removeEventListener(
-        APP_DATA_CHANGED_EVENT,
-        handleAppDataChanged,
+      setEvents(
+        getCalendarEvents(
+          assignments,
+          studySessions,
+        ),
       );
-
-      window.removeEventListener(
-        "storage",
-        handleStorageChange,
+    } catch (error) {
+      console.error(
+        "Could not load calendar data:",
+        error,
       );
-    };
-  }, []);
+    } finally {
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
+    }
+  }
+
+  void loadData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, []);
 
   function showPreviousPeriod() {
   if (view === "week") {
