@@ -10,6 +10,11 @@ import AssignmentFilters, {
   type StatusFilter,
 } from "@/components/assignments/AssignmentFilters";
 
+import {
+  deleteOneAssignment,
+  saveOneAssignment,
+} from "@/services/assignmentService";
+
 import AssignmentForm from "@/components/assignments/AssignmentForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import DataErrorState from "@/components/ui/DataErrorState";
@@ -31,6 +36,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 
+import LoadingCard from "@/components/ui/LoadingCard";
 
 import {
   loadAssignments,
@@ -246,11 +252,12 @@ const [
 
   useEffect(() => {
   if (
-    !hasLoadedAssignments ||
-    isAuthLoading
-  ) {
-    return;
-  }
+  !hasLoadedAssignments ||
+  isAuthLoading ||
+  user?.uid
+) {
+  return;
+}
 
   let isCancelled = false;
 
@@ -261,9 +268,8 @@ const [
 
     try {
       await saveAssignments(
-        assignments,
-        user?.uid,
-      );
+  assignments,
+);
 
       notifyAppDataChanged();
     } catch (error) {
@@ -325,9 +331,59 @@ useEffect(() => {
   user,
 ]);
 
-  function saveAssignment(
+  async function saveAssignment(
     assignment: Assignment,
   ) {
+
+    const previousAssignments =
+  assignments;
+  
+  const nextAssignments =
+  assignments.some(
+    (currentAssignment) =>
+      currentAssignment.id ===
+      assignment.id,
+  )
+    ? assignments.map(
+        (currentAssignment) =>
+          currentAssignment.id ===
+          assignment.id
+            ? assignment
+            : currentAssignment,
+      )
+    : [
+        ...assignments,
+        assignment,
+      ];
+
+      setAssignments(
+  nextAssignments,
+);
+
+setAssignmentToEdit(null);
+
+if (user?.uid) {
+  try {
+    await saveOneAssignment(
+      assignment,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not save assignment:",
+      error,
+    );
+
+    setAssignments(
+      previousAssignments,
+    );
+
+    setAssignmentDataError(
+      "The assignment could not be saved. Your previous data was restored.",
+    );
+  }
+}
+
     setAssignments(
       (currentAssignments) => {
         const assignmentExists =
@@ -416,13 +472,47 @@ useEffect(() => {
   setAssignmentPendingDeletion(assignment);
 }
 
-function confirmAssignmentDeletion() {
+async function confirmAssignmentDeletion() {
   if (!assignmentPendingDeletion) {
     return;
   }
 
   const assignmentId =
     assignmentPendingDeletion.id;
+
+    const previousAssignments =
+  assignments;
+
+  setAssignments(
+  (currentAssignments) =>
+    currentAssignments.filter(
+      (assignment) =>
+        assignment.id !==
+        assignmentId,
+    ),
+);
+
+if (user?.uid) {
+  try {
+    await deleteOneAssignment(
+      assignmentId,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not delete assignment:",
+      error,
+    );
+
+    setAssignments(
+      previousAssignments,
+    );
+
+    setAssignmentDataError(
+      "The assignment could not be deleted. It has been restored.",
+    );
+  }
+}
 
 
   setAssignments((currentAssignments) =>
@@ -541,8 +631,8 @@ function confirmClearCompletedAssignments() {
 ) {
   return (
     <div className="space-y-6">
-      <div className="h-80 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <LoadingCard heightClassName="h-80" />
+      <LoadingCard heightClassName="h-64" />
     </div>
   );
 }

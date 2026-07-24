@@ -15,6 +15,7 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   sendEmailVerification,
+  deleteUser,
   type User,
 } from "firebase/auth";
 
@@ -295,6 +296,38 @@ async function refreshUser() {
     setError(null);
   }
 
+  async function deleteAccount() {
+  setError(null);
+
+  const currentUser =
+    firebaseAuth.currentUser;
+
+  if (!currentUser) {
+    throw new Error(
+      "No authenticated user.",
+    );
+  }
+
+  try {
+    await deleteUser(
+      currentUser,
+    );
+
+    setUser(null);
+  } catch (deleteError) {
+    console.error(
+      "Could not delete account:",
+      deleteError,
+    );
+
+    setError(
+      "Your account could not be deleted. You may need to sign in again first.",
+    );
+
+    throw deleteError;
+  }
+}
+
   return (
     <AuthContext.Provider
       value={{
@@ -308,9 +341,11 @@ async function refreshUser() {
   clearAuthError,
   sendVerificationEmail,
   refreshUser,
+  deleteAccount,
 }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
+

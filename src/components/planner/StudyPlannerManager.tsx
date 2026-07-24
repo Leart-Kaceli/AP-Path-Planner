@@ -8,8 +8,15 @@ import {
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import {
+  deleteOneStudySession,
+  saveOneStudySession,
+} from "@/services/studySessionService";
+
+import {
   useAuth,
 } from "@/hooks/useAuth";
+
+import LoadingCard from "@/components/ui/LoadingCard";
 
 import StudyPlannerFilters, {
   type StudyStatusFilter,
@@ -192,11 +199,12 @@ const [
 
   useEffect(() => {
   if (
-    !hasLoaded ||
-    isAuthLoading
-  ) {
-    return;
-  }
+  !hasLoaded ||
+  isAuthLoading ||
+  user?.uid
+) {
+  return;
+}
 
   let isCancelled = false;
 
@@ -206,9 +214,8 @@ const [
 
     try {
       await saveStudySessions(
-        sessions,
-        user?.uid,
-      );
+  sessions,
+);
 
       notifyAppDataChanged();
     } catch (error) {
@@ -319,30 +326,65 @@ useEffect(() => {
   router,
 ]);
 
-  function saveSession(
-    session: StudySession,
-  ) {
-    setSessions((currentSessions) => {
-      const sessionExists =
-        currentSessions.some(
-          (currentSession) =>
-            currentSession.id === session.id,
-        );
+  async function saveSession(
+  session: StudySession,
+) {
+  const previousSessions =
+    sessions;
 
-      if (sessionExists) {
-        return currentSessions.map(
+  const sessionExists =
+    sessions.some(
+      (currentSession) =>
+        currentSession.id ===
+        session.id,
+    );
+
+  const nextSessions =
+    sessionExists
+      ? sessions.map(
           (currentSession) =>
-            currentSession.id === session.id
+            currentSession.id ===
+            session.id
               ? session
               : currentSession,
-        );
-      }
+        )
+      : [
+          ...sessions,
+          session,
+        ];
 
-      return [...currentSessions, session];
-    });
+  setSessions(
+    nextSessions,
+  );
 
-    setSessionToEdit(null);
+  setSessionToEdit(null);
+
+  if (!user?.uid) {
+    return;
   }
+
+  try {
+    await saveOneStudySession(
+      session,
+      user.uid,
+    );
+
+    notifyAppDataChanged();
+  } catch (error) {
+    console.error(
+      "Could not save study session:",
+      error,
+    );
+
+    setSessions(
+      previousSessions,
+    );
+
+    setStudySessionDataError(
+      "The study session could not be saved. Your previous data was restored.",
+    );
+  }
+}
 
   function startEditingSession(
     session: StudySession,
@@ -397,7 +439,7 @@ useEffect(() => {
   setSessionPendingDeletion(session);
 }
 
-function confirmSessionDeletion() {
+async function confirmSessionDeletion() {
   if (!sessionPendingDeletion) {
     return;
   }
@@ -405,20 +447,52 @@ function confirmSessionDeletion() {
   const sessionId =
     sessionPendingDeletion.id;
 
-  setSessions((currentSessions) =>
-    currentSessions.filter(
-      (session) =>
-        session.id !== sessionId,
-    ),
+  const previousSessions =
+    sessions;
+
+  setSessions(
+    (currentSessions) =>
+      currentSessions.filter(
+        (session) =>
+          session.id !==
+          sessionId,
+      ),
   );
 
   if (
-    sessionToEdit?.id === sessionId
+    sessionToEdit?.id ===
+    sessionId
   ) {
     setSessionToEdit(null);
   }
 
   setSessionPendingDeletion(null);
+
+  if (!user?.uid) {
+    return;
+  }
+
+  try {
+    await deleteOneStudySession(
+      sessionId,
+      user.uid,
+    );
+
+    notifyAppDataChanged();
+  } catch (error) {
+    console.error(
+      "Could not delete study session:",
+      error,
+    );
+
+    setSessions(
+      previousSessions,
+    );
+
+    setStudySessionDataError(
+      "The study session could not be deleted. It has been restored.",
+    );
+  }
 }
 
   function requestClearCompletedSessions() {
@@ -527,8 +601,8 @@ function confirmClearCompletedSessions() {
 ) {
   return (
     <div className="space-y-6">
-      <div className="h-80 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <LoadingCard heightClassName="h-80" />
+      <LoadingCard heightClassName="h-64" />
     </div>
   );
 }

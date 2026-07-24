@@ -1725,3 +1725,120 @@ Learned how to:
 - Add profile and data export for cloud users
 - Improve loading skeleton consistency
 - Polish dark-mode styling across older components
+
+# Day 23 Completed
+
+## Firestore Grades
+
+- Added authenticated Firestore grade storage
+- Added signed-out local grade fallback
+- Added first-login grade migration
+- Added cloud grade loading
+- Added cloud grade saving
+- Added individual grade write helpers
+- Added grade error and saving states
+
+## Grade Weights
+
+- Added Firestore grade-weight document storage
+- Stored grade weights under user settings
+- Added local grade-weight fallback
+- Migrated existing local weights to Firestore
+- Updated Dashboard to load cloud grade weights
+
+## Notification Preferences
+
+- Connected notification generation to authenticated profile data
+- Loaded reminder preferences from Firestore
+- Loaded cloud assignments for notifications
+- Loaded cloud study sessions for notifications
+- Preserved local notification dismissal and snooze state
+
+## Account Pages
+
+- Added dedicated account page
+- Added dedicated sign-in page
+- Added account navigation
+- Preserved Firebase authentication functionality
+
+## Individual Firestore Writes
+
+- Began replacing full collection synchronization with individual document writes
+- Added individual assignment writes
+- Added individual study-session writes
+- Added individual course writes
+- Added individual grade writes
+- Limited bulk saves to localStorage and migration workflows
+
+## Optimistic Updates
+
+- Added immediate UI updates before Firestore completion
+- Added rollback when assignment writes fail
+- Added rollback when course writes fail
+- Added rollback when study-session writes fail
+- Added rollback when grade writes fail
+- Added user-facing data errors after rollback
+
+## Account Deletion
+
+- Added Firebase account deletion support
+- Added known Firestore data cleanup
+- Added account deletion confirmation
+- Added cloud-data deletion before authentication deletion
+- Added error feedback for deletion failures
+
+## Cloud-Aware Export
+
+- Added signed-in Firestore backup export
+- Added cloud assignments to backup
+- Added cloud courses to backup
+- Added cloud study sessions to backup
+- Added cloud grades and grade weights to backup
+- Added cloud profile data to backup
+
+## Loading UI
+
+- Added reusable loading-card component
+- Improved loading skeleton consistency
+- Added dark-mode loading states
+
+## Dark Mode
+
+- Improved older grade components
+- Improved profile components
+- Improved dashboard cards
+- Improved account UI
+- Improved loading-state styling
+
+## New Files
+
+- src/services/firestoreGradeService.ts
+- src/services/gradeService.ts
+- src/services/gradeWeightService.ts
+- src/services/accountDataService.ts
+- src/services/exportService.ts
+- src/components/ui/LoadingCard.tsx
+- src/app/(app)/account/page.tsx
+- src/app/(app)/sign-in/page.tsx
+
+## Current Limitations
+
+- Notification dismiss/snooze state remains device-specific
+- Backup import remains primarily local-first
+- Account deletion cleans known subcollections from the browser client
+- Large Firestore collection deletion should eventually move server-side
+- Offline behavior is still Firebase-default
+- Authentication does not yet include Google sign-in
+- Grades do not yet support attachments or teacher comments
+
+## Day 24 Goals
+
+- Move notification dismissal and snooze state to Firestore
+- Add cloud-aware backup import
+- Add full account re-authentication flow
+- Add Google sign-in
+- Add stronger Firestore data validation rules
+- Add server-side account-data cleanup strategy
+- Add offline/network status indicators
+- Add undo actions for recent deletes
+- Improve mobile navigation

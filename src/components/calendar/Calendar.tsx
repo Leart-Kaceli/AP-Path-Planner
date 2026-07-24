@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import LoadingCard from "@/components/ui/LoadingCard";
+
 import CalendarAgendaView from "@/components/calendar/CalendarAgendaView";
 import CalendarDay from "@/components/calendar/CalendarDay";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
@@ -233,13 +235,13 @@ export default function Calendar() {
   }
 
   if (
-    isAuthLoading ||
-    !hasLoaded
-  ) {
-    return (
-      <div className="h-[600px] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-    );
-  }
+  isAuthLoading ||
+  !hasLoaded
+) {
+  return (
+    <LoadingCard heightClassName="h-[600px]" />
+  );
+}
 
   const calendarDates =
     getMonthGridDates(

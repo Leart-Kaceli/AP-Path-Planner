@@ -16,6 +16,8 @@ import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
 import DashboardReminderSummary from "@/components/dashboard/DashboardReminderSummary";
 
+import LoadingCard from "@/components/ui/LoadingCard";
+
 import {
   useAuth,
 } from "@/hooks/useAuth";
@@ -37,9 +39,12 @@ import {
 } from "@/services/profileService";
 
 import {
-  GRADE_STORAGE_KEY,
-  GRADE_WEIGHT_STORAGE_KEY,
-} from "@/constants/storage";
+  loadGrades,
+} from "@/services/gradeService";
+
+import {
+  loadGradeWeights,
+} from "@/services/gradeWeightService";
 
 import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
 
@@ -113,74 +118,47 @@ const [dashboardData, setDashboardData] =
   async function loadDashboardData() {
     try {
       const [
-        courses,
-        assignments,
-        studySessions,
-        profile,
-      ] = await Promise.all([
-        loadCourses(
-          user?.uid,
-        ),
-        loadAssignments(
-          user?.uid,
-        ),
-        loadStudySessions(
-          user?.uid,
-        ),
-        loadProfile(
-          user?.uid,
-        ),
-      ]);
+  courses,
+  assignments,
+  studySessions,
+  profile,
+  grades,
+  weightsByCourse,
+] = await Promise.all([
+  loadCourses(
+    user?.uid,
+  ),
+  loadAssignments(
+    user?.uid,
+  ),
+  loadStudySessions(
+    user?.uid,
+  ),
+  loadProfile(
+    user?.uid,
+  ),
+  loadGrades(
+    user?.uid,
+  ),
+  loadGradeWeights(
+    user?.uid,
+  ),
+]);
 
-      const storedGrades =
-        localStorage.getItem(
-          GRADE_STORAGE_KEY,
-        );
-
-      const storedGradeWeights =
-        localStorage.getItem(
-          GRADE_WEIGHT_STORAGE_KEY,
-        );
-
-      const parsedGrades =
-        storedGrades
-          ? JSON.parse(
-              storedGrades,
-            ) as GradeEntry[]
-          : [];
-
-      const parsedWeights =
-        storedGradeWeights
-          ? JSON.parse(
-              storedGradeWeights,
-            ) as CourseGradeWeights
-          : {};
 
       if (isCancelled) {
         return;
       }
 
       setDashboardData({
-        courses,
-        assignments,
-        studySessions,
-        grades:
-          Array.isArray(
-            parsedGrades,
-          )
-            ? parsedGrades
-            : [],
-        weightsByCourse:
-          parsedWeights &&
-          typeof parsedWeights ===
-            "object" &&
-          !Array.isArray(
-            parsedWeights,
-          )
-            ? parsedWeights
-            : {},
-        profile,
-      });
+  courses,
+  assignments,
+  studySessions,
+  grades,
+  weightsByCourse,
+  profile,
+});
+
     } catch (error) {
       console.error(
         "Could not load dashboard data:",
@@ -662,15 +640,17 @@ function DashboardLoading() {
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {[1, 2, 3, 4].map(
           (placeholder) => (
-            <div
-              key={placeholder}
-              className="h-36 animate-pulse rounded-2xl bg-slate-200"
-            />
+            <LoadingCard
+  key={placeholder}
+  heightClassName="h-36"
+/>
           ),
         )}
       </div>
 
-      <div className="mt-8 h-96 animate-pulse rounded-2xl bg-slate-200" />
+      <div className="mt-8">
+  <LoadingCard heightClassName="h-96" />
+</div>
     </main>
   );
 }

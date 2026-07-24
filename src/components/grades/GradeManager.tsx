@@ -12,12 +12,27 @@ import GradeWeightEditor from "@/components/grades/GradeWeightEditor";
 import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 
 import {
-  COURSE_STORAGE_KEY,
-  GRADE_STORAGE_KEY,
-  GRADE_WEIGHT_STORAGE_KEY,
-} from "@/constants/storage";
+  useAuth,
+} from "@/hooks/useAuth";
 
-import type { Course } from "@/types/course";
+import LoadingCard from "@/components/ui/LoadingCard";
+
+import {
+  deleteOneGrade,
+  loadGrades,
+  saveGrades,
+  saveOneGrade,
+} from "@/services/gradeService";
+
+import {
+  loadGradeWeights,
+  saveGradeWeights,
+} from "@/services/gradeWeightService";
+
+import {
+  loadCourses,
+} from "@/services/courseService";
+
 import type {
   CourseGradeWeights,
   GradeCategory,
@@ -29,6 +44,12 @@ import {
 } from "@/utils/grades";
 
 export default function GradeManager() {
+
+  const {
+  user,
+  isLoading: isAuthLoading,
+} = useAuth();
+
   const [grades, setGrades] =
     useState<GradeEntry[]>([]);
 
@@ -44,6 +65,18 @@ export default function GradeManager() {
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
+    const [
+  isSavingGrades,
+  setIsSavingGrades,
+] = useState(false);
+
+const [
+  gradeDataError,
+  setGradeDataError,
+] = useState<string | null>(
+  null,
+);
+
   const [courseFilter, setCourseFilter] =
     useState("All");
 
@@ -53,130 +86,191 @@ export default function GradeManager() {
   const [searchTerm, setSearchTerm] =
     useState("");
 
-  useEffect(() => {
-    const storedWeights =
-  localStorage.getItem(
-    GRADE_WEIGHT_STORAGE_KEY,
-  );
-    
-    try {
-      const storedGrades =
-        localStorage.getItem(
-          GRADE_STORAGE_KEY,
-        );
-      if (storedWeights) {
-  const parsedWeights = JSON.parse(
-    storedWeights,
-  ) as CourseGradeWeights;
-
-  if (
-    parsedWeights &&
-    typeof parsedWeights === "object" &&
-    !Array.isArray(parsedWeights)
-  ) {
-    // Add the ESLint comment only if
-    // your linter reports this exact line.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-setWeightsByCourse(parsedWeights);
+ useEffect(() => {
+  if (isAuthLoading) {
+    return;
   }
-}
 
-      if (storedGrades) {
-        const parsedGrades = JSON.parse(
-          storedGrades,
-        ) as GradeEntry[];
+  let isCancelled = false;
 
-        if (Array.isArray(parsedGrades)) {
-          setGrades(parsedGrades);
-        }
+  async function loadGradeData() {
+    setHasLoaded(false);
+    setGradeDataError(null);
+
+    try {
+      const [
+        loadedGrades,
+        loadedWeights,
+        loadedCourses,
+      ] = await Promise.all([
+        loadGrades(
+          user?.uid,
+        ),
+        loadGradeWeights(
+          user?.uid,
+        ),
+        loadCourses(
+          user?.uid,
+        ),
+      ]);
+
+      if (isCancelled) {
+        return;
       }
 
-      const storedCourses =
-        localStorage.getItem(
-          COURSE_STORAGE_KEY,
-        );
+      setGrades(
+        loadedGrades,
+      );
 
-      if (storedCourses) {
-        const parsedCourses = JSON.parse(
-          storedCourses,
-        ) as Course[];
+      setWeightsByCourse(
+        loadedWeights,
+      );
 
-        if (Array.isArray(parsedCourses)) {
-          setCourseNames(
-            parsedCourses.map(
-              (course) => course.name,
-            ),
-          );
-        }
-      }
+      setCourseNames(
+        loadedCourses.map(
+          (course) =>
+            course.name,
+        ),
+      );
     } catch (error) {
       console.error(
         "Could not load grade data:",
         error,
       );
+
+      if (!isCancelled) {
+        setGradeDataError(
+          user?.uid
+            ? "Your cloud grade data could not be loaded."
+            : "Your saved grade data could not be loaded.",
+        );
+      }
     } finally {
-      setHasLoaded(true);
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
     }
-  }, []);
+  }
+
+  void loadGradeData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
 
   useEffect(() => {
-  if (!hasLoaded) {
+  if (
+    !hasLoaded ||
+    isAuthLoading ||
+    user?.uid
+  ) {
     return;
   }
 
-  try {
-    localStorage.setItem(
-      GRADE_WEIGHT_STORAGE_KEY,
-      JSON.stringify(weightsByCourse),
-    );
-  } catch (error) {
-    console.error(
-      "Could not save grade weights:",
-      error,
-    );
-  }
-}, [weightsByCourse, hasLoaded]);
+  let isCancelled = false;
 
-  useEffect(() => {
-    if (!hasLoaded) {
-      return;
-    }
+  async function persistGradeData() {
+    setIsSavingGrades(true);
+    setGradeDataError(null);
 
     try {
-      localStorage.setItem(
-        GRADE_STORAGE_KEY,
-        JSON.stringify(grades),
-      );
+      await Promise.all([
+  saveGrades(
+    grades,
+  ),
+  saveGradeWeights(
+    weightsByCourse,
+  ),
+]);
     } catch (error) {
       console.error(
         "Could not save grade data:",
         error,
       );
-    }
-  }, [grades, hasLoaded]);
 
-  function saveGrade(grade: GradeEntry) {
-    setGrades((currentGrades) => {
-      const gradeExists =
-        currentGrades.some(
-          (currentGrade) =>
-            currentGrade.id === grade.id,
+      if (!isCancelled) {
+        setGradeDataError(
+          user?.uid
+            ? "Your grades could not be saved to the cloud."
+            : "Your grades could not be saved on this device.",
         );
+      }
+    } finally {
+      if (!isCancelled) {
+        setIsSavingGrades(false);
+      }
+    }
+  }
 
-      if (gradeExists) {
-        return currentGrades.map(
+  void persistGradeData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  grades,
+  weightsByCourse,
+  hasLoaded,
+  isAuthLoading,
+  user?.uid,
+]);
+
+ async function saveGrade(
+  grade: GradeEntry,
+) {
+  const previousGrades =
+    grades;
+
+  const gradeExists =
+    grades.some(
+      (currentGrade) =>
+        currentGrade.id === grade.id,
+    );
+
+  const nextGrades =
+    gradeExists
+      ? grades.map(
           (currentGrade) =>
             currentGrade.id === grade.id
               ? grade
               : currentGrade,
-        );
-      }
+        )
+      : [...grades, grade];
 
-      return [...currentGrades, grade];
-    });
+  setGrades(nextGrades);
+  setGradeToEdit(null);
+  setGradeDataError(null);
 
-    setGradeToEdit(null);
+  if (!user?.uid) {
+    return;
   }
+
+  setIsSavingGrades(true);
+
+  try {
+    await saveOneGrade(
+      grade,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not save grade:",
+      error,
+    );
+
+    setGrades(previousGrades);
+
+    setGradeDataError(
+      "The grade could not be saved. Your previous data was restored.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
+}
 
   function startEditingGrade(
     grade: GradeEntry,
@@ -193,73 +287,215 @@ setWeightsByCourse(parsedWeights);
     setGradeToEdit(null);
   }
 
-  function deleteGrade(gradeId: string) {
-    const gradeToDelete = grades.find(
-      (grade) => grade.id === gradeId,
+ async function deleteGrade(
+  gradeId: string,
+) {
+  const gradeToDelete =
+    grades.find(
+      (grade) =>
+        grade.id === gradeId,
     );
 
-    if (!gradeToDelete) {
-      return;
-    }
+  if (!gradeToDelete) {
+    return;
+  }
 
-    const shouldDelete = window.confirm(
+  const shouldDelete =
+    window.confirm(
       `Delete "${gradeToDelete.title}"?`,
     );
 
-    if (!shouldDelete) {
-      return;
-    }
-
-    setGrades((currentGrades) =>
-      currentGrades.filter(
-        (grade) => grade.id !== gradeId,
-      ),
-    );
-
-    if (gradeToEdit?.id === gradeId) {
-      setGradeToEdit(null);
-    }
+  if (!shouldDelete) {
+    return;
   }
 
-  function clearAllGrades() {
+  const previousGrades =
+    grades;
+
+  setGrades(
+    (currentGrades) =>
+      currentGrades.filter(
+        (grade) =>
+          grade.id !== gradeId,
+      ),
+  );
+
+  if (
+    gradeToEdit?.id === gradeId
+  ) {
+    setGradeToEdit(null);
+  }
+
+  if (!user?.uid) {
+    return;
+  }
+
+  setIsSavingGrades(true);
+
+  try {
+    await deleteOneGrade(
+      gradeId,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not delete grade:",
+      error,
+    );
+
+    setGrades(previousGrades);
+
+    setGradeDataError(
+      "The grade could not be deleted. It has been restored.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
+}
+
+  async function clearAllGrades() {
   if (grades.length === 0) {
     return;
   }
 
-  const shouldClear = window.confirm(
-    "Delete all grade entries? This action cannot be undone.",
-  );
+  const shouldClear =
+    window.confirm(
+      "Delete all grade entries? This action cannot be undone.",
+    );
 
   if (!shouldClear) {
     return;
   }
 
+  const previousGrades =
+    grades;
+
   setGrades([]);
   setGradeToEdit(null);
+
+  if (!user?.uid) {
+    return;
+  }
+
+  setIsSavingGrades(true);
+
+  try {
+    await saveGrades(
+      [],
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not clear grades:",
+      error,
+    );
+
+    setGrades(
+      previousGrades,
+    );
+
+    setGradeDataError(
+      "Your grades could not be cleared. They have been restored.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
 }
 
-function changeGradeWeight(
+async function changeGradeWeight(
   course: string,
   category: GradeCategory,
   weight: number,
 ) {
-  setWeightsByCourse((currentWeights) => ({
-    ...currentWeights,
+  const previousWeights =
+    weightsByCourse;
+
+  const nextWeights = {
+    ...weightsByCourse,
     [course]: {
-      ...(currentWeights[course] ??
+      ...(weightsByCourse[course] ??
         DEFAULT_GRADE_WEIGHTS),
       [category]: weight,
     },
-  }));
+  };
+
+  setWeightsByCourse(
+    nextWeights,
+  );
+
+  if (!user?.uid) {
+    return;
+  }
+
+  setIsSavingGrades(true);
+
+  try {
+    await saveGradeWeights(
+      nextWeights,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not save grade weights:",
+      error,
+    );
+
+    setWeightsByCourse(
+      previousWeights,
+    );
+
+    setGradeDataError(
+      "Your grade weights could not be saved.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
 }
 
-function resetGradeWeights(course: string) {
-  setWeightsByCourse((currentWeights) => ({
-    ...currentWeights,
+async function resetGradeWeights(
+  course: string,
+) {
+  const previousWeights =
+    weightsByCourse;
+
+  const nextWeights = {
+    ...weightsByCourse,
     [course]: {
       ...DEFAULT_GRADE_WEIGHTS,
     },
-  }));
+  };
+
+  setWeightsByCourse(
+    nextWeights,
+  );
+
+  if (!user?.uid) {
+    return;
+  }
+
+  setIsSavingGrades(true);
+
+  try {
+    await saveGradeWeights(
+      nextWeights,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not reset grade weights:",
+      error,
+    );
+
+    setWeightsByCourse(
+      previousWeights,
+    );
+
+    setGradeDataError(
+      "Your grade weights could not be reset.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
 }
 
 const normalizedSearch =
@@ -346,9 +582,57 @@ const overallWeightedAverage =
           weightedCourseAverages.length,
       );
 
+     if (
+  isAuthLoading ||
+  !hasLoaded
+) {
+  return (
+    <div className="space-y-6">
+      <LoadingCard heightClassName="h-72" />
+      <LoadingCard heightClassName="h-80" />
+    </div>
+  );
+}
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
+  <div className="space-y-5">
+    <div
+      aria-live="polite"
+      className="space-y-3"
+    >
+      {user?.uid ? (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+          Grades are connected to{" "}
+          <span className="font-semibold">
+            {user.email}
+          </span>
+          .
+        </div>
+      ) : (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          You are signed out. Grades are
+          being saved only on this device.
+        </div>
+      )}
+
+      {isSavingGrades && (
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          Saving grade data...
+        </p>
+      )}
+
+      {gradeDataError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+        >
+          {gradeDataError}
+        </div>
+      )}
+    </div>
+  
+
+    <div className="grid gap-8 xl:grid-cols-[380px_1fr]"></div>
       <GradeForm
         key={
           gradeToEdit?.id ?? "new-grade"

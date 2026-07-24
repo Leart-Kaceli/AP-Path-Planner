@@ -31,4 +31,7 @@ refreshUser:
   () => Promise<void>;
 
   clearAuthError: () => void;
+
+  deleteAccount:
+  () => Promise<void>;
 };

@@ -9,14 +9,27 @@ import {
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 import {
-  downloadAppBackup,
   migrateAppBackup,
   restoreAppBackup,
 } from "@/utils/backup";
 
 import type { AppBackup } from "@/types/backup";
 
+import {
+  useAuth,
+} from "@/hooks/useAuth";
+
+import {
+  createCloudAwareBackup,
+  downloadBackupObject,
+} from "@/services/exportService";
+
 export default function DataManagement() {
+
+  const {
+  user,
+} = useAuth();
+
   const fileInputRef =
     useRef<HTMLInputElement>(null);
 
@@ -28,23 +41,30 @@ export default function DataManagement() {
   const [message, setMessage] =
     useState("");
 
-  function handleExport() {
+  async function handleExport() {
     try {
-      downloadAppBackup();
+  const backup =
+    await createCloudAwareBackup(
+      user?.uid,
+    );
 
-      setMessage(
-        "Backup downloaded successfully.",
-      );
-    } catch (error) {
-      console.error(
-        "Could not export app data:",
-        error,
-      );
+  downloadBackupObject(
+    backup,
+  );
 
-      setMessage(
-        "Your backup could not be created.",
-      );
-    }
+  setMessage(
+    "Backup downloaded successfully.",
+  );
+} catch (error) {
+  console.error(
+    "Could not export app data:",
+    error,
+  );
+
+  setMessage(
+    "Your backup could not be created.",
+  );
+}
   }
 
   function openFilePicker() {

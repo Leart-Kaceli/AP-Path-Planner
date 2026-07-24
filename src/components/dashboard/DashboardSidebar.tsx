@@ -33,6 +33,10 @@ const navigationItems = [
     name: "Profile",
     href: "/profile",
   },
+  {
+  name: "Account",
+  href: "/account",
+},
 ];
 
 export default function DashboardSidebar() {

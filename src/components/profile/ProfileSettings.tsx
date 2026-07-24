@@ -9,6 +9,8 @@ import {
 import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
 import { applyTheme } from "@/utils/theme";
 
+import LoadingCard from "@/components/ui/LoadingCard";
+
 import {
   loadProfile,
   saveProfile,
@@ -278,10 +280,10 @@ async function requestNotificationPermission() {
   }
 
   if (!hasLoaded) {
-    return (
-      <div className="h-96 animate-pulse rounded-2xl bg-slate-200" />
-    );
-  }
+  return (
+    <LoadingCard heightClassName="h-96" />
+  );
+}
 
   return (
     <div className="grid gap-8 xl:grid-cols-[1fr_320px]">

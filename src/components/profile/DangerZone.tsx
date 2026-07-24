@@ -16,7 +16,31 @@ import {
   SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
 } from "@/constants/storage";
 
+import {
+  useAuth,
+} from "@/hooks/useAuth";
+
+import {
+  deleteUserCloudData,
+} from "@/services/accountDataService";
+
 export default function DangerZone() {
+
+  const [
+  accountDeleteError,
+  setAccountDeleteError,
+] = useState("");
+
+  const {
+  user,
+  deleteAccount,
+} = useAuth();
+
+const [
+  isAccountDeleteDialogOpen,
+  setIsAccountDeleteDialogOpen,
+] = useState(false);
+
   const [
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
@@ -44,6 +68,35 @@ export default function DangerZone() {
     window.location.href = "/dashboard";
   }
 
+  async function confirmDeleteAccount() {
+  if (!user?.uid) {
+    return;
+  }
+
+  setAccountDeleteError("");
+
+  try {
+    await deleteUserCloudData(
+      user.uid,
+    );
+
+    await deleteAccount();
+
+    localStorage.clear();
+
+    window.location.href = "/";
+  } catch (error) {
+    console.error(
+      "Could not delete account:",
+      error,
+    );
+
+    setAccountDeleteError(
+      "Your account could not be fully deleted. Sign out, sign back in, and try again.",
+    );
+  }
+}
+
   return (
     <section className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm dark:border-red-900 dark:bg-red-950/30">
       <h2 className="text-2xl font-bold text-red-700 dark:text-red-300">
@@ -65,6 +118,30 @@ export default function DangerZone() {
         Delete All App Data
       </button>
 
+      {accountDeleteError && (
+  <div
+    role="alert"
+    className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+  >
+    {accountDeleteError}
+  </div>
+)}
+
+      {user && (
+  <button
+    type="button"
+    onClick={() =>
+      setIsAccountDeleteDialogOpen(
+        true,
+      )
+    }
+    className="mt-4 rounded-lg border border-red-600 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-950"
+  >
+    Delete Firebase Account
+  </button>
+
+)}
+
       <ConfirmDialog
         open={isDeleteDialogOpen}
         title="Delete all app data?"
@@ -76,6 +153,24 @@ export default function DangerZone() {
           setIsDeleteDialogOpen(false)
         }
       />
+
+      <ConfirmDialog
+  open={
+    isAccountDeleteDialogOpen
+  }
+  title="Delete Firebase account?"
+  description="This will permanently remove your cloud courses, assignments, study sessions, grades, profile, and Firebase account. This cannot be undone."
+  confirmText="Delete Account"
+  destructive
+  onConfirm={
+    confirmDeleteAccount
+  }
+  onCancel={() =>
+    setIsAccountDeleteDialogOpen(
+      false,
+    )
+  }
+/>
     </section>
   );
 }

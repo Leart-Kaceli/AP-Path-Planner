@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -9,62 +10,109 @@ import {
 } from "react";
 
 import {
+  useAuth,
+} from "@/hooks/useAuth";
+
+import {
+  loadAssignments,
+} from "@/services/assignmentService";
+
+import {
+  loadStudySessions,
+} from "@/services/studySessionService";
+
+import {
+  loadProfile,
+} from "@/services/profileService";
+
+import {
+  createAppNotifications,
+} from "@/utils/notifications";
+
+import {
   APP_DATA_CHANGED_EVENT,
 } from "@/utils/appEvents";
 
 import {
-  loadNotificationData,
-} from "@/utils/notifications";
-
-import {
   DISMISSED_NOTIFICATION_STORAGE_KEY,
+  SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
   SNOOZED_NOTIFICATION_STORAGE_KEY,
 } from "@/constants/storage";
-
-import type {
-  AppNotification,
-  SnoozedNotification,
-} from "@/types/notification";
-
-import {
-  PROFILE_STORAGE_KEY,
-  SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
-} from "@/constants/storage";
-
-import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
-
-import type {
-  StudentProfile,
-} from "@/types/profile";
 
 import {
   sendBrowserNotification,
   shouldSendBrowserNotification,
 } from "@/utils/browserNotifications";
 
-function loadProfile():
-  StudentProfile {
+import type {
+  AppNotification,
+  SnoozedNotification,
+} from "@/types/notification";
+
+function loadDismissedNotificationIds() {
   try {
-    const storedProfile =
+    const storedValue =
       localStorage.getItem(
-        PROFILE_STORAGE_KEY,
+        DISMISSED_NOTIFICATION_STORAGE_KEY,
       );
 
-    const parsedProfile =
-      storedProfile
-        ? (JSON.parse(
-            storedProfile,
-          ) as Partial<StudentProfile>)
-        : {};
+    const parsedValue: unknown =
+      storedValue
+        ? JSON.parse(storedValue)
+        : [];
 
-    return {
-      ...DEFAULT_STUDENT_PROFILE,
-      ...parsedProfile,
-    };
+    return Array.isArray(parsedValue)
+      ? parsedValue.filter(
+          (
+            value,
+          ): value is string =>
+            typeof value === "string",
+        )
+      : [];
   } catch {
-    return {
-      ...DEFAULT_STUDENT_PROFILE,
-    };
+    return [];
+  }
+}
+
+function loadSnoozedNotifications() {
+  try {
+    const storedValue =
+      localStorage.getItem(
+        SNOOZED_NOTIFICATION_STORAGE_KEY,
+      );
+
+    const parsedValue: unknown =
+      storedValue
+        ? JSON.parse(storedValue)
+        : [];
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue.filter(
+      (
+        value,
+      ): value is SnoozedNotification => {
+        if (
+          typeof value !== "object" ||
+          value === null
+        ) {
+          return false;
+        }
+
+        return (
+          "notificationId" in value &&
+          typeof value.notificationId ===
+            "string" &&
+          "snoozedUntil" in value &&
+          typeof value.snoozedUntil ===
+            "string"
+        );
+      },
+    );
+  } catch {
+    return [];
   }
 }
 
@@ -98,11 +146,17 @@ type NotificationContextValue = {
   dismissedNotificationIds: string[];
   snoozedNotifications:
     SnoozedNotification[];
-  refreshNotifications: () => void;
+
+  refreshNotifications:
+    () => Promise<void>;
+
   dismissNotification: (
     notificationId: string,
   ) => void;
-  dismissAllNotifications: () => void;
+
+  dismissAllNotifications:
+    () => void;
+
   snoozeNotification: (
     notificationId: string,
     snoozedUntil: Date,
@@ -121,6 +175,14 @@ type NotificationProviderProps = {
 export default function NotificationProvider({
   children,
 }: NotificationProviderProps) {
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuth();
+
+  const userId =
+  user?.uid;
+
   const [
     notifications,
     setNotifications,
@@ -139,128 +201,228 @@ export default function NotificationProvider({
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-  function refreshNotifications() {
-    const loadedData =
-      loadNotificationData();
+  const refreshNotifications =
+    useCallback(async () => {
+      if (isAuthLoading) {
+        return;
+      }
 
-    const profile = loadProfile();
+      try {
+        const [
+          assignments,
+          studySessions,
+          profile,
+        ] = await Promise.all([
+          loadAssignments(
+             userId,
+          ),
 
-const storedSentIds =
-  loadSentBrowserNotificationIds();
+          loadStudySessions(
+            userId,
+          ),
 
-const knownNotificationIds =
-  new Set([
-    ...loadedData.notifications.map(
-      (notification) =>
-        notification.id,
-    ),
-    ...loadedData
-      .dismissedNotificationIds,
-    ...loadedData.snoozedNotifications.map(
-      (item) =>
-        item.notificationId,
-    ),
-  ]);
+          loadProfile(
+            userId,
+          ),
+        ]);
 
-const cleanedSentIds =
-  storedSentIds.filter(
-    (notificationId) =>
-      knownNotificationIds.has(
-        notificationId,
-      ),
-  );
+        const loadedDismissedIds =
+          loadDismissedNotificationIds();
 
-const nextSentIds =
-  new Set(cleanedSentIds);
+        const loadedSnoozedNotifications =
+          loadSnoozedNotifications();
 
-loadedData.notifications.forEach(
-  (notification) => {
-    if (
-      nextSentIds.has(
-        notification.id,
-      )
-    ) {
+        const currentTime =
+          Date.now();
+
+        const activeSnoozedNotifications =
+          loadedSnoozedNotifications.filter(
+            (item) =>
+              new Date(
+                item.snoozedUntil,
+              ).getTime() >
+              currentTime,
+          );
+
+        const generatedNotifications =
+          createAppNotifications(
+            assignments,
+            studySessions,
+            profile,
+          );
+
+        const activeSnoozedIds =
+          new Set(
+            activeSnoozedNotifications.map(
+              (item) =>
+                item.notificationId,
+            ),
+          );
+
+        const dismissedIds =
+          new Set(
+            loadedDismissedIds,
+          );
+
+        const visibleNotifications =
+          generatedNotifications.filter(
+            (notification) =>
+              !dismissedIds.has(
+                notification.id,
+              ) &&
+              !activeSnoozedIds.has(
+                notification.id,
+              ),
+          );
+
+        const storedSentIds =
+          loadSentBrowserNotificationIds();
+
+        const knownNotificationIds =
+          new Set([
+            ...generatedNotifications.map(
+              (notification) =>
+                notification.id,
+            ),
+
+            ...loadedDismissedIds,
+
+            ...activeSnoozedNotifications.map(
+              (item) =>
+                item.notificationId,
+            ),
+          ]);
+
+        const cleanedSentIds =
+          storedSentIds.filter(
+            (notificationId) =>
+              knownNotificationIds.has(
+                notificationId,
+              ),
+          );
+
+        const nextSentIds =
+          new Set(cleanedSentIds);
+
+        visibleNotifications.forEach(
+          (notification) => {
+            if (
+              nextSentIds.has(
+                notification.id,
+              )
+            ) {
+              return;
+            }
+
+            if (
+              !shouldSendBrowserNotification(
+                notification,
+                profile,
+              )
+            ) {
+              return;
+            }
+
+            sendBrowserNotification(
+              notification,
+            );
+
+            nextSentIds.add(
+              notification.id,
+            );
+          },
+        );
+
+        localStorage.setItem(
+          SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
+          JSON.stringify(
+            Array.from(
+              nextSentIds,
+            ),
+          ),
+        );
+
+        localStorage.setItem(
+          SNOOZED_NOTIFICATION_STORAGE_KEY,
+          JSON.stringify(
+            activeSnoozedNotifications,
+          ),
+        );
+
+        setNotifications(
+          visibleNotifications,
+        );
+
+        setDismissedNotificationIds(
+          loadedDismissedIds,
+        );
+
+        setSnoozedNotifications(
+          activeSnoozedNotifications,
+        );
+      } catch (error) {
+        console.error(
+          "Could not refresh notifications:",
+          error,
+        );
+      }
+    }, [
+  isAuthLoading,
+  userId,
+]);
+
+  useEffect(() => {
+    if (isAuthLoading) {
       return;
     }
 
-    if (
-      !shouldSendBrowserNotification(
-        notification,
-        profile,
-      )
-    ) {
-      return;
+    let isCancelled = false;
+
+    async function initializeNotifications() {
+      await refreshNotifications();
+
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
     }
 
-    sendBrowserNotification(
-      notification,
-    );
+    void initializeNotifications();
 
-    nextSentIds.add(
-      notification.id,
-    );
-  },
-);
+    function handleAppDataChanged() {
+      void refreshNotifications();
+    }
 
-localStorage.setItem(
-  SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
-  JSON.stringify(
-    Array.from(nextSentIds),
-  ),
-);
+    function handleStorageChange() {
+      void refreshNotifications();
+    }
 
-    setNotifications(
-      loadedData.notifications,
-    );
-
-    setDismissedNotificationIds(
-      loadedData
-        .dismissedNotificationIds,
-    );
-
-    setSnoozedNotifications(
-      loadedData.snoozedNotifications,
-    );
-  }
-
- useEffect(() => {
-    
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  refreshNotifications();
-
-
-  setHasLoaded(true);
-
-  function handleAppDataChanged() {
-    refreshNotifications();
-  }
-
-  function handleStorageChange() {
-    refreshNotifications();
-  }
-
-  window.addEventListener(
-    APP_DATA_CHANGED_EVENT,
-    handleAppDataChanged,
-  );
-
-  window.addEventListener(
-    "storage",
-    handleStorageChange,
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       APP_DATA_CHANGED_EVENT,
       handleAppDataChanged,
     );
 
-    window.removeEventListener(
+    window.addEventListener(
       "storage",
       handleStorageChange,
     );
-  };
-}, []);
+
+    return () => {
+      isCancelled = true;
+
+      window.removeEventListener(
+        APP_DATA_CHANGED_EVENT,
+        handleAppDataChanged,
+      );
+
+      window.removeEventListener(
+        "storage",
+        handleStorageChange,
+      );
+    };
+  }, [
+    isAuthLoading,
+    refreshNotifications,
+  ]);
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -325,6 +487,7 @@ localStorage.setItem(
         Array.from(
           new Set([
             ...currentIds,
+
             ...notifications.map(
               (notification) =>
                 notification.id,
@@ -347,6 +510,7 @@ localStorage.setItem(
             item.notificationId !==
             notificationId,
         ),
+
         {
           notificationId,
           snoozedUntil:
@@ -384,7 +548,9 @@ localStorage.setItem(
 
 export function useNotifications() {
   const context =
-    useContext(NotificationContext);
+    useContext(
+      NotificationContext,
+    );
 
   if (!context) {
     throw new Error(
