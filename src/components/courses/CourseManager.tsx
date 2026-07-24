@@ -4,12 +4,24 @@ import { useEffect, useState } from "react";
 import CourseForm from "@/components/courses/CourseForm";
 import ManagedCourseCard from "@/components/courses/ManagedCourseCard";
 import type { Course } from "@/types/course";
-import {
-  ASSIGNMENT_STORAGE_KEY,
-  COURSE_STORAGE_KEY,
-} from "@/constants/storage";
 
-import type { Assignment } from "@/types/assignment";
+import {
+  loadCourses,
+  saveCourses,
+} from "@/services/courseService";
+
+import {
+  loadAssignments,
+  saveAssignments,
+} from "@/services/assignmentService";
+
+import {
+  useAuth,
+} from "@/hooks/useAuth";
+
+import {
+  notifyAppDataChanged,
+} from "@/utils/appEvents";
 
 const initialCourses: Course[] = [
   {
@@ -36,44 +48,128 @@ const initialCourses: Course[] = [
 ];
 
 export default function CourseManager() {
+
+  const [
+  isSavingCourses,
+  setIsSavingCourses,
+] = useState(false);
+
+const [
+  courseDataError,
+  setCourseDataError,
+] = useState<string | null>(
+  null,
+);
+
+  const {
+  user,
+  isLoading: isAuthLoading,
+} = useAuth();
  const [courses, setCourses] = useState<Course[]>(initialCourses);
 const [hasLoadedCourses, setHasLoadedCourses] = useState(false);
 const [courseToEdit, setCourseToEdit] =
   useState<Course | null>(null);
 
 useEffect(() => {
-  try {
-    const storedCourses = localStorage.getItem(COURSE_STORAGE_KEY);
-
-    if (storedCourses) {
-      const parsedCourses = JSON.parse(storedCourses) as Course[];
-
-      if (Array.isArray(parsedCourses)) {
-         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCourses(parsedCourses);
-      }
-    }
-  } catch (error) {
-    console.error("Could not load saved courses:", error);
-  } finally {
-    setHasLoadedCourses(true);
-  }
-}, []);
-
-useEffect(() => {
-  if (!hasLoadedCourses) {
+  if (isAuthLoading) {
     return;
   }
 
-  try {
-    localStorage.setItem(
-      COURSE_STORAGE_KEY,
-      JSON.stringify(courses),
-    );
-  } catch (error) {
-    console.error("Could not save courses:", error);
+  let isCancelled = false;
+
+  async function loadCourseData() {
+    setHasLoadedCourses(false);
+    setCourseDataError(null);
+
+    try {
+      const loadedCourses =
+        await loadCourses(
+          user?.uid,
+        );
+
+      if (!isCancelled) {
+        setCourses(
+          loadedCourses,
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Could not load courses:",
+        error,
+      );
+
+      if (!isCancelled) {
+        setCourseDataError(
+          "Your courses could not be loaded.",
+        );
+      }
+    } finally {
+      if (!isCancelled) {
+        setHasLoadedCourses(true);
+      }
+    }
   }
-}, [courses, hasLoadedCourses]);
+
+  void loadCourseData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
+
+useEffect(() => {
+  if (
+    !hasLoadedCourses ||
+    isAuthLoading
+  ) {
+    return;
+  }
+
+  let isCancelled = false;
+
+  async function persistCourses() {
+    setIsSavingCourses(true);
+    setCourseDataError(null);
+
+    try {
+      await saveCourses(
+        courses,
+        user?.uid,
+      );
+
+      notifyAppDataChanged();
+    } catch (error) {
+      console.error(
+        "Could not save courses:",
+        error,
+      );
+
+      if (!isCancelled) {
+        setCourseDataError(
+          "Your courses could not be saved.",
+        );
+      }
+    } finally {
+      if (!isCancelled) {
+        setIsSavingCourses(false);
+      }
+    }
+  }
+
+  void persistCourses();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  courses,
+  hasLoadedCourses,
+  isAuthLoading,
+  user?.uid,
+]);
 
   function saveCourse(course: Course) {
   setCourses((currentCourses) => {
@@ -108,7 +204,7 @@ function cancelEditingCourse() {
   setCourseToEdit(null);
 }
 
- function deleteCourse(courseId: string) {
+ async function deleteCourse(courseId: string) {
   const courseToDelete = courses.find(
     (course) => course.id === courseId,
   );
@@ -126,35 +222,34 @@ function cancelEditingCourse() {
   }
 
   try {
-    const storedAssignments = localStorage.getItem(
-      ASSIGNMENT_STORAGE_KEY,
+  const currentAssignments =
+    await loadAssignments(
+      user?.uid,
     );
 
-    if (storedAssignments) {
-      const parsedAssignments = JSON.parse(
-        storedAssignments,
-      ) as Assignment[];
-
-      if (Array.isArray(parsedAssignments)) {
-        const remainingAssignments =
-          parsedAssignments.filter(
-            (assignment) =>
-              assignment.course !==
-              courseToDelete.name,
-          );
-
-        localStorage.setItem(
-          ASSIGNMENT_STORAGE_KEY,
-          JSON.stringify(remainingAssignments),
-        );
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Could not remove connected assignments:",
-      error,
+  const remainingAssignments =
+    currentAssignments.filter(
+      (assignment) =>
+        assignment.course !==
+        courseToDelete.name,
     );
-  }
+
+  await saveAssignments(
+    remainingAssignments,
+    user?.uid,
+  );
+} catch (error) {
+  console.error(
+    "Could not remove connected assignments:",
+    error,
+  );
+
+  setCourseDataError(
+    "The connected assignments could not be removed.",
+  );
+
+  return;
+}
 
   setCourses((currentCourses) =>
     currentCourses.filter(
@@ -167,7 +262,7 @@ function cancelEditingCourse() {
   }
 }
 
-function clearAllCourses() {
+async function clearAllCourses() {
   if (courses.length === 0) {
     return;
   }
@@ -181,40 +276,46 @@ function clearAllCourses() {
   }
 
   try {
-    const storedAssignments = localStorage.getItem(
-      ASSIGNMENT_STORAGE_KEY,
+    const currentAssignments =
+      await loadAssignments(
+        user?.uid,
+      );
+
+    const courseNames =
+      new Set(
+        courses.map(
+          (course) =>
+            course.name,
+        ),
+      );
+
+    const remainingAssignments =
+      currentAssignments.filter(
+        (assignment) =>
+          !courseNames.has(
+            assignment.course,
+          ),
+      );
+
+    await saveAssignments(
+      remainingAssignments,
+      user?.uid,
     );
-
-    if (storedAssignments) {
-      const parsedAssignments = JSON.parse(
-        storedAssignments,
-      ) as Assignment[];
-
-      if (Array.isArray(parsedAssignments)) {
-        const courseNames = new Set(
-          courses.map((course) => course.name),
-        );
-
-        const remainingAssignments =
-          parsedAssignments.filter(
-            (assignment) =>
-              !courseNames.has(assignment.course),
-          );
-
-        localStorage.setItem(
-          ASSIGNMENT_STORAGE_KEY,
-          JSON.stringify(remainingAssignments),
-        );
-      }
-    }
   } catch (error) {
     console.error(
       "Could not remove connected assignments:",
       error,
     );
+
+    setCourseDataError(
+      "Connected assignments could not be removed.",
+    );
+
+    return;
   }
 
   setCourses([]);
+
   setCourseToEdit(null);
 }
 
@@ -233,7 +334,22 @@ function clearAllCourses() {
   ).length;
 
   return (
+    
     <div className="grid gap-8 xl:grid-cols-[360px_1fr]">
+      {isSavingCourses && (
+  <p className="mb-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+    Saving courses...
+  </p>
+)}
+
+{courseDataError && (
+  <div
+    role="alert"
+    className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+  >
+    {courseDataError}
+  </div>
+)}
      <CourseForm
   key={courseToEdit?.id ?? "new-course"}
   courseToEdit={courseToEdit}

@@ -1613,3 +1613,115 @@ Learned how to:
 - Improve individual Firestore create, update, and delete operations
 - Add authentication-aware dashboard loading
 - Add Firestore error retry controls
+
+# Day 22 Completed
+
+## Study Session Firestore Migration
+
+- Added Firestore study-session storage
+- Added authenticated per-user study-session collections
+- Preserved localStorage for signed-out users
+- Added first-sign-in study-session migration
+- Added cloud loading and saving states
+- Added study-session data error handling
+
+## Course Firestore Migration
+
+- Added Firestore course storage
+- Added authenticated per-user course collections
+- Preserved local courses for signed-out users
+- Added first-sign-in course migration
+- Updated connected-assignment deletion for cloud users
+
+## Firestore User Profiles
+
+- Created per-user Firestore profile documents
+- Stored profile preferences in Firestore
+- Preserved a local profile cache for immediate theme initialization
+- Loaded authenticated profile settings from Firestore
+- Synchronized profile identity with Firebase Authentication
+
+## Authentication Improvements
+
+- Added password reset email support
+- Added email verification email support
+- Added email verification status
+- Added verification-state refresh
+- Improved account status UI
+
+## Firestore Operations
+
+- Added individual assignment create/update/delete service helpers
+- Added individual study-session create/update/delete helpers
+- Added individual course create/update/delete helpers
+- Retained bulk synchronization for migration and fallback workflows
+
+## Dashboard
+
+- Made Dashboard authentication-aware
+- Loaded assignments from the active data service
+- Loaded courses from the active data service
+- Loaded study sessions from the active data service
+- Loaded profiles from the active data service
+- Preserved local grade loading temporarily
+- Removed duplicate Dashboard data state update
+
+## Error Recovery
+
+- Added reusable DataErrorState component
+- Added manual retry support
+- Added cloud loading and saving error feedback
+- Improved async cancellation handling
+
+## Firestore Security
+
+- Expanded rules to user profile documents
+- Added user-owned study-session rules
+- Added user-owned course rules
+- Preserved user-owned assignment rules
+- Restricted each user's data to their Firebase UID
+
+## New Files
+
+- src/services/firestoreStudySessionService.ts
+- src/services/firestoreCourseService.ts
+- src/services/courseService.ts
+- src/services/profileService.ts
+- src/components/ui/DataErrorState.tsx
+
+## Updated Files
+
+- src/components/planner/StudyPlannerManager.tsx
+- src/components/courses/CourseManager.tsx
+- src/components/profile/ProfileSettings.tsx
+- src/components/auth/AuthProvider.tsx
+- src/components/auth/AuthPanel.tsx
+- src/components/assignments/AssignmentManager.tsx
+- src/components/dashboard/DashboardOverview.tsx
+- src/services/studySessionService.ts
+- src/services/assignmentService.ts
+- src/types/auth.ts
+- PROJECT_NOTES.md
+
+## Current Limitations
+
+- Grades remain in localStorage
+- Grade weights remain in localStorage
+- Notifications remain primarily local
+- Signed-out data remains device-specific
+- Bulk service methods still exist for migration workflows
+- Firebase email delivery depends on Firebase Auth email templates
+- There is not yet a dedicated auth page
+- Offline Firestore behavior has not been customized
+
+## Day 23 Goals
+
+- Move grades and grade weights to Firestore
+- Move notification preferences to cloud profile data
+- Add dedicated sign-in and account pages
+- Improve Firestore individual-write architecture
+- Add optimistic updates with rollback
+- Add account deletion workflow
+- Add profile and data export for cloud users
+- Improve loading skeleton consistency
+- Polish dark-mode styling across older components

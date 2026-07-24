@@ -7,8 +7,12 @@ import {
 } from "react";
 
 import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
-import { PROFILE_STORAGE_KEY } from "@/constants/storage";
 import { applyTheme } from "@/utils/theme";
+
+import {
+  loadProfile,
+  saveProfile,
+} from "@/services/profileService";
 
 import type {
   ReminderTiming,
@@ -36,6 +40,7 @@ export default function ProfileSettings() {
 
   const {
   user,
+  isLoading: isAuthLoading,
 } = useAuth();
 
   const [profile, setProfile] =
@@ -56,51 +61,75 @@ export default function ProfileSettings() {
   useState<BrowserNotificationPermission>(
     "unsupported",
   );
+  
   useEffect(() => {
+  if (isAuthLoading) {
+    return;
+  }
+
+  let isCancelled = false;
+
+  async function loadProfileData() {
     try {
-        if ("Notification" in window) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (
+        "Notification" in window
+      ) {
         setNotificationPermission(
           Notification.permission,
         );
       }
-      const storedProfile =
-        localStorage.getItem(
-          PROFILE_STORAGE_KEY,
+
+      const loadedProfile =
+        await loadProfile(
+          user?.uid,
         );
-        
 
-      if (storedProfile) {
-        const parsedProfile = JSON.parse(
-          storedProfile,
-        ) as Partial<StudentProfile>;
-
-        const loadedProfile: StudentProfile = {
-  ...DEFAULT_STUDENT_PROFILE,
-  ...parsedProfile,
-  name:
-    user?.displayName ??
-    parsedProfile.name ??
-    DEFAULT_STUDENT_PROFILE.name,
-};
-
-        setProfile(loadedProfile);
-        applyTheme(loadedProfile.theme);
-      } else {
-        applyTheme(
-          DEFAULT_STUDENT_PROFILE.theme,
-        );
+      if (isCancelled) {
+        return;
       }
+
+      const profileWithIdentity:
+        StudentProfile = {
+          ...loadedProfile,
+          name:
+            user?.displayName ??
+            loadedProfile.name,
+        };
+
+      setProfile(
+        profileWithIdentity,
+      );
+
+      applyTheme(
+        profileWithIdentity.theme,
+      );
     } catch (error) {
       console.error(
         "Could not load profile settings:",
         error,
       );
+
+      if (!isCancelled) {
+        setMessage(
+          "Your profile could not be loaded.",
+        );
+      }
     } finally {
-      setHasLoaded(true);
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
     }
-  }, [
+  }
+
+  void loadProfileData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
   user?.displayName,
+  user?.uid,
 ]);
 
   function updateProfile<
@@ -201,10 +230,11 @@ async function requestNotificationPermission() {
     },
   );
 }
-      localStorage.setItem(
-        PROFILE_STORAGE_KEY,
-        JSON.stringify(savedProfile),
-      );
+      await saveProfile(
+  savedProfile,
+  user?.uid,
+);
+
       notifyAppDataChanged();
       setProfile(savedProfile);
       applyTheme(savedProfile.theme);
@@ -221,7 +251,7 @@ async function requestNotificationPermission() {
     }
   }
 
-  function resetProfile() {
+  async function resetProfile() {
     const shouldReset = window.confirm(
       "Reset all profile settings to their defaults?",
     );
@@ -232,12 +262,11 @@ async function requestNotificationPermission() {
 
     setProfile(DEFAULT_STUDENT_PROFILE);
 
-    localStorage.setItem(
-      PROFILE_STORAGE_KEY,
-      JSON.stringify(
-        DEFAULT_STUDENT_PROFILE,
-      ),
-    );
+    await saveProfile(
+  DEFAULT_STUDENT_PROFILE,
+  user?.uid,
+);
+
     notifyAppDataChanged();
     applyTheme(
       DEFAULT_STUDENT_PROFILE.theme,

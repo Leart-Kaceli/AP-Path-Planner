@@ -13,6 +13,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
+  sendEmailVerification,
   type User,
 } from "firebase/auth";
 
@@ -217,6 +219,78 @@ export default function AuthProvider({
     }
   }
 
+  async function sendPasswordReset(
+  email: string,
+) {
+  setError(null);
+
+  try {
+    await sendPasswordResetEmail(
+      firebaseAuth,
+      email.trim(),
+    );
+  } catch (resetError) {
+    console.error(
+      "Could not send password reset email:",
+      resetError,
+    );
+
+    const message =
+      getAuthErrorMessage(
+        resetError,
+      );
+
+    setError(message);
+
+    throw resetError;
+  }
+}
+
+async function sendVerificationEmail() {
+  setError(null);
+
+  const currentUser =
+    firebaseAuth.currentUser;
+
+  if (!currentUser) {
+    throw new Error(
+      "No authenticated user.",
+    );
+  }
+
+  try {
+    await sendEmailVerification(
+      currentUser,
+    );
+  } catch (verificationError) {
+    console.error(
+      "Could not send verification email:",
+      verificationError,
+    );
+
+    setError(
+      "The verification email could not be sent.",
+    );
+
+    throw verificationError;
+  }
+}
+
+async function refreshUser() {
+  const currentUser =
+    firebaseAuth.currentUser;
+
+  if (!currentUser) {
+    return;
+  }
+
+  await currentUser.reload();
+
+  setUser(
+    firebaseAuth.currentUser,
+  );
+}
+
   function clearAuthError() {
     setError(null);
   }
@@ -224,14 +298,17 @@ export default function AuthProvider({
   return (
     <AuthContext.Provider
       value={{
-        user,
-        isLoading,
-        error,
-        createAccount,
-        signIn,
-        signOutUser,
-        clearAuthError,
-      }}
+  user,
+  isLoading,
+  error,
+  createAccount,
+  signIn,
+  signOutUser,
+  sendPasswordReset,
+  clearAuthError,
+  sendVerificationEmail,
+  refreshUser,
+}}
     >
       {children}
     </AuthContext.Provider>

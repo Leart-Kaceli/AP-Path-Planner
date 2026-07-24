@@ -20,5 +20,15 @@ export type AuthContextValue = {
 
   signOutUser: () => Promise<void>;
 
+  sendPasswordReset: (
+  email: string,
+) => Promise<void>;
+
+sendVerificationEmail:
+  () => Promise<void>;
+
+refreshUser:
+  () => Promise<void>;
+
   clearAuthError: () => void;
 };

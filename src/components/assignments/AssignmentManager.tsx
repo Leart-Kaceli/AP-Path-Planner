@@ -12,6 +12,7 @@ import AssignmentFilters, {
 
 import AssignmentForm from "@/components/assignments/AssignmentForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import DataErrorState from "@/components/ui/DataErrorState";
 
 import ManagedAssignmentCard from "@/components/assignments/ManagedAssignmentCard";
 
@@ -77,6 +78,11 @@ const initialAssignments: Assignment[] = [
 ];
 
 export default function AssignmentManager() {
+
+  const [
+  assignmentReloadKey,
+  setAssignmentReloadKey,
+] = useState(0);
 
   const {
   user,
@@ -232,6 +238,7 @@ const [
     isCancelled = true;
   };
 }, [
+  assignmentReloadKey,
   isAuthLoading,
   user?.uid,
   user,
@@ -294,39 +301,7 @@ const [
   user,
 ]);
 
-useEffect(() => {
-  if (!hasLoadedAssignments) {
-    return;
-  }
 
-  let isCancelled = false;
-
-  async function persistAssignments() {
-    try {
-      await saveAssignments(
-        assignments,
-      );
-
-      if (!isCancelled) {
-        notifyAppDataChanged();
-      }
-    } catch (error) {
-      console.error(
-        "Could not save assignments:",
-        error,
-      );
-    }
-  }
-
-  void persistAssignments();
-
-  return () => {
-    isCancelled = true;
-  };
-}, [
-  assignments,
-  hasLoadedAssignments,
-]);
 
 useEffect(() => {
   if (
@@ -347,6 +322,7 @@ useEffect(() => {
   pathname,
   requestedCreateDate,
   router,
+  user,
 ]);
 
   function saveAssignment(
@@ -603,13 +579,16 @@ function confirmClearCompletedAssignments() {
   )}
 
   {assignmentDataError && (
-    <div
-      role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-    >
-      {assignmentDataError}
-    </div>
-  )}
+  <DataErrorState
+    message={assignmentDataError}
+    onRetry={() =>
+      setAssignmentReloadKey(
+        (current) =>
+          current + 1,
+      )
+    }
+  />
+)}
 </div>
       <AssignmentForm
   key={

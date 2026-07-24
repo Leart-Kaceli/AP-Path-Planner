@@ -14,17 +14,31 @@ import StatCard from "@/components/dashboard/StatCard";
 import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
 import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
-import { normalizeStudySession } from "@/utils/studySessions";
-import { normalizeAssignment } from "@/utils/assignments";
 import DashboardReminderSummary from "@/components/dashboard/DashboardReminderSummary";
 
 import {
-  ASSIGNMENT_STORAGE_KEY,
-  COURSE_STORAGE_KEY,
+  useAuth,
+} from "@/hooks/useAuth";
+
+import {
+  loadAssignments,
+} from "@/services/assignmentService";
+
+import {
+  loadCourses,
+} from "@/services/courseService";
+
+import {
+  loadStudySessions,
+} from "@/services/studySessionService";
+
+import {
+  loadProfile,
+} from "@/services/profileService";
+
+import {
   GRADE_STORAGE_KEY,
   GRADE_WEIGHT_STORAGE_KEY,
-  PROFILE_STORAGE_KEY,
-  STUDY_SESSION_STORAGE_KEY,
 } from "@/constants/storage";
 
 import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
@@ -72,6 +86,11 @@ const emptyDashboardData: LoadedDashboardData = {
 export default function DashboardOverview() {
 
   const {
+  user,
+  isLoading: isAuthLoading,
+} = useAuth();
+
+  const {
   notifications:
     dashboardNotifications,
 } = useNotifications();
@@ -84,157 +103,118 @@ const [dashboardData, setDashboardData] =
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-   
+   useEffect(() => {
+  if (isAuthLoading) {
+    return;
+  }
 
-  useEffect(() => {
+  let isCancelled = false;
+
+  async function loadDashboardData() {
     try {
-      const storedCourses =
+      const [
+        courses,
+        assignments,
+        studySessions,
+        profile,
+      ] = await Promise.all([
+        loadCourses(
+          user?.uid,
+        ),
+        loadAssignments(
+          user?.uid,
+        ),
+        loadStudySessions(
+          user?.uid,
+        ),
+        loadProfile(
+          user?.uid,
+        ),
+      ]);
+
+      const storedGrades =
         localStorage.getItem(
-          COURSE_STORAGE_KEY,
+          GRADE_STORAGE_KEY,
         );
 
-      const storedAssignments =
+      const storedGradeWeights =
         localStorage.getItem(
-          ASSIGNMENT_STORAGE_KEY,
+          GRADE_WEIGHT_STORAGE_KEY,
         );
 
-        const storedStudySessions =
-  localStorage.getItem(
-    STUDY_SESSION_STORAGE_KEY,
-  );
-
-    const storedGrades =
-  localStorage.getItem(
-    GRADE_STORAGE_KEY,
-  );
-
-const storedGradeWeights =
-  localStorage.getItem(
-    GRADE_WEIGHT_STORAGE_KEY,
-  );
-  
-
-
-  const storedProfile =
-  localStorage.getItem(
-    PROFILE_STORAGE_KEY,
-  );
-
-      const courses = storedCourses
-        ? (JSON.parse(
-            storedCourses,
-          ) as Course[])
-        : [];
-
-      const assignments =
-        storedAssignments
-          ? (JSON.parse(
-              storedAssignments,
-            ) as Assignment[])
+      const parsedGrades =
+        storedGrades
+          ? JSON.parse(
+              storedGrades,
+            ) as GradeEntry[]
           : [];
 
-          const studySessions =
-  storedStudySessions
-    ? (JSON.parse(
-        storedStudySessions,
-      ) as StudySession[])
-    : [];
+      const parsedWeights =
+        storedGradeWeights
+          ? JSON.parse(
+              storedGradeWeights,
+            ) as CourseGradeWeights
+          : {};
 
-    const grades = storedGrades
-  ? (JSON.parse(
-      storedGrades,
-    ) as GradeEntry[])
-  : [];
+      if (isCancelled) {
+        return;
+      }
 
-const weightsByCourse =
-  storedGradeWeights
-    ? (JSON.parse(
-        storedGradeWeights,
-      ) as CourseGradeWeights)
-    : {};
-
-const safeStudySessions =
-  Array.isArray(studySessions)
-    ? studySessions.map(
-        normalizeStudySession,
-      )
-    : [];
-
-      const safeCourses =
-        Array.isArray(courses)
-          ? courses
-          : [];
-
-      const safeAssignments =
-  Array.isArray(assignments)
-    ? assignments.map(
-        normalizeAssignment,
-      )
-    : [];
-
-        const safeGrades =
-  Array.isArray(grades)
-    ? grades
-    : [];
-
-const safeWeightsByCourse =
-  weightsByCourse &&
-  typeof weightsByCourse === "object" &&
-  !Array.isArray(weightsByCourse)
-    ? weightsByCourse
-    : {};
-
-    const parsedProfile = storedProfile
-  ? (JSON.parse(
-      storedProfile,
-    ) as Partial<StudentProfile>)
-  : {};
-
-const safeProfile: StudentProfile = {
-  ...DEFAULT_STUDENT_PROFILE,
-  ...parsedProfile,
-};
-
-
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-     setDashboardData({
-  courses: safeCourses,
-  assignments: safeAssignments,
-  studySessions: safeStudySessions,
-  grades: safeGrades,
-  weightsByCourse: safeWeightsByCourse,
-  profile: safeProfile,
-});
-
-setDashboardData({
-  courses: safeCourses,
-  assignments: safeAssignments,
-  studySessions: safeStudySessions,
-  grades: safeGrades,
-  weightsByCourse: safeWeightsByCourse,
-  profile: safeProfile,
-});
-
-setHasLoaded(true);
-
-
+      setDashboardData({
+        courses,
+        assignments,
+        studySessions,
+        grades:
+          Array.isArray(
+            parsedGrades,
+          )
+            ? parsedGrades
+            : [],
+        weightsByCourse:
+          parsedWeights &&
+          typeof parsedWeights ===
+            "object" &&
+          !Array.isArray(
+            parsedWeights,
+          )
+            ? parsedWeights
+            : {},
+        profile,
+      });
     } catch (error) {
       console.error(
         "Could not load dashboard data:",
         error,
       );
 
-      setDashboardData(
-        emptyDashboardData,
-      );
+      if (!isCancelled) {
+        setDashboardData(
+          emptyDashboardData,
+        );
+      }
     } finally {
-      setHasLoaded(true);
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
     }
-  }, []);
-
-  if (!hasLoaded) {
-    return <DashboardLoading />;
   }
+
+  void loadDashboardData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
+
+ if (
+  isAuthLoading ||
+  !hasLoaded
+) {
+  return <DashboardLoading />;
+}
 
 const {
   courses,

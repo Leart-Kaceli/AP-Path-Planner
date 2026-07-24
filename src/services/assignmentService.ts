@@ -8,7 +8,9 @@ import {
 } from "@/services/localStorageService";
 
 import {
+  deleteFirestoreAssignment,
   firestoreAssignmentService,
+  saveFirestoreAssignment,
 } from "@/services/firestoreAssignmentService";
 
 import {
@@ -88,5 +90,33 @@ export async function saveAssignments(
   await service.saveAll(
     assignments,
     userId,
+  );
+}
+
+export async function saveOneAssignment(
+  assignment: Assignment,
+  userId?: string | null,
+) {
+  if (!userId) {
+    return;
+  }
+
+  await saveFirestoreAssignment(
+    userId,
+    assignment,
+  );
+}
+
+export async function deleteOneAssignment(
+  assignmentId: string,
+  userId?: string | null,
+) {
+  if (!userId) {
+    return;
+  }
+
+  await deleteFirestoreAssignment(
+    userId,
+    assignmentId,
   );
 }

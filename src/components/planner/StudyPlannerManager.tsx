@@ -7,6 +7,10 @@ import {
 } from "react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
+import {
+  useAuth,
+} from "@/hooks/useAuth";
+
 import StudyPlannerFilters, {
   type StudyStatusFilter,
 } from "@/components/planner/StudyPlannerFilters";
@@ -41,6 +45,11 @@ const initialSessions: StudySession[] = [];
 
 
 export default function StudyPlannerManager() {
+
+  const {
+  user,
+  isLoading: isAuthLoading,
+} = useAuth();
 
   const router = useRouter();
 const pathname = usePathname();
@@ -81,6 +90,18 @@ const [
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
+    const [
+  isSavingSessions,
+  setIsSavingSessions,
+] = useState(false);
+
+const [
+  studySessionDataError,
+  setStudySessionDataError,
+] = useState<string | null>(
+  null,
+);
+
   const [courseFilter, setCourseFilter] =
     useState("All");
 
@@ -91,30 +112,50 @@ const [
     useState("");
 
   useEffect(() => {
-    try {
-     const storedSessions =
-  loadStudySessions();
+  if (isAuthLoading) {
+    return;
+  }
 
-if (
-  storedSessions.length > 0
-) {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  setSessions(storedSessions);
-}
+  let isCancelled = false;
+
+  async function loadPlannerData() {
+    setHasLoaded(false);
+    setStudySessionDataError(null);
+
+    try {
+      const storedSessions =
+        await loadStudySessions(
+          user?.uid,
+        );
+
+      if (isCancelled) {
+        return;
+      }
+
+      setSessions(
+        storedSessions,
+      );
+
       const storedCourses =
         localStorage.getItem(
           COURSE_STORAGE_KEY,
         );
 
       if (storedCourses) {
-        const parsedCourses = JSON.parse(
-          storedCourses,
-        ) as Course[];
+        const parsedCourses =
+          JSON.parse(
+            storedCourses,
+          ) as Course[];
 
-        if (Array.isArray(parsedCourses)) {
+        if (
+          Array.isArray(
+            parsedCourses,
+          )
+        ) {
           setCourseNames(
             parsedCourses.map(
-              (course) => course.name,
+              (course) =>
+                course.name,
             ),
           );
         }
@@ -124,26 +165,84 @@ if (
         "Could not load study planner data:",
         error,
       );
+
+      if (!isCancelled) {
+        setStudySessionDataError(
+          user?.uid
+            ? "Your cloud study sessions could not be loaded."
+            : "Your saved study sessions could not be loaded.",
+        );
+      }
     } finally {
-      setHasLoaded(true);
+      if (!isCancelled) {
+        setHasLoaded(true);
+      }
     }
-  }, []);
+  }
+
+  void loadPlannerData();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
 
   useEffect(() => {
-    if (!hasLoaded) {
-      return;
-    }
+  if (
+    !hasLoaded ||
+    isAuthLoading
+  ) {
+    return;
+  }
+
+  let isCancelled = false;
+
+  async function persistSessions() {
+    setIsSavingSessions(true);
+    setStudySessionDataError(null);
 
     try {
-      saveStudySessions(sessions);
+      await saveStudySessions(
+        sessions,
+        user?.uid,
+      );
+
       notifyAppDataChanged();
     } catch (error) {
       console.error(
         "Could not save study sessions:",
         error,
       );
+
+      if (!isCancelled) {
+        setStudySessionDataError(
+          user?.uid
+            ? "Your study sessions could not be saved to the cloud."
+            : "Your study sessions could not be saved on this device.",
+        );
+      }
+    } finally {
+      if (!isCancelled) {
+        setIsSavingSessions(false);
+      }
     }
-  }, [sessions, hasLoaded]);
+  }
+
+  void persistSessions();
+
+
+  return () => {
+    isCancelled = true;
+  };
+}, [
+  sessions,
+  hasLoaded,
+  isAuthLoading,
+  user?.uid,
+]);
 
   useEffect(() => {
   if (!hasLoaded) {
@@ -422,8 +521,55 @@ function confirmClearCompletedSessions() {
       0,
     );
 
+    if (
+  isAuthLoading ||
+  !hasLoaded
+) {
   return (
+    <div className="space-y-6">
+      <div className="h-80 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+    </div>
+  );
+}
+
+  return (
+
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
+    <div
+  aria-live="polite"
+  className="space-y-3"
+>
+  {user?.uid ? (
+    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-200">
+      Study sessions are connected to{" "}
+      <span className="font-semibold">
+        {user.email}
+      </span>
+      .
+    </div>
+  ) : (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      You are signed out. Study sessions
+      are being saved only on this device.
+    </div>
+  )}
+
+  {isSavingSessions && (
+    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+      Saving study sessions...
+    </p>
+  )}
+
+  {studySessionDataError && (
+    <div
+      role="alert"
+      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+    >
+      {studySessionDataError}
+    </div>
+  )}
+</div>
       <StudySessionForm
   key={
     sessionToEdit?.id ??
