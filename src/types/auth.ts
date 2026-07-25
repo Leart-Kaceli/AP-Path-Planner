@@ -34,4 +34,14 @@ refreshUser:
 
   deleteAccount:
   () => Promise<void>;
+
+  reauthenticatePassword: (
+  password: string,
+) => Promise<void>;
+
+reauthenticateGoogle:
+  () => Promise<void>;
+
+signInWithGoogle:
+  () => Promise<void>;
 };

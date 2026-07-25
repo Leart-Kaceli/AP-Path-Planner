@@ -1,18 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
-import { PROFILE_STORAGE_KEY } from "@/constants/storage";
+import {
+  DEFAULT_STUDENT_PROFILE,
+} from "@/constants/profile";
 
-import type { StudentProfile } from "@/types/profile";
+import {
+  PROFILE_STORAGE_KEY,
+} from "@/constants/storage";
+
+import type {
+  StudentProfile,
+} from "@/types/profile";
 
 export default function DashboardHeader() {
-  const [studentName, setStudentName] =
-    useState(
-      DEFAULT_STUDENT_PROFILE.name,
-    );
+  const [
+    studentName,
+    setStudentName,
+  ] = useState(
+    DEFAULT_STUDENT_PROFILE.name,
+  );
 
   useEffect(() => {
     try {
@@ -25,16 +37,17 @@ export default function DashboardHeader() {
         return;
       }
 
-      const parsedProfile = JSON.parse(
-        storedProfile,
-      ) as Partial<StudentProfile>;
+      const parsedProfile =
+        JSON.parse(
+          storedProfile,
+        ) as Partial<StudentProfile>;
 
       if (
         typeof parsedProfile.name ===
           "string" &&
         parsedProfile.name.trim()
       ) {
-       // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStudentName(
           parsedProfile.name.trim(),
         );
@@ -48,17 +61,21 @@ export default function DashboardHeader() {
   }, []);
 
   return (
-    <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+    <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-6 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="text-sm font-medium text-blue-600">
+        <p
+          suppressHydrationWarning
+          className="text-sm font-medium text-blue-600 dark:text-blue-400"
+        >
           {getCurrentDate()}
         </p>
 
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-          Welcome back, {studentName}
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Welcome back,{" "}
+          {studentName}
         </h1>
 
-        <p className="mt-2 text-slate-600">
+        <p className="mt-2 text-slate-600 dark:text-slate-300">
           Here is an overview of your AP
           coursework and study progress.
         </p>
@@ -82,5 +99,7 @@ function getCurrentDate() {
       month: "long",
       day: "numeric",
     },
-  ).format(new Date());
+  ).format(
+    new Date(),
+  );
 }

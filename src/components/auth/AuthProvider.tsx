@@ -16,6 +16,11 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   deleteUser,
+  EmailAuthProvider,
+GoogleAuthProvider,
+reauthenticateWithCredential,
+reauthenticateWithPopup,
+signInWithPopup,
   type User,
 } from "firebase/auth";
 
@@ -292,6 +297,81 @@ async function refreshUser() {
   );
 }
 
+async function signInWithGoogle() {
+  setError(null);
+
+  try {
+    const provider =
+      new GoogleAuthProvider();
+
+    await signInWithPopup(
+      firebaseAuth,
+      provider,
+    );
+  } catch (googleError) {
+    console.error(
+      "Could not sign in with Google:",
+      googleError,
+    );
+
+    setError(
+      "Google sign-in could not be completed.",
+    );
+
+    throw googleError;
+  }
+}
+
+async function reauthenticatePassword(
+  password: string,
+) {
+  setError(null);
+
+  const currentUser =
+    firebaseAuth.currentUser;
+
+  if (
+    !currentUser ||
+    !currentUser.email
+  ) {
+    throw new Error(
+      "Password reauthentication is unavailable.",
+    );
+  }
+
+  const credential =
+    EmailAuthProvider.credential(
+      currentUser.email,
+      password,
+    );
+
+  await reauthenticateWithCredential(
+    currentUser,
+    credential,
+  );
+}
+
+async function reauthenticateGoogle() {
+  setError(null);
+
+  const currentUser =
+    firebaseAuth.currentUser;
+
+  if (!currentUser) {
+    throw new Error(
+      "No authenticated user.",
+    );
+  }
+
+  const provider =
+    new GoogleAuthProvider();
+
+  await reauthenticateWithPopup(
+    currentUser,
+    provider,
+  );
+}
+
   function clearAuthError() {
     setError(null);
   }
@@ -342,6 +422,9 @@ async function refreshUser() {
   sendVerificationEmail,
   refreshUser,
   deleteAccount,
+  signInWithGoogle,
+reauthenticatePassword,
+reauthenticateGoogle,
 }}
     >
       {children}

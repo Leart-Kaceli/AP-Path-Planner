@@ -31,10 +31,36 @@ export default function DangerZone() {
   setAccountDeleteError,
 ] = useState("");
 
-  const {
+const [
+  deletePassword,
+  setDeletePassword,
+] = useState("");
+
+const [
+  isDeletingAccount,
+  setIsDeletingAccount,
+] = useState(false);
+
+const {
   user,
   deleteAccount,
+  reauthenticatePassword,
+  reauthenticateGoogle,
 } = useAuth();
+
+const usesPassword =
+  user?.providerData.some(
+    (provider) =>
+      provider.providerId ===
+      "password",
+  ) ?? false;
+
+const usesGoogle =
+  user?.providerData.some(
+    (provider) =>
+      provider.providerId ===
+      "google.com",
+  ) ?? false;
 
 const [
   isAccountDeleteDialogOpen,
@@ -68,19 +94,41 @@ const [
     window.location.href = "/dashboard";
   }
 
-  async function confirmDeleteAccount() {
+ async function confirmDeleteAccount() {
   if (!user?.uid) {
     return;
   }
 
+
   setAccountDeleteError("");
+  setIsDeletingAccount(true);
 
   try {
+    if (usesPassword) {
+      if (!deletePassword) {
+        setAccountDeleteError(
+          "Enter your password before deleting your account.",
+        );
+
+        return;
+      }
+
+      await reauthenticatePassword(
+        deletePassword,
+      );
+    } else if (usesGoogle) {
+      await reauthenticateGoogle();
+    }
+
     await deleteUserCloudData(
       user.uid,
     );
 
     await deleteAccount();
+
+    setIsAccountDeleteDialogOpen(
+  false,
+);
 
     localStorage.clear();
 
@@ -92,8 +140,10 @@ const [
     );
 
     setAccountDeleteError(
-      "Your account could not be fully deleted. Sign out, sign back in, and try again.",
+      "Your account could not be deleted. Verify your identity and try again.",
     );
+  } finally {
+    setIsDeletingAccount(false);
   }
 }
 
@@ -135,12 +185,39 @@ const [
         true,
       )
     }
-    className="mt-4 rounded-lg border border-red-600 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-950"
+    disabled={isDeletingAccount}
+    className="mt-4 rounded-lg border border-red-600 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-300 dark:hover:bg-red-950"
   >
-    Delete Firebase Account
+    {isDeletingAccount
+      ? "Deleting Account..."
+      : "Delete Firebase Account"}
   </button>
-
 )}
+
+{isAccountDeleteDialogOpen &&
+  usesPassword && (
+    <div className="mt-4">
+      <label
+        htmlFor="delete-password"
+        className="text-sm font-medium text-red-800 dark:text-red-200"
+      >
+        Confirm your password
+      </label>
+
+      <input
+        id="delete-password"
+        type="password"
+        value={deletePassword}
+        onChange={(event) =>
+          setDeletePassword(
+            event.target.value,
+          )
+        }
+        autoComplete="current-password"
+        className="mt-2 w-full rounded-lg border border-red-300 bg-white px-4 py-3 text-slate-900 dark:border-red-800 dark:bg-slate-950 dark:text-white"
+      />
+    </div>
+  )}
 
       <ConfirmDialog
         open={isDeleteDialogOpen}
@@ -160,7 +237,11 @@ const [
   }
   title="Delete Firebase account?"
   description="This will permanently remove your cloud courses, assignments, study sessions, grades, profile, and Firebase account. This cannot be undone."
-  confirmText="Delete Account"
+  confirmText={
+  isDeletingAccount
+    ? "Deleting..."
+    : "Delete Account"
+}
   destructive
   onConfirm={
     confirmDeleteAccount

@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useAuth";
 
 import LoadingCard from "@/components/ui/LoadingCard";
+import UndoToast from "@/components/ui/UndoToast";
 
 import StudyPlannerFilters, {
   type StudyStatusFilter,
@@ -82,6 +83,13 @@ const pathname = usePathname();
   sessionPendingDeletion,
   setSessionPendingDeletion,
 ] = useState<StudySession | null>(null);
+
+const [
+  recentlyDeletedSession,
+  setRecentlyDeletedSession,
+] = useState<StudySession | null>(
+  null,
+);
 
 const [
   isClearCompletedDialogOpen,
@@ -444,8 +452,11 @@ async function confirmSessionDeletion() {
     return;
   }
 
+  const sessionToDelete =
+    sessionPendingDeletion;
+
   const sessionId =
-    sessionPendingDeletion.id;
+    sessionToDelete.id;
 
   const previousSessions =
     sessions;
@@ -468,7 +479,15 @@ async function confirmSessionDeletion() {
 
   setSessionPendingDeletion(null);
 
+  /*
+   * Signed-out users are saved by the
+   * localStorage saving effect.
+   */
   if (!user?.uid) {
+    setRecentlyDeletedSession(
+      sessionToDelete,
+    );
+
     return;
   }
 
@@ -476,6 +495,10 @@ async function confirmSessionDeletion() {
     await deleteOneStudySession(
       sessionId,
       user.uid,
+    );
+
+    setRecentlyDeletedSession(
+      sessionToDelete,
     );
 
     notifyAppDataChanged();
@@ -491,6 +514,68 @@ async function confirmSessionDeletion() {
 
     setStudySessionDataError(
       "The study session could not be deleted. It has been restored.",
+    );
+  }
+}
+
+async function undoSessionDeletion() {
+  if (!recentlyDeletedSession) {
+    return;
+  }
+
+  const sessionToRestore =
+    recentlyDeletedSession;
+
+  /*
+   * Restore it immediately in the UI.
+   */
+  setSessions(
+    (currentSessions) => [
+      ...currentSessions,
+      sessionToRestore,
+    ],
+  );
+
+  setRecentlyDeletedSession(
+    null,
+  );
+
+  /*
+   * Signed-out users are handled by
+   * the normal localStorage effect.
+   */
+  if (!user?.uid) {
+    return;
+  }
+
+  try {
+    await saveOneStudySession(
+      sessionToRestore,
+      user.uid,
+    );
+
+    notifyAppDataChanged();
+  } catch (error) {
+    console.error(
+      "Could not restore study session:",
+      error,
+    );
+
+    /*
+     * Firestore restoration failed,
+     * so remove it from the UI again.
+     */
+    setSessions(
+      (currentSessions) =>
+        currentSessions.filter(
+          (session) =>
+            session.id !==
+            sessionToRestore.id,
+        ),
+    );
+
+    setStudySessionDataError(
+      "The study session could not be restored.",
     );
   }
 }
@@ -826,6 +911,20 @@ function confirmClearCompletedSessions() {
     setIsClearCompletedDialogOpen(false)
   }
 />
+
+{recentlyDeletedSession && (
+  <UndoToast
+    message={`Deleted "${recentlyDeletedSession.topic}".`}
+    onUndo={
+      undoSessionDeletion
+    }
+    onDismiss={() =>
+      setRecentlyDeletedSession(
+        null,
+      )
+    }
+  />
+)}
     </div>
 
     

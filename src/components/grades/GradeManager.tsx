@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useAuth";
 
 import LoadingCard from "@/components/ui/LoadingCard";
+import UndoToast from "@/components/ui/UndoToast";
 
 import {
   deleteOneGrade,
@@ -61,6 +62,13 @@ export default function GradeManager() {
 
   const [gradeToEdit, setGradeToEdit] =
     useState<GradeEntry | null>(null);
+
+    const [
+  recentlyDeletedGrade,
+  setRecentlyDeletedGrade,
+] = useState<GradeEntry | null>(
+  null,
+);
 
   const [hasLoaded, setHasLoaded] =
     useState(false);
@@ -312,6 +320,10 @@ const [
   const previousGrades =
     grades;
 
+  /*
+   * Optimistically remove the grade
+   * from the screen.
+   */
   setGrades(
     (currentGrades) =>
       currentGrades.filter(
@@ -321,12 +333,23 @@ const [
   );
 
   if (
-    gradeToEdit?.id === gradeId
+    gradeToEdit?.id ===
+    gradeId
   ) {
     setGradeToEdit(null);
   }
 
+  setGradeDataError(null);
+
+  /*
+   * Signed-out users are persisted by
+   * the localStorage saving effect.
+   */
   if (!user?.uid) {
+    setRecentlyDeletedGrade(
+      gradeToDelete,
+    );
+
     return;
   }
 
@@ -337,16 +360,92 @@ const [
       gradeId,
       user.uid,
     );
+
+    /*
+     * Only show Undo after Firestore
+     * confirms the delete.
+     */
+    setRecentlyDeletedGrade(
+      gradeToDelete,
+    );
   } catch (error) {
     console.error(
       "Could not delete grade:",
       error,
     );
 
-    setGrades(previousGrades);
+    setGrades(
+      previousGrades,
+    );
 
     setGradeDataError(
       "The grade could not be deleted. It has been restored.",
+    );
+  } finally {
+    setIsSavingGrades(false);
+  }
+}
+
+async function undoGradeDeletion() {
+  if (!recentlyDeletedGrade) {
+    return;
+  }
+
+  const gradeToRestore =
+    recentlyDeletedGrade;
+
+  /*
+   * Put it back on screen immediately.
+   */
+  setGrades(
+    (currentGrades) => [
+      ...currentGrades,
+      gradeToRestore,
+    ],
+  );
+
+  setRecentlyDeletedGrade(
+    null,
+  );
+
+  setGradeDataError(null);
+
+  /*
+   * Signed-out users are persisted by
+   * the localStorage effect.
+   */
+  if (!user?.uid) {
+    return;
+  }
+
+  setIsSavingGrades(true);
+
+  try {
+    await saveOneGrade(
+      gradeToRestore,
+      user.uid,
+    );
+  } catch (error) {
+    console.error(
+      "Could not restore grade:",
+      error,
+    );
+
+    /*
+     * Firestore restore failed, so
+     * remove it from the UI again.
+     */
+    setGrades(
+      (currentGrades) =>
+        currentGrades.filter(
+          (grade) =>
+            grade.id !==
+            gradeToRestore.id,
+        ),
+    );
+
+    setGradeDataError(
+      "The grade could not be restored.",
     );
   } finally {
     setIsSavingGrades(false);
@@ -790,6 +889,19 @@ const overallWeightedAverage =
           </div>
         )}
       </section>
+      {recentlyDeletedGrade && (
+  <UndoToast
+    message={`Deleted "${recentlyDeletedGrade.title}".`}
+    onUndo={
+      undoGradeDeletion
+    }
+    onDismiss={() =>
+      setRecentlyDeletedGrade(
+        null,
+      )
+    }
+  />
+)}
     </div>
   );
 }

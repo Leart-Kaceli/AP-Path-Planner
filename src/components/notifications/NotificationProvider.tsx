@@ -10,6 +10,11 @@ import {
 } from "react";
 
 import {
+  loadNotificationState,
+  saveNotificationState,
+} from "@/services/notificationStateService";
+
+import {
   useAuth,
 } from "@/hooks/useAuth";
 
@@ -34,7 +39,6 @@ import {
 } from "@/utils/appEvents";
 
 import {
-  DISMISSED_NOTIFICATION_STORAGE_KEY,
   SENT_BROWSER_NOTIFICATION_STORAGE_KEY,
   SNOOZED_NOTIFICATION_STORAGE_KEY,
 } from "@/constants/storage";
@@ -49,72 +53,7 @@ import type {
   SnoozedNotification,
 } from "@/types/notification";
 
-function loadDismissedNotificationIds() {
-  try {
-    const storedValue =
-      localStorage.getItem(
-        DISMISSED_NOTIFICATION_STORAGE_KEY,
-      );
 
-    const parsedValue: unknown =
-      storedValue
-        ? JSON.parse(storedValue)
-        : [];
-
-    return Array.isArray(parsedValue)
-      ? parsedValue.filter(
-          (
-            value,
-          ): value is string =>
-            typeof value === "string",
-        )
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadSnoozedNotifications() {
-  try {
-    const storedValue =
-      localStorage.getItem(
-        SNOOZED_NOTIFICATION_STORAGE_KEY,
-      );
-
-    const parsedValue: unknown =
-      storedValue
-        ? JSON.parse(storedValue)
-        : [];
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter(
-      (
-        value,
-      ): value is SnoozedNotification => {
-        if (
-          typeof value !== "object" ||
-          value === null
-        ) {
-          return false;
-        }
-
-        return (
-          "notificationId" in value &&
-          typeof value.notificationId ===
-            "string" &&
-          "snoozedUntil" in value &&
-          typeof value.snoozedUntil ===
-            "string"
-        );
-      },
-    );
-  } catch {
-    return [];
-  }
-}
 
 function loadSentBrowserNotificationIds() {
   try {
@@ -209,28 +148,35 @@ export default function NotificationProvider({
 
       try {
         const [
-          assignments,
-          studySessions,
-          profile,
-        ] = await Promise.all([
-          loadAssignments(
-             userId,
-          ),
+  assignments,
+  studySessions,
+  profile,
+  notificationState,
+] = await Promise.all([
+  loadAssignments(
+    userId,
+  ),
 
-          loadStudySessions(
-            userId,
-          ),
+  loadStudySessions(
+    userId,
+  ),
 
-          loadProfile(
-            userId,
-          ),
-        ]);
+  loadProfile(
+    userId,
+  ),
+
+  loadNotificationState(
+    userId,
+  ),
+]);
 
         const loadedDismissedIds =
-          loadDismissedNotificationIds();
+  notificationState
+    .dismissedNotificationIds;
 
-        const loadedSnoozedNotifications =
-          loadSnoozedNotifications();
+const loadedSnoozedNotifications =
+  notificationState
+    .snoozedNotifications;
 
         const currentTime =
           Date.now();
@@ -425,36 +371,34 @@ export default function NotificationProvider({
   ]);
 
   useEffect(() => {
-    if (!hasLoaded) {
-      return;
+  if (!hasLoaded) {
+    return;
+  }
+
+  async function persistNotificationState() {
+    try {
+      await saveNotificationState(
+        {
+          dismissedNotificationIds,
+          snoozedNotifications,
+        },
+        userId,
+      );
+    } catch (error) {
+      console.error(
+        "Could not save notification state:",
+        error,
+      );
     }
+  }
 
-    localStorage.setItem(
-      DISMISSED_NOTIFICATION_STORAGE_KEY,
-      JSON.stringify(
-        dismissedNotificationIds,
-      ),
-    );
-  }, [
-    dismissedNotificationIds,
-    hasLoaded,
-  ]);
-
-  useEffect(() => {
-    if (!hasLoaded) {
-      return;
-    }
-
-    localStorage.setItem(
-      SNOOZED_NOTIFICATION_STORAGE_KEY,
-      JSON.stringify(
-        snoozedNotifications,
-      ),
-    );
-  }, [
-    snoozedNotifications,
-    hasLoaded,
-  ]);
+  void persistNotificationState();
+}, [
+  dismissedNotificationIds,
+  snoozedNotifications,
+  hasLoaded,
+  userId,
+]);
 
   function dismissNotification(
     notificationId: string,

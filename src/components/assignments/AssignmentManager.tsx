@@ -10,6 +10,8 @@ import AssignmentFilters, {
   type StatusFilter,
 } from "@/components/assignments/AssignmentFilters";
 
+import UndoToast from "@/components/ui/UndoToast";
+
 import {
   deleteOneAssignment,
   saveOneAssignment,
@@ -89,6 +91,14 @@ export default function AssignmentManager() {
   assignmentReloadKey,
   setAssignmentReloadKey,
 ] = useState(0);
+
+const [
+  recentlyDeletedAssignment,
+  setRecentlyDeletedAssignment,
+] =
+  useState<Assignment | null>(
+    null,
+  );
 
   const {
   user,
@@ -476,6 +486,8 @@ async function confirmAssignmentDeletion() {
   if (!assignmentPendingDeletion) {
     return;
   }
+  const assignmentToDelete =
+  assignmentPendingDeletion;
 
   const assignmentId =
     assignmentPendingDeletion.id;
@@ -498,6 +510,10 @@ if (user?.uid) {
       assignmentId,
       user.uid,
     );
+
+    setRecentlyDeletedAssignment(
+  assignmentToDelete,
+);
   } catch (error) {
     console.error(
       "Could not delete assignment:",
@@ -531,6 +547,50 @@ if (user?.uid) {
   setAssignmentPendingDeletion(null);
 } 
     
+async function undoAssignmentDeletion() {
+  if (
+    !recentlyDeletedAssignment
+  ) {
+    return;
+  }
+
+  const assignment =
+    recentlyDeletedAssignment;
+
+  setAssignments(
+    (current) => [
+      ...current,
+      assignment,
+    ],
+  );
+
+  setRecentlyDeletedAssignment(
+    null,
+  );
+
+  if (user?.uid) {
+    try {
+      await saveOneAssignment(
+        assignment,
+        user.uid,
+      );
+    } catch (error) {
+      console.error(
+        "Could not restore assignment:",
+        error,
+      );
+
+      setAssignments(
+        (current) =>
+          current.filter(
+            (item) =>
+              item.id !==
+              assignment.id,
+          ),
+      );
+    }
+  }
+}
 
 
   function requestClearCompletedAssignments() {
@@ -862,6 +922,20 @@ function confirmClearCompletedAssignments() {
     setIsClearCompletedDialogOpen(false)
   }
 />
+
+{recentlyDeletedAssignment && (
+  <UndoToast
+    message={`Deleted "${recentlyDeletedAssignment.title}".`}
+    onUndo={
+      undoAssignmentDeletion
+    }
+    onDismiss={() =>
+      setRecentlyDeletedAssignment(
+        null,
+      )
+    }
+  />
+)}
     </div>
   );
 }

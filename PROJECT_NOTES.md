@@ -1842,3 +1842,108 @@ Learned how to:
 - Add offline/network status indicators
 - Add undo actions for recent deletes
 - Improve mobile navigation
+
+Future cleanup strategy:
+Firebase Delete User Data extension
+with recursive users/{UID} deletion.
+
+# Day 24 Completed
+
+## Cloud Notification State
+- Moved dismissed notification IDs to Firestore
+- Moved snoozed notifications to Firestore
+- Preserved local fallback for signed-out users
+- Kept browser notification sent IDs device-specific
+
+## Cloud Backup Import
+- Added Firestore-aware backup restoration
+- Restored courses, assignments, sessions, grades, weights, profile, and notification state
+- Preserved local backup cache
+
+## Authentication
+- Added Google sign-in
+- Added password reauthentication
+- Added Google reauthentication
+- Added recent-login handling for destructive account actions
+- Corrected account deletion order
+
+## Security
+- Added stronger Firestore document validation
+- Added allowed-field validation
+- Added basic field-type validation
+- Documented server-side account cleanup strategy
+
+## Connectivity
+- Added global online/offline status provider
+- Added offline status banner
+
+## Undo
+- Added reusable UndoToast
+- Added undo support for assignments
+- Added undo support for study sessions
+- Added undo support for grades
+- Kept cascading course deletion confirmation-only
+
+## Mobile
+- Improved mobile sidebar
+- Added dark-mode navigation styling
+- Improved sidebar scrolling
+
+## Day 25 Goals
+- Improve backup validation and rollback
+- Harden Firestore field validation
+- Improve account center
+- Finalize server-side user cleanup
+- Add global error and 404 pages
+- Improve accessibility
+- Complete dark-mode cleanup
+- Run multi-account security testing
+- Run full cloud backup testing
+- Perform production-readiness QA
+
+# Day 25 Completed
+
+## Backup Reliability
+- Added backup validation
+- Added failed-import rollback protection
+- Improved cloud-aware restore workflow
+
+## Authentication UX
+- Improved provider display
+- Improved account center
+- Improved reauthentication UX
+
+## Security
+- Added enum restrictions to Firestore rules
+- Added profile validation
+- Tested user-data isolation
+
+## Reliability
+- Added reusable sync status UI
+- Added global error page
+- Added custom 404 page
+- Tested offline status behavior
+
+## UI Polish
+- Improved mobile navigation
+- Completed dark-mode consistency pass
+- Improved accessibility across forms and controls
+
+## Testing
+- Tested two-account isolation
+- Tested full backup export/import
+- Tested Google authentication
+- Tested email/password authentication
+- Tested account deletion
+- Tested offline/online state
+- Confirmed lint passes
+- Confirmed production build passes
+
+## Day 26 Goals
+- Real-time Firestore listeners
+- Conflict-aware multi-device synchronization
+- Stronger offline support
+- Automated Firestore rules tests
+- Better toast/feedback system
+- Cloud-aware notification sent state
+- Further mobile dashboard improvements
