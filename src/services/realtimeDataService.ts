@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   onSnapshot,
+  type Unsubscribe,
 } from "firebase/firestore";
 
 import {
@@ -29,8 +30,8 @@ import type {
 } from "@/types/course";
 
 import type {
-  GradeEntry,
   CourseGradeWeights,
+  GradeEntry,
 } from "@/types/grade";
 
 import type {
@@ -57,7 +58,7 @@ export function subscribeToAssignments(
     >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     collection(
       firestoreDatabase,
@@ -74,13 +75,15 @@ export function subscribeToAssignments(
           .map(
             (documentSnapshot) =>
               normalizeAssignment({
-                id:
-                  documentSnapshot.id,
                 ...documentSnapshot.data(),
+                id: documentSnapshot.id,
               } as Assignment),
           )
           .sort(
-            (first, second) =>
+            (
+              first,
+              second,
+            ) =>
               first.dueDate.localeCompare(
                 second.dueDate,
               ),
@@ -89,8 +92,7 @@ export function subscribeToAssignments(
       onData({
         data: assignments,
         fromCache:
-          snapshot.metadata
-            .fromCache,
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
@@ -105,10 +107,12 @@ export function subscribeToAssignments(
 export function subscribeToCourses(
   userId: string,
   onData: (
-    snapshot: SyncSnapshot<Course[]>,
+    snapshot: SyncSnapshot<
+      Course[]
+    >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     collection(
       firestoreDatabase,
@@ -123,14 +127,18 @@ export function subscribeToCourses(
       const courses =
         snapshot.docs
           .map(
-            (documentSnapshot) => ({
-              id:
-                documentSnapshot.id,
+            (
+              documentSnapshot,
+            ) => ({
               ...documentSnapshot.data(),
+              id: documentSnapshot.id,
             }) as Course,
           )
           .sort(
-            (first, second) =>
+            (
+              first,
+              second,
+            ) =>
               first.name.localeCompare(
                 second.name,
               ),
@@ -139,8 +147,7 @@ export function subscribeToCourses(
       onData({
         data: courses,
         fromCache:
-          snapshot.metadata
-            .fromCache,
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
@@ -160,7 +167,7 @@ export function subscribeToStudySessions(
     >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     collection(
       firestoreDatabase,
@@ -177,13 +184,15 @@ export function subscribeToStudySessions(
           .map(
             (documentSnapshot) =>
               normalizeStudySession({
-                id:
-                  documentSnapshot.id,
                 ...documentSnapshot.data(),
+                id: documentSnapshot.id,
               } as StudySession),
           )
           .sort(
-            (first, second) =>
+            (
+              first,
+              second,
+            ) =>
               `${first.date}T${first.startTime}`.localeCompare(
                 `${second.date}T${second.startTime}`,
               ),
@@ -192,8 +201,7 @@ export function subscribeToStudySessions(
       onData({
         data: sessions,
         fromCache:
-          snapshot.metadata
-            .fromCache,
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
@@ -213,7 +221,7 @@ export function subscribeToGrades(
     >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     collection(
       firestoreDatabase,
@@ -228,14 +236,18 @@ export function subscribeToGrades(
       const grades =
         snapshot.docs
           .map(
-            (documentSnapshot) => ({
-              id:
-                documentSnapshot.id,
+            (
+              documentSnapshot,
+            ) => ({
               ...documentSnapshot.data(),
+              id: documentSnapshot.id,
             }) as GradeEntry,
           )
           .sort(
-            (first, second) =>
+            (
+              first,
+              second,
+            ) =>
               second.date.localeCompare(
                 first.date,
               ),
@@ -244,8 +256,7 @@ export function subscribeToGrades(
       onData({
         data: grades,
         fromCache:
-          snapshot.metadata
-            .fromCache,
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
@@ -265,7 +276,7 @@ export function subscribeToProfile(
     >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     doc(
       firestoreDatabase,
@@ -276,18 +287,18 @@ export function subscribeToProfile(
       includeMetadataChanges: true,
     },
     (snapshot) => {
-      onData({
-        data: snapshot.exists()
-          ? {
+      const profile =
+        snapshot.exists()
+          ? ({
               ...DEFAULT_STUDENT_PROFILE,
               ...snapshot.data(),
-            } as StudentProfile
-          : DEFAULT_STUDENT_PROFILE,
+            } as StudentProfile)
+          : DEFAULT_STUDENT_PROFILE;
 
+      onData({
+        data: profile,
         fromCache:
-          snapshot.metadata
-            .fromCache,
-
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
@@ -307,7 +318,7 @@ export function subscribeToGradeWeights(
     >,
   ) => void,
   onError?: ErrorHandler,
-) {
+): Unsubscribe {
   return onSnapshot(
     doc(
       firestoreDatabase,
@@ -323,22 +334,22 @@ export function subscribeToGradeWeights(
       const data =
         snapshot.data();
 
-      const weights =
+      const weights:
+        CourseGradeWeights =
         data?.weights &&
         typeof data.weights ===
           "object" &&
         !Array.isArray(
           data.weights,
         )
-          ? data.weights as
-              CourseGradeWeights
+          ? (data.weights as
+              CourseGradeWeights)
           : {};
 
       onData({
         data: weights,
         fromCache:
-          snapshot.metadata
-            .fromCache,
+          snapshot.metadata.fromCache,
         hasPendingWrites:
           snapshot.metadata
             .hasPendingWrites,
