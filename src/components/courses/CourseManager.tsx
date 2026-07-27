@@ -22,9 +22,19 @@ import {
 } from "@/services/courseService";
 
 import {
+  subscribeToCourses,
+} from "@/services/realtimeDataService";
+
+import SyncStatus from "@/components/ui/SyncStatus";
+
+import {
   loadAssignments,
   saveAssignments,
 } from "@/services/assignmentService";
+
+import {
+  hasObjectChanged,
+} from "@/utils/conflicts";
 
 import {
   useAuth,
@@ -77,11 +87,33 @@ export default function CourseManager() {
   ] = useState(false);
 
   const [
+  coursesFromCache,
+  setCoursesFromCache,
+] = useState(false);
+
+const [
+  coursesHavePendingWrites,
+  setCoursesHavePendingWrites,
+] = useState(false);
+
+  const [
     courseToEdit,
     setCourseToEdit,
   ] = useState<Course | null>(
     null,
   );
+
+  const [
+  courseEditSnapshot,
+  setCourseEditSnapshot,
+] = useState<Course | null>(
+  null,
+);
+
+const [
+  hasCourseConflict,
+  setHasCourseConflict,
+] = useState(false);
 
   const [
     isSavingCourses,
@@ -96,27 +128,41 @@ export default function CourseManager() {
   );
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+  if (isAuthLoading) {
+    return;
+  }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+setHasLoadedCourses(false);
+setCourseDataError(null);
+
+  /*
+   * Signed-out users still load from
+   * the local course service.
+   */
+  if (!user?.uid) {
     let isCancelled = false;
 
-    async function loadCourseData() {
-      setHasLoadedCourses(false);
-      setCourseDataError(null);
-
+    async function loadLocalCourses() {
       try {
         const loadedCourses =
-          await loadCourses(
-            user?.uid,
-          );
+          await loadCourses();
 
-        if (!isCancelled) {
-          setCourses(
-            loadedCourses,
-          );
+        if (isCancelled) {
+          return;
         }
+
+        setCourses(
+          loadedCourses,
+        );
+
+        setCoursesFromCache(
+          false,
+        );
+
+        setCoursesHavePendingWrites(
+          false,
+        );
       } catch (error) {
         console.error(
           "Could not load courses:",
@@ -125,7 +171,7 @@ export default function CourseManager() {
 
         if (!isCancelled) {
           setCourseDataError(
-            "Your courses could not be loaded.",
+            "Your saved courses could not be loaded.",
           );
         }
       } finally {
@@ -137,15 +183,64 @@ export default function CourseManager() {
       }
     }
 
-    void loadCourseData();
+    void loadLocalCourses();
 
     return () => {
       isCancelled = true;
     };
-  }, [
-    isAuthLoading,
-    user?.uid,
-  ]);
+  }
+
+  /*
+   * Signed-in users listen to Firestore
+   * continuously.
+   */
+  const unsubscribe =
+    subscribeToCourses(
+      user.uid,
+
+      (snapshot) => {
+        setCourses(
+          snapshot.data,
+        );
+
+        setCoursesFromCache(
+          snapshot.fromCache,
+        );
+
+        setCoursesHavePendingWrites(
+          snapshot.hasPendingWrites,
+        );
+
+        setHasLoadedCourses(
+          true,
+        );
+
+        setCourseDataError(
+          null,
+        );
+      },
+
+      (error) => {
+        console.error(
+          "Course listener failed:",
+          error,
+        );
+
+        setCourseDataError(
+          "Real-time course sync could not be started.",
+        );
+
+        setHasLoadedCourses(
+          true,
+        );
+      },
+    );
+
+  return unsubscribe;
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
 
   /*
    * Signed-out users still save the
@@ -208,9 +303,58 @@ export default function CourseManager() {
     user?.uid,
   ]);
 
+  useEffect(() => {
+  if (
+    !courseToEdit ||
+    !courseEditSnapshot
+  ) {
+    return;
+  }
+
+  const latestCourse =
+    courses.find(
+      (course) =>
+        course.id ===
+        courseToEdit.id,
+    );
+
+  if (!latestCourse) {
+    return;
+  }
+
+  if (
+  hasObjectChanged(
+    courseEditSnapshot,
+    latestCourse,
+  )
+) {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setHasCourseConflict(
+    true,
+  );
+}
+}, [
+  courses,
+  courseToEdit,
+  courseEditSnapshot,
+]);
+
   async function saveCourse(
     course: Course,
   ) {
+    if (
+  hasCourseConflict &&
+  courseToEdit
+) {
+  const shouldOverwrite =
+    window.confirm(
+      "This course changed on another device while you were editing it. Save your version anyway?",
+    );
+
+  if (!shouldOverwrite) {
+    return;
+  }
+}
     const previousCourses =
       courses;
 
@@ -244,6 +388,13 @@ export default function CourseManager() {
     );
 
     setCourseToEdit(null);
+    setCourseEditSnapshot(
+  null,
+);
+
+setHasCourseConflict(
+  false,
+);
     setCourseDataError(null);
 
     /*
@@ -286,19 +437,35 @@ export default function CourseManager() {
   }
 
   function startEditingCourse(
-    course: Course,
-  ) {
-    setCourseToEdit(course);
+  course: Course,
+) {
+  setCourseToEdit(course);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
+  setCourseEditSnapshot(
+    course,
+  );
+
+  setHasCourseConflict(
+    false,
+  );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
 
   function cancelEditingCourse() {
-    setCourseToEdit(null);
-  }
+  setCourseToEdit(null);
+
+  setCourseEditSnapshot(
+    null,
+  );
+
+  setHasCourseConflict(
+    false,
+  );
+}
 
   async function deleteCourse(
     courseId: string,
@@ -546,20 +713,34 @@ export default function CourseManager() {
   return (
     <div className="grid gap-8 xl:grid-cols-[360px_1fr]">
       <div className="space-y-4">
-        {isSavingCourses && (
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            Saving courses...
-          </p>
-        )}
+        <SyncStatus
+  isSaving={
+    isSavingCourses
+  }
+  error={
+    courseDataError
+  }
+  fromCache={
+    coursesFromCache
+  }
+  hasPendingWrites={
+    coursesHavePendingWrites
+  }
+  realtime={
+    Boolean(user?.uid)
+  }
+/>
 
-        {courseDataError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-          >
-            {courseDataError}
-          </div>
-        )}
+{hasCourseConflict && (
+  <div
+    role="alert"
+    className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+  >
+    This course changed on another
+    device while you were editing it.
+    Review before saving.
+  </div>
+)}
 
         <CourseForm
           key={

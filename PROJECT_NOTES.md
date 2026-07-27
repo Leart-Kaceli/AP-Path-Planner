@@ -1947,3 +1947,127 @@ with recursive users/{UID} deletion.
 - Better toast/feedback system
 - Cloud-aware notification sent state
 - Further mobile dashboard improvements
+
+# Day 26 Completed
+
+## Real-Time Firestore
+
+- Added Firestore onSnapshot listeners
+- Added live assignment synchronization
+- Added live course synchronization
+- Added live study-session synchronization
+- Added live grade synchronization
+- Added real-time grade-weight synchronization
+- Added real-time Dashboard updates
+- Added real-time Calendar updates
+
+## Sync Metadata
+
+- Added reusable SyncSnapshot type
+- Added Firestore from-cache awareness
+- Added pending-write awareness
+- Improved SyncStatus component
+- Added cloud-sync status feedback
+
+## Offline Support
+
+- Enabled persistent Firestore web cache
+- Added multi-tab Firestore cache support
+- Improved offline status messaging
+- Preserved optimistic UI behavior
+
+## Security Testing
+
+- Added Firebase Local Emulator configuration
+- Added local Firestore rules file
+- Added automated Rules tests
+- Added ownership tests
+- Added invalid-value tests
+
+## Feedback
+
+- Added global ToastProvider
+- Added reusable toast messages
+- Preserved form-local validation
+- Preserved UndoToast for destructive actions
+
+## Notifications
+
+- Added stable device identity groundwork
+- Preserved browser-notification sent state per device
+
+## Mobile
+
+- Added mobile Dashboard quick actions
+- Improved Dashboard mobile workflow
+
+## Day 27 Goals
+
+- Add edit-conflict protection
+- Expand Rules test coverage
+- Add anonymous-access tests
+- Add unified project check command
+- Improve real-time sync abstractions
+- Improve Dashboard performance
+- Improve connection-status UI
+- Upgrade backup schema
+- Improve actionable toasts
+- Run multi-tab conflict testing
+- Run offline queue testing
+
+# Day 27 Completed
+
+## Conflict Protection
+
+- Added remote-edit conflict detection
+- Added assignment conflict warning
+- Added course conflict warning
+- Added study-session conflict warning
+- Added grade conflict warning
+- Added overwrite confirmation
+
+## Security Tests
+
+- Added tests for all Firestore collections
+- Added cross-user read tests
+- Added cross-user write tests
+- Added signed-out access tests
+- Added invalid-type tests
+- Added invalid-enum tests
+
+## Developer Workflow
+
+- Added unified npm run check command
+- Combined lint, Rules tests, and build validation
+- Improved listener error handling
+
+## Performance
+
+- Reduced unnecessary Dashboard calculations
+- Added reusable sync-metadata hook
+- Improved mobile Dashboard spacing
+
+## Reliability
+
+- Added visible connection-state indicator
+- Added listener-failure feedback
+- Tested multi-tab real-time synchronization
+- Tested offline queued writes
+- Tested reconnection synchronization
+
+## Backup
+
+- Upgraded backup schema to version 4
+- Preserved migration support for older backups
+
+## Day 28 Goals
+
+- Add automated React component tests
+- Add form validation tests
+- Add end-to-end browser testing
+- Add real-time profile synchronization
+- Add richer toast actions
+- Replace legacy UndoToast with action toasts
+- Add performance monitoring
+- Add error monitoring
+- Improve Firebase deployment workflow

@@ -1,0 +1,210 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedInAs(userId) {
+      return request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    function validProfile(data) {
+      return data.name is string
+        && data.school is string
+        && data.graduationYear is string
+        && data.weeklyStudyGoalMinutes is int
+        && data.weeklyStudyGoalMinutes >= 0
+        && data.theme is string
+        && (
+          data.theme == 'light'
+          || data.theme == 'dark'
+          || data.theme == 'system'
+        )
+        && data.assignmentRemindersEnabled is bool
+        && data.studyRemindersEnabled is bool
+        && data.assignmentReminderTiming is string
+        && (
+          data.assignmentReminderTiming == 'none'
+          || data.assignmentReminderTiming == 'same-day'
+          || data.assignmentReminderTiming == 'one-day'
+          || data.assignmentReminderTiming == 'two-days'
+        )
+        && data.studyReminderTiming is string
+        && (
+          data.studyReminderTiming == 'none'
+          || data.studyReminderTiming == 'same-day'
+          || data.studyReminderTiming == 'one-day'
+          || data.studyReminderTiming == 'two-days'
+        )
+        && data.browserNotificationsEnabled is bool
+        && data.browserNotificationsForAssignments is bool
+        && data.browserNotificationsForStudySessions is bool;
+    }
+
+    function validAssignment(data) {
+      return data.keys().hasOnly([
+        'id',
+        'title',
+        'course',
+        'dueDate',
+        'priority',
+        'completed',
+        'completedAt',
+        'notes'
+      ])
+      && data.id is string
+      && data.title is string
+      && data.course is string
+      && data.dueDate is string
+      && data.priority is string
+      && (
+        data.priority == 'Low'
+        || data.priority == 'Medium'
+        || data.priority == 'High'
+      )
+      && data.completed is bool
+      && (
+        data.completedAt == null
+        || data.completedAt is string
+      )
+      && data.notes is string;
+    }
+
+    function validCourse(data) {
+      return data.keys().hasOnly([
+        'id',
+        'name',
+        'teacher',
+        'goalScore',
+        'progress'
+      ])
+      && data.id is string
+      && data.name is string
+      && data.teacher is string
+      && data.goalScore is int
+      && (
+        data.goalScore == 3
+        || data.goalScore == 4
+        || data.goalScore == 5
+      )
+      && data.progress is int
+      && data.progress >= 0
+      && data.progress <= 100;
+    }
+
+    function validStudySession(data) {
+      return data.keys().hasOnly([
+        'id',
+        'course',
+        'topic',
+        'date',
+        'startTime',
+        'durationMinutes',
+        'completed',
+        'completedAt',
+        'notes'
+      ])
+      && data.id is string
+      && data.course is string
+      && data.topic is string
+      && data.date is string
+      && data.startTime is string
+      && data.durationMinutes is int
+      && data.durationMinutes > 0
+      && data.completed is bool
+      && (
+        data.completedAt == null
+        || data.completedAt is string
+      )
+      && data.notes is string;
+    }
+
+    function validGrade(data) {
+      return data.keys().hasOnly([
+        'id',
+        'course',
+        'title',
+        'category',
+        'earnedPoints',
+        'possiblePoints',
+        'date'
+      ])
+      && data.id is string
+      && data.course is string
+      && data.title is string
+      && data.category is string
+      && (
+        data.category == 'Homework'
+        || data.category == 'Quiz'
+        || data.category == 'Test'
+        || data.category == 'Project'
+        || data.category == 'Other'
+      )
+      && data.earnedPoints is number
+      && data.possiblePoints is number
+      && data.possiblePoints > 0
+      && data.earnedPoints >= 0
+      && data.date is string;
+    }
+
+    match /users/{userId} {
+      allow read, delete:
+        if signedInAs(userId);
+
+      allow create, update:
+        if signedInAs(userId)
+        && validProfile(
+          request.resource.data
+        );
+
+      match /assignments/{assignmentId} {
+        allow read, delete:
+          if signedInAs(userId);
+
+        allow create, update:
+          if signedInAs(userId)
+          && validAssignment(
+            request.resource.data
+          );
+      }
+
+      match /courses/{courseId} {
+        allow read, delete:
+          if signedInAs(userId);
+
+        allow create, update:
+          if signedInAs(userId)
+          && validCourse(
+            request.resource.data
+          );
+      }
+
+      match /studySessions/{sessionId} {
+        allow read, delete:
+          if signedInAs(userId);
+
+        allow create, update:
+          if signedInAs(userId)
+          && validStudySession(
+            request.resource.data
+          );
+      }
+
+      match /grades/{gradeId} {
+        allow read, delete:
+          if signedInAs(userId);
+
+        allow create, update:
+          if signedInAs(userId)
+          && validGrade(
+            request.resource.data
+          );
+      }
+
+      match /settings/{settingsId} {
+        allow read, create, update, delete:
+          if signedInAs(userId);
+      }
+    }
+  }
+}

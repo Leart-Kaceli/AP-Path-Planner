@@ -14,17 +14,23 @@ import CalendarViewControls from "@/components/calendar/CalendarViewControls";
 import CalendarWeekView from "@/components/calendar/CalendarWeekView";
 import SelectedDayPanel from "@/components/calendar/SelectedDayPanel";
 
+import type {
+  Assignment,
+} from "@/types/assignment";
+
+import type {
+  StudySession,
+} from "@/types/studySession";
+
 import {
   useAuth,
 } from "@/hooks/useAuth";
 
 import {
-  loadAssignments,
-} from "@/services/assignmentService";
+  subscribeToAssignments,
+  subscribeToStudySessions,
+} from "@/services/realtimeDataService";
 
-import {
-  loadStudySessions,
-} from "@/services/studySessionService";
 
 import {
   formatCalendarWeek,
@@ -90,58 +96,86 @@ export default function Calendar() {
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-  useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+    const [
+  realtimeAssignments,
+  setRealtimeAssignments,
+] = useState<Assignment[]>([]);
 
-    let isCancelled = false;
+const [
+  realtimeStudySessions,
+  setRealtimeStudySessions,
+] = useState<StudySession[]>([]);
 
-    async function loadData() {
-      try {
-        const [
-          assignments,
-          studySessions,
-        ] = await Promise.all([
-          loadAssignments(
-            user?.uid,
-          ),
-          loadStudySessions(
-            user?.uid,
-          ),
-        ]);
+ useEffect(() => {
+  if (
+    isAuthLoading ||
+    !user?.uid
+  ) {
+    return;
+  }
 
-        if (isCancelled) {
-          return;
-        }
+  const userId =
+    user.uid;
 
-        setEvents(
-          getCalendarEvents(
-            assignments,
-            studySessions,
-          ),
+  const unsubscribeAssignments =
+    subscribeToAssignments(
+      userId,
+      (snapshot) => {
+        setRealtimeAssignments(
+          snapshot.data,
         );
-      } catch (error) {
+      },
+      (error) => {
         console.error(
-          "Could not load calendar data:",
+          "Calendar assignment listener failed:",
           error,
         );
-      } finally {
-        if (!isCancelled) {
-          setHasLoaded(true);
-        }
-      }
-    }
+      },
+    );
 
-    void loadData();
+  const unsubscribeSessions =
+    subscribeToStudySessions(
+      userId,
+      (snapshot) => {
+        setRealtimeStudySessions(
+          snapshot.data,
+        );
+      },
+      (error) => {
+        console.error(
+          "Calendar study-session listener failed:",
+          error,
+        );
+      },
+    );
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [
-    isAuthLoading,
-    user?.uid,
-  ]);
+  return () => {
+    unsubscribeAssignments();
+    unsubscribeSessions();
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
+
+useEffect(() => {
+  if (!user?.uid) {
+    return;
+  }
+   // eslint-disable-next-line react-hooks/set-state-in-effect
+  setEvents(
+    getCalendarEvents(
+      realtimeAssignments,
+      realtimeStudySessions,
+    ),
+  );
+
+  setHasLoaded(true);
+}, [
+  realtimeAssignments,
+  realtimeStudySessions,
+  user?.uid,
+]);
 
   function showPreviousPeriod() {
     if (view === "week") {

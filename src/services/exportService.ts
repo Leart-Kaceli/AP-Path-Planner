@@ -46,7 +46,7 @@ export async function createCloudAwareBackup(
   ]);
 
   return {
-    version: 3,
+    version: 4,
     exportedAt:
       new Date().toISOString(),
     courses,

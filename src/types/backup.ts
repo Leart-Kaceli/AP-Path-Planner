@@ -11,7 +11,7 @@ import type {
 } from "@/types/notification";
 
 export type AppBackup = {
-  version: 3;
+  version: 4;
   exportedAt: string;
   courses: Course[];
   assignments: Assignment[];

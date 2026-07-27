@@ -9,8 +9,13 @@ import {
 } from "firebase/auth";
 
 import {
-  getFirestore,
+  connectFirestoreEmulator,
+  initializeFirestore,
+  memoryLocalCache,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from "firebase/firestore";
+
 
 const firebaseConfig = {
   apiKey:
@@ -47,6 +52,47 @@ export const firebaseAuth =
   getAuth(firebaseApp);
 
 export const firestoreDatabase =
-  getFirestore(firebaseApp);
+  initializeFirestore(
+    firebaseApp,
+    {
+      localCache:
+        process.env.NODE_ENV ===
+        "development"
+          ? memoryLocalCache()
+          : persistentLocalCache({
+              tabManager:
+                persistentMultipleTabManager(),
+            }),
+    },
+  );
+
+if (
+  process.env.NODE_ENV ===
+  "development"
+) {
+  connectFirestoreEmulator(
+    firestoreDatabase,
+    "127.0.0.1",
+    8090,
+  );
+}
+
+  if (
+  process.env.NODE_ENV ===
+  "development"
+) {
+  try {
+    connectFirestoreEmulator(
+      firestoreDatabase,
+      "127.0.0.1",
+      8085,
+    );
+  } catch {
+    /*
+     * Next development hot reload can
+     * evaluate this module more than once.
+     */
+  }
+}
 
 export default firebaseApp;

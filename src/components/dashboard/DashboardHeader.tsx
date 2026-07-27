@@ -10,6 +10,8 @@ import {
   DEFAULT_STUDENT_PROFILE,
 } from "@/constants/profile";
 
+import AppConnectionStatus from "@/components/network/AppConnectionStatus";
+
 import {
   PROFILE_STORAGE_KEY,
 } from "@/constants/storage";
@@ -81,12 +83,16 @@ export default function DashboardHeader() {
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3">
+  <AppConnectionStatus />
+
       <Link
         href="/assignments"
         className="w-fit rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
       >
         Add Assignment
       </Link>
+      </div>
     </header>
   );
 }

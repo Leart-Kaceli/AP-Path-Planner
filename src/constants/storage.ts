@@ -27,3 +27,6 @@ export const BROWSER_NOTIFICATION_STORAGE_KEY =
 
 export const SENT_BROWSER_NOTIFICATION_STORAGE_KEY =
   "ap-path-planner-sent-browser-notifications";
+
+  export const DEVICE_ID_STORAGE_KEY =
+  "ap-path-planner-device-id";

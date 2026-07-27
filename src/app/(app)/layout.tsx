@@ -4,6 +4,7 @@ import NotificationController from "@/components/notifications/NotificationContr
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 import NetworkStatusBanner from "@/components/network/NetworkStatusBanner";
 import NetworkStatusProvider from "@/components/network/NetworkStatusProvider";
+import ToastProvider from "@/components/ui/ToastProvider";
 
 type AppLayoutProps = {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export default function AppLayout({
   return (
     <AuthProvider>
   <NetworkStatusProvider>
+    <ToastProvider>
     <NotificationProvider>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 md:flex">
         <DashboardSidebar />
@@ -28,6 +30,7 @@ export default function AppLayout({
         <NotificationController />
       </div>
     </NotificationProvider>
+    </ToastProvider>
   </NetworkStatusProvider>
 </AuthProvider>
   );

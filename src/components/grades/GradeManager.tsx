@@ -15,8 +15,19 @@ import {
   useAuth,
 } from "@/hooks/useAuth";
 
+import {
+  hasObjectChanged,
+} from "@/utils/conflicts";
+
 import LoadingCard from "@/components/ui/LoadingCard";
 import UndoToast from "@/components/ui/UndoToast";
+
+import {
+  subscribeToGrades,
+  subscribeToGradeWeights,
+} from "@/services/realtimeDataService";
+
+import SyncStatus from "@/components/ui/SyncStatus";
 
 import {
   deleteOneGrade,
@@ -64,6 +75,18 @@ export default function GradeManager() {
     useState<GradeEntry | null>(null);
 
     const [
+  gradeEditSnapshot,
+  setGradeEditSnapshot,
+] = useState<GradeEntry | null>(
+  null,
+);
+
+const [
+  hasGradeConflict,
+  setHasGradeConflict,
+] = useState(false);
+
+    const [
   recentlyDeletedGrade,
   setRecentlyDeletedGrade,
 ] = useState<GradeEntry | null>(
@@ -76,6 +99,16 @@ export default function GradeManager() {
     const [
   isSavingGrades,
   setIsSavingGrades,
+] = useState(false);
+
+const [
+  gradesFromCache,
+  setGradesFromCache,
+] = useState(false);
+
+const [
+  gradesHavePendingWrites,
+  setGradesHavePendingWrites,
 ] = useState(false);
 
 const [
@@ -99,40 +132,125 @@ const [
     return;
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+setHasLoaded(false);
+setGradeDataError(null);
+
+  /*
+   * SIGNED OUT
+   *
+   * Load everything from the local
+   * data services.
+   */
+  if (!user?.uid) {
+    let isCancelled = false;
+
+    async function loadLocalGradeData() {
+      try {
+        const [
+          loadedGrades,
+          loadedWeights,
+          loadedCourses,
+        ] = await Promise.all([
+          loadGrades(),
+          loadGradeWeights(),
+          loadCourses(),
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setGrades(
+          loadedGrades,
+        );
+
+        setWeightsByCourse(
+          loadedWeights,
+        );
+
+        setCourseNames(
+          loadedCourses.map(
+            (course) =>
+              course.name,
+          ),
+        );
+
+        setGradesFromCache(
+          false,
+        );
+
+        setGradesHavePendingWrites(
+          false,
+        );
+      } catch (error) {
+        console.error(
+          "Could not load local grade data:",
+          error,
+        );
+
+        if (!isCancelled) {
+          setGradeDataError(
+            "Your saved grade data could not be loaded.",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setHasLoaded(true);
+        }
+      }
+    }
+
+    void loadLocalGradeData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }
+
+  /*
+   * SIGNED IN
+   *
+   * Capture the UID so nested
+   * callbacks do not use User | null.
+   */
+  const userId =
+    user.uid;
+
   let isCancelled = false;
 
-  async function loadGradeData() {
-    setHasLoaded(false);
-    setGradeDataError(null);
+  let hasReceivedGrades =
+    false;
 
+  let hasReceivedWeights =
+    false;
+
+  function finishInitialLoad() {
+    if (
+      !isCancelled &&
+      hasReceivedGrades &&
+      hasReceivedWeights
+    ) {
+      setHasLoaded(true);
+    }
+  }
+
+  /*
+   * Courses do not need their own
+   * listener on the Grades page yet.
+   * We only need their names for the
+   * grade form and filters.
+   */
+  async function loadCourseNames() {
     try {
-      const [
-        loadedGrades,
-        loadedWeights,
-        loadedCourses,
-      ] = await Promise.all([
-        loadGrades(
-          user?.uid,
-        ),
-        loadGradeWeights(
-          user?.uid,
-        ),
-        loadCourses(
-          user?.uid,
-        ),
-      ]);
+      const loadedCourses =
+        await loadCourses(
+          userId,
+        );
 
       if (isCancelled) {
         return;
       }
-
-      setGrades(
-        loadedGrades,
-      );
-
-      setWeightsByCourse(
-        loadedWeights,
-      );
 
       setCourseNames(
         loadedCourses.map(
@@ -142,28 +260,109 @@ const [
       );
     } catch (error) {
       console.error(
-        "Could not load grade data:",
+        "Could not load courses for grades:",
         error,
       );
 
       if (!isCancelled) {
         setGradeDataError(
-          user?.uid
-            ? "Your cloud grade data could not be loaded."
-            : "Your saved grade data could not be loaded.",
+          "Your course list could not be loaded.",
         );
-      }
-    } finally {
-      if (!isCancelled) {
-        setHasLoaded(true);
       }
     }
   }
 
-  void loadGradeData();
+  void loadCourseNames();
+
+  /*
+   * Real-time grades.
+   */
+  const unsubscribeGrades =
+    subscribeToGrades(
+      userId,
+
+      (snapshot) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setGrades(
+          snapshot.data,
+        );
+
+        setGradesFromCache(
+          snapshot.fromCache,
+        );
+
+        setGradesHavePendingWrites(
+          snapshot.hasPendingWrites,
+        );
+
+        hasReceivedGrades =
+          true;
+
+        finishInitialLoad();
+      },
+
+      (error) => {
+        console.error(
+          "Grade listener failed:",
+          error,
+        );
+
+        if (!isCancelled) {
+          setGradeDataError(
+            "Real-time grade sync could not be started.",
+          );
+
+          setHasLoaded(true);
+        }
+      },
+    );
+
+  /*
+   * Real-time grade weights.
+   */
+  const unsubscribeWeights =
+    subscribeToGradeWeights(
+      userId,
+
+      (snapshot) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setWeightsByCourse(
+          snapshot.data,
+        );
+
+        hasReceivedWeights =
+          true;
+
+        finishInitialLoad();
+      },
+
+      (error) => {
+        console.error(
+          "Grade-weight listener failed:",
+          error,
+        );
+
+        if (!isCancelled) {
+          setGradeDataError(
+            "Real-time grade-weight sync could not be started.",
+          );
+
+          setHasLoaded(true);
+        }
+      },
+    );
 
   return () => {
     isCancelled = true;
+
+    unsubscribeGrades();
+    unsubscribeWeights();
   };
 }, [
   isAuthLoading,
@@ -230,6 +429,19 @@ const [
  async function saveGrade(
   grade: GradeEntry,
 ) {
+  if (
+  hasGradeConflict &&
+  gradeToEdit
+) {
+  const shouldOverwrite =
+    window.confirm(
+      "This grade changed on another device while you were editing it. Save your version anyway?",
+    );
+
+  if (!shouldOverwrite) {
+    return;
+  }
+}
   const previousGrades =
     grades;
 
@@ -250,6 +462,13 @@ const [
       : [...grades, grade];
 
   setGrades(nextGrades);
+  setGradeEditSnapshot(
+  null,
+);
+
+setHasGradeConflict(
+  false,
+);
   setGradeToEdit(null);
   setGradeDataError(null);
 
@@ -283,6 +502,14 @@ const [
   function startEditingGrade(
     grade: GradeEntry,
   ) {
+
+    setGradeEditSnapshot(
+  grade,
+);
+
+setHasGradeConflict(
+  false,
+);
     setGradeToEdit(grade);
 
     window.scrollTo({
@@ -293,7 +520,50 @@ const [
 
   function cancelEditingGrade() {
     setGradeToEdit(null);
+    setGradeEditSnapshot(
+  null,
+);
+
+setHasGradeConflict(
+  false,
+);
   }
+
+  useEffect(() => {
+  if (
+    !gradeToEdit ||
+    !gradeEditSnapshot
+  ) {
+    return;
+  }
+
+  const latestGrade =
+    grades.find(
+      (grade) =>
+        grade.id ===
+        gradeToEdit.id,
+    );
+
+  if (!latestGrade) {
+    return;
+  }
+
+ if (
+  hasObjectChanged(
+    gradeEditSnapshot,
+    latestGrade,
+  )
+) {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setHasGradeConflict(
+    true,
+  );
+}
+}, [
+  grades,
+  gradeToEdit,
+  gradeEditSnapshot,
+]);
 
  async function deleteGrade(
   gradeId: string,
@@ -714,24 +984,38 @@ const overallWeightedAverage =
         </div>
       )}
 
-      {isSavingGrades && (
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Saving grade data...
-        </p>
-      )}
-
-      {gradeDataError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-        >
-          {gradeDataError}
-        </div>
-      )}
+      <SyncStatus
+  isSaving={
+    isSavingGrades
+  }
+  error={
+    gradeDataError
+  }
+  fromCache={
+    gradesFromCache
+  }
+  hasPendingWrites={
+    gradesHavePendingWrites
+  }
+  realtime={
+    Boolean(user?.uid)
+  }
+/>
     </div>
   
 
     <div className="grid gap-8 xl:grid-cols-[380px_1fr]"></div>
+
+    {hasGradeConflict && (
+  <div
+    role="alert"
+    className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+  >
+    This grade changed on another
+    device while you were editing it.
+    Review before saving.
+  </div>
+)}
       <GradeForm
         key={
           gradeToEdit?.id ?? "new-grade"

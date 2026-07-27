@@ -2,21 +2,33 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import Link from "next/link";
-import DashboardCalendarPreview from "@/components/dashboard/DashboardCalendarPreview";
 
 import AssignmentCard from "@/components/dashboard/AssignmentCard";
 import CourseCard from "@/components/dashboard/CourseCard";
-import StatCard from "@/components/dashboard/StatCard";
-import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
-import { DEFAULT_GRADE_WEIGHTS } from "@/constants/grades";
+import DashboardCalendarPreview from "@/components/dashboard/DashboardCalendarPreview";
 import DashboardGradeSummary from "@/components/dashboard/DashboardGradeSummary";
 import DashboardReminderSummary from "@/components/dashboard/DashboardReminderSummary";
+import DashboardStudySession from "@/components/dashboard/DashboardStudySession";
+import StatCard from "@/components/dashboard/StatCard";
 
 import LoadingCard from "@/components/ui/LoadingCard";
+
+import {
+  useNotifications,
+} from "@/components/notifications/NotificationProvider";
+
+import {
+  DEFAULT_GRADE_WEIGHTS,
+} from "@/constants/grades";
+
+import {
+  DEFAULT_STUDENT_PROFILE,
+} from "@/constants/profile";
 
 import {
   useAuth,
@@ -31,14 +43,6 @@ import {
 } from "@/services/courseService";
 
 import {
-  loadStudySessions,
-} from "@/services/studySessionService";
-
-import {
-  loadProfile,
-} from "@/services/profileService";
-
-import {
   loadGrades,
 } from "@/services/gradeService";
 
@@ -46,29 +50,51 @@ import {
   loadGradeWeights,
 } from "@/services/gradeWeightService";
 
-import { DEFAULT_STUDENT_PROFILE } from "@/constants/profile";
+import {
+  loadProfile,
+} from "@/services/profileService";
 
 import {
-  calculatePointAverage,
-  calculateWeightedAverage,
-} from "@/utils/grades";
+  subscribeToAssignments,
+  subscribeToCourses,
+  subscribeToGrades,
+  subscribeToStudySessions,
+} from "@/services/realtimeDataService";
+
+import {
+  loadStudySessions,
+} from "@/services/studySessionService";
+
 import {
   isDateTimeInCurrentWeek,
   isDateTimeToday,
 } from "@/utils/dates";
 
-import type { Assignment } from "@/types/assignment";
-import type { Course } from "@/types/course";
-import type { StudySession } from "@/types/studySession";
+import {
+  calculatePointAverage,
+  calculateWeightedAverage,
+} from "@/utils/grades";
+
+import type {
+  Assignment,
+} from "@/types/assignment";
+
+import type {
+  Course,
+} from "@/types/course";
+
 import type {
   CourseGradeWeights,
   GradeEntry,
 } from "@/types/grade";
-import type { StudentProfile } from "@/types/profile";
 
-import {
-  useNotifications,
-} from "@/components/notifications/NotificationProvider";
+import type {
+  StudentProfile,
+} from "@/types/profile";
+
+import type {
+  StudySession,
+} from "@/types/studySession";
 
 type LoadedDashboardData = {
   courses: Course[];
@@ -78,6 +104,7 @@ type LoadedDashboardData = {
   weightsByCourse: CourseGradeWeights;
   profile: StudentProfile;
 };
+
 const emptyDashboardData: LoadedDashboardData = {
   courses: [],
   assignments: [],
@@ -87,121 +114,274 @@ const emptyDashboardData: LoadedDashboardData = {
   profile: DEFAULT_STUDENT_PROFILE,
 };
 
-
 export default function DashboardOverview() {
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuth();
 
   const {
-  user,
-  isLoading: isAuthLoading,
-} = useAuth();
+    notifications:
+      dashboardNotifications,
+  } = useNotifications();
 
-  const {
-  notifications:
-    dashboardNotifications,
-} = useNotifications();
-
-const [dashboardData, setDashboardData] =
-  useState<LoadedDashboardData>(
+  const [
+    dashboardData,
+    setDashboardData,
+  ] = useState<LoadedDashboardData>(
     emptyDashboardData,
   );
 
-  const [hasLoaded, setHasLoaded] =
-    useState(false);
+  const [
+    hasLoaded,
+    setHasLoaded,
+  ] = useState(false);
 
-   useEffect(() => {
-  if (isAuthLoading) {
-    return;
-  }
+  /*
+   * Load the initial Dashboard data.
+   */
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
 
-  let isCancelled = false;
+    let isCancelled = false;
 
-  async function loadDashboardData() {
-    try {
-      const [
-  courses,
-  assignments,
-  studySessions,
-  profile,
-  grades,
-  weightsByCourse,
-] = await Promise.all([
-  loadCourses(
-    user?.uid,
-  ),
-  loadAssignments(
-    user?.uid,
-  ),
-  loadStudySessions(
-    user?.uid,
-  ),
-  loadProfile(
-    user?.uid,
-  ),
-  loadGrades(
-    user?.uid,
-  ),
-  loadGradeWeights(
-    user?.uid,
-  ),
-]);
+    async function loadDashboardData() {
+      try {
+        const [
+          courses,
+          assignments,
+          studySessions,
+          profile,
+          grades,
+          weightsByCourse,
+        ] = await Promise.all([
+          loadCourses(
+            user?.uid,
+          ),
+          loadAssignments(
+            user?.uid,
+          ),
+          loadStudySessions(
+            user?.uid,
+          ),
+          loadProfile(
+            user?.uid,
+          ),
+          loadGrades(
+            user?.uid,
+          ),
+          loadGradeWeights(
+            user?.uid,
+          ),
+        ]);
 
+        if (isCancelled) {
+          return;
+        }
 
-      if (isCancelled) {
-        return;
-      }
-
-      setDashboardData({
-  courses,
-  assignments,
-  studySessions,
-  grades,
-  weightsByCourse,
-  profile,
-});
-
-    } catch (error) {
-      console.error(
-        "Could not load dashboard data:",
-        error,
-      );
-
-      if (!isCancelled) {
-        setDashboardData(
-          emptyDashboardData,
+        setDashboardData({
+          courses,
+          assignments,
+          studySessions,
+          grades,
+          weightsByCourse,
+          profile,
+        });
+      } catch (error) {
+        console.error(
+          "Could not load dashboard data:",
+          error,
         );
-      }
-    } finally {
-      if (!isCancelled) {
-        setHasLoaded(true);
+
+        if (!isCancelled) {
+          setDashboardData(
+            emptyDashboardData,
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setHasLoaded(true);
+        }
       }
     }
+
+    void loadDashboardData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    isAuthLoading,
+    user?.uid,
+  ]);
+
+  /*
+   * Keep signed-in Dashboard data
+   * synchronized with Firestore.
+   */
+  useEffect(() => {
+    if (
+      isAuthLoading ||
+      !user?.uid ||
+      !hasLoaded
+    ) {
+      return;
+    }
+
+    const userId =
+      user.uid;
+
+    const unsubscribeCourses =
+      subscribeToCourses(
+        userId,
+
+        (snapshot) => {
+          setDashboardData(
+            (current) => ({
+              ...current,
+              courses:
+                snapshot.data,
+            }),
+          );
+        },
+
+        (error) => {
+          console.error(
+            "Dashboard course listener failed:",
+            error,
+          );
+        },
+      );
+
+    const unsubscribeAssignments =
+      subscribeToAssignments(
+        userId,
+
+        (snapshot) => {
+          setDashboardData(
+            (current) => ({
+              ...current,
+              assignments:
+                snapshot.data,
+            }),
+          );
+        },
+
+        (error) => {
+          console.error(
+            "Dashboard assignment listener failed:",
+            error,
+          );
+        },
+      );
+
+    const unsubscribeStudySessions =
+      subscribeToStudySessions(
+        userId,
+
+        (snapshot) => {
+          setDashboardData(
+            (current) => ({
+              ...current,
+              studySessions:
+                snapshot.data,
+            }),
+          );
+        },
+
+        (error) => {
+          console.error(
+            "Dashboard study-session listener failed:",
+            error,
+          );
+        },
+      );
+
+    const unsubscribeGrades =
+      subscribeToGrades(
+        userId,
+
+        (snapshot) => {
+          setDashboardData(
+            (current) => ({
+              ...current,
+              grades:
+                snapshot.data,
+            }),
+          );
+        },
+
+        (error) => {
+          console.error(
+            "Dashboard grade listener failed:",
+            error,
+          );
+        },
+      );
+
+    return () => {
+      unsubscribeCourses();
+      unsubscribeAssignments();
+      unsubscribeStudySessions();
+      unsubscribeGrades();
+    };
+  }, [
+    hasLoaded,
+    isAuthLoading,
+    user?.uid,
+  ]);
+
+  /*
+   * Memoized calculations must remain
+   * at the component level and before
+   * every conditional return.
+   */
+  const activeAssignments =
+    useMemo(
+      () =>
+        dashboardData.assignments.filter(
+          (assignment) =>
+            !assignment.completed,
+        ),
+      [
+        dashboardData.assignments,
+      ],
+    );
+
+  const completedSessionsThisWeek =
+    useMemo(
+      () =>
+        dashboardData.studySessions.filter(
+          (session) =>
+            session.completed &&
+            session.completedAt !==
+              null &&
+            isDateTimeInCurrentWeek(
+              session.completedAt,
+            ),
+        ),
+      [
+        dashboardData.studySessions,
+      ],
+    );
+
+  if (
+    isAuthLoading ||
+    !hasLoaded
+  ) {
+    return <DashboardLoading />;
   }
 
-  void loadDashboardData();
-
-  return () => {
-    isCancelled = true;
-  };
-}, [
-  isAuthLoading,
-  user?.uid,
-]);
-
- if (
-  isAuthLoading ||
-  !hasLoaded
-) {
-  return <DashboardLoading />;
-}
-
-const {
-  courses,
-  assignments,
-  studySessions,
-  grades,
-  weightsByCourse,
-  profile,
-} = dashboardData;
+  const {
+    courses,
+    assignments,
+    studySessions,
+    grades,
+    weightsByCourse,
+    profile,
+  } = dashboardData;
 
   const completedAssignments =
     assignments.filter(
@@ -209,86 +389,80 @@ const {
         assignment.completed,
     );
 
-    const assignmentsCompletedToday =
-  completedAssignments.filter(
-    (assignment) =>
-      assignment.completedAt !== null &&
-      isDateTimeToday(
-        assignment.completedAt,
-      ),
-  );
-
-  const activeAssignments =
-    assignments.filter(
+  const assignmentsCompletedToday =
+    completedAssignments.filter(
       (assignment) =>
-        !assignment.completed,
+        assignment.completedAt !==
+          null &&
+        isDateTimeToday(
+          assignment.completedAt,
+        ),
     );
 
-    const completedSessionsThisWeek =
-  studySessions.filter(
-    (session) =>
-      session.completed &&
-      session.completedAt !== null &&
-      isDateTimeInCurrentWeek(
-        session.completedAt,
-      ),
-  );
+  const completedMinutesThisWeek =
+    completedSessionsThisWeek.reduce(
+      (
+        total,
+        session,
+      ) =>
+        total +
+        session.durationMinutes,
+      0,
+    );
 
-const completedMinutesThisWeek =
-  completedSessionsThisWeek.reduce(
-    (total, session) =>
-      total + session.durationMinutes,
-    0,
-  );
+  const weeklyStudyGoal =
+    profile.weeklyStudyGoalMinutes;
 
-const weeklyStudyGoal =
-  profile.weeklyStudyGoalMinutes;
+  const weeklyStudyPercentage =
+    weeklyStudyGoal === 0
+      ? 0
+      : Math.min(
+          100,
+          Math.round(
+            (completedMinutesThisWeek /
+              weeklyStudyGoal) *
+              100,
+          ),
+        );
 
+  const scheduledStudySessions =
+    studySessions.filter(
+      (session) =>
+        !session.completed,
+    );
 
+  const upcomingStudySessions =
+    scheduledStudySessions
+      .slice()
+      .sort(
+        (
+          sessionA,
+          sessionB,
+        ) => {
+          const firstDateTime =
+            `${sessionA.date}T${sessionA.startTime}`;
 
-const weeklyStudyPercentage =
-  weeklyStudyGoal === 0
-    ? 0
-    : Math.min(
-        100,
-        Math.round(
-          (completedMinutesThisWeek /
-            weeklyStudyGoal) *
-            100,
-        ),
-      );
+          const secondDateTime =
+            `${sessionB.date}T${sessionB.startTime}`;
 
-const scheduledStudySessions =
-  studySessions.filter(
-    (session) => !session.completed,
-  );
-
-
-const upcomingStudySessions =
-  scheduledStudySessions
-    .slice()
-    .sort((sessionA, sessionB) => {
-      const firstDateTime =
-        `${sessionA.date}T${sessionA.startTime}`;
-
-      const secondDateTime =
-        `${sessionB.date}T${sessionB.startTime}`;
-
-      return firstDateTime.localeCompare(
-        secondDateTime,
-      );
-    })
-    .slice(0, 3);
-
-
+          return firstDateTime.localeCompare(
+            secondDateTime,
+          );
+        },
+      )
+      .slice(0, 3);
 
   const averageProgress =
     courses.length === 0
       ? 0
       : Math.round(
           courses.reduce(
-            (total, course) =>
-              total + course.progress,
+            (
+              total,
+              course,
+            ) =>
+              total +
+              course.progress,
             0,
           ) / courses.length,
         );
@@ -306,7 +480,10 @@ const upcomingStudySessions =
     activeAssignments
       .slice()
       .sort(
-        (assignmentA, assignmentB) =>
+        (
+          assignmentA,
+          assignmentB,
+        ) =>
           assignmentA.dueDate.localeCompare(
             assignmentB.dueDate,
           ),
@@ -314,112 +491,129 @@ const upcomingStudySessions =
       .slice(0, 5);
 
   const displayedCourses =
-    courses.slice(0, 4);
-
-  const overallPointAverage =
-  calculatePointAverage(grades);
-
-const coursesWithGrades = Array.from(
-  new Set(
-    grades.map((grade) => grade.course),
-  ),
-);
-
-const weightedCourseSummaries =
-  coursesWithGrades
-    .map((course) => {
-      const courseGrades = grades.filter(
-        (grade) =>
-          grade.course === course,
-      );
-
-      const weights =
-        weightsByCourse[course] ??
-        DEFAULT_GRADE_WEIGHTS;
-
-      const weightedAverage =
-        calculateWeightedAverage(
-          courseGrades,
-          weights,
-        );
-
-      
-
-      return {
-        course,
-        weightedAverage,
-      };
-    })
-    .filter(
-      (
-        summary,
-      ): summary is {
-        course: string;
-        weightedAverage: number;
-      } =>
-        summary.weightedAverage !== null,
+    courses.slice(
+      0,
+      4,
     );
 
-const overallWeightedAverage =
-  weightedCourseSummaries.length === 0
-    ? null
-    : Math.round(
-        weightedCourseSummaries.reduce(
-          (total, summary) =>
-            total +
-            summary.weightedAverage,
-          0,
-        ) /
-          weightedCourseSummaries.length,
+  const overallPointAverage =
+    calculatePointAverage(
+      grades,
+    );
+
+  const coursesWithGrades =
+    Array.from(
+      new Set(
+        grades.map(
+          (grade) =>
+            grade.course,
+        ),
+      ),
+    );
+
+  const weightedCourseSummaries =
+    coursesWithGrades
+      .map((course) => {
+        const courseGrades =
+          grades.filter(
+            (grade) =>
+              grade.course ===
+              course,
+          );
+
+        const weights =
+          weightsByCourse[
+            course
+          ] ??
+          DEFAULT_GRADE_WEIGHTS;
+
+        const weightedAverage =
+          calculateWeightedAverage(
+            courseGrades,
+            weights,
+          );
+
+        return {
+          course,
+          weightedAverage,
+        };
+      })
+      .filter(
+        (
+          summary,
+        ): summary is {
+          course: string;
+          weightedAverage: number;
+        } =>
+          summary.weightedAverage !==
+          null,
       );
+
+  const overallWeightedAverage =
+    weightedCourseSummaries.length ===
+    0
+      ? null
+      : Math.round(
+          weightedCourseSummaries.reduce(
+            (
+              total,
+              summary,
+            ) =>
+              total +
+              summary.weightedAverage,
+            0,
+          ) /
+            weightedCourseSummaries.length,
+        );
 
   return (
     <main
   id="main-content"
-  className="px-6 py-8"
+  className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8"
 >
-      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="AP Courses"
-          value={String(courses.length)}
+          value={String(
+            courses.length,
+          )}
           description="Currently enrolled"
         />
 
         <StatCard
-  title="Active Tasks"
-  value={String(
-    activeAssignments.length,
-  )}
-  description={`${assignmentsCompletedToday.length} completed today`}
-/>
+          title="Active Tasks"
+          value={String(
+            activeAssignments.length,
+          )}
+          description={`${assignmentsCompletedToday.length} completed today`}
+        />
 
         <StatCard
-  title="Study Time This Week"
-  value={formatStudyMinutes(
-    completedMinutesThisWeek,
-  )}
-  description={`Goal: ${formatStudyMinutes(
-    weeklyStudyGoal,
-  )}`}
-/>
+          title="Study Time This Week"
+          value={formatStudyMinutes(
+            completedMinutesThisWeek,
+          )}
+          description={`Goal: ${formatStudyMinutes(
+            weeklyStudyGoal,
+          )}`}
+        />
 
         <StatCard
           title="Average Progress"
           value={`${averageProgress}%`}
           description="Across all AP courses"
         />
-        
       </section>
 
-      <section className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Your AP Courses
               </h2>
 
-              <p className="mt-1 text-slate-600">
+              <p className="mt-1 text-slate-600 dark:text-slate-300">
                 Progress across your saved
                 courses.
               </p>
@@ -427,19 +621,24 @@ const overallWeightedAverage =
 
             <Link
               href="/courses"
-              className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+              className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               Manage Courses
             </Link>
           </div>
 
-          {displayedCourses.length > 0 ? (
+          {displayedCourses.length >
+          0 ? (
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
               {displayedCourses.map(
                 (course) => (
                   <CourseCard
-                    key={course.id}
-                    name={course.name}
+                    key={
+                      course.id
+                    }
+                    name={
+                      course.name
+                    }
                     teacher={
                       course.teacher
                     }
@@ -463,71 +662,72 @@ const overallWeightedAverage =
           )}
         </div>
 
-        
-
         <DashboardProgressSummary
-  courseProgress={averageProgress}
-  assignmentCompletion={
-    assignmentCompletion
-  }
-  completedAssignments={
-    completedAssignments.length
-  }
-  totalAssignments={
-    assignments.length
-  }
-  weeklyStudyPercentage={
-    weeklyStudyPercentage
-  }
-  completedStudyMinutes={
-    completedMinutesThisWeek
-  }
-  weeklyStudyGoal={
-    weeklyStudyGoal
-  }
-/>
+          courseProgress={
+            averageProgress
+          }
+          assignmentCompletion={
+            assignmentCompletion
+          }
+          completedAssignments={
+            completedAssignments.length
+          }
+          totalAssignments={
+            assignments.length
+          }
+          weeklyStudyPercentage={
+            weeklyStudyPercentage
+          }
+          completedStudyMinutes={
+            completedMinutesThisWeek
+          }
+          weeklyStudyGoal={
+            weeklyStudyGoal
+          }
+        />
       </section>
 
-      
+      <div className="mt-8">
+        <DashboardGradeSummary
+          pointAverage={
+            overallPointAverage
+          }
+          weightedAverage={
+            overallWeightedAverage
+          }
+          courseSummaries={
+            weightedCourseSummaries
+          }
+        />
+      </div>
 
       <div className="mt-8">
-  <DashboardGradeSummary
-    pointAverage={overallPointAverage}
-    weightedAverage={
-      overallWeightedAverage
-    }
-    courseSummaries={
-      weightedCourseSummaries
-    }
-  />
-</div>
+        <DashboardReminderSummary
+          notifications={
+            dashboardNotifications
+          }
+        />
+      </div>
 
-<div className="mt-8">
-  <DashboardReminderSummary
-    notifications={
-      dashboardNotifications
-    }
-  />
-</div>
+      <div className="mt-8">
+        <DashboardCalendarPreview
+          assignments={
+            assignments
+          }
+          studySessions={
+            studySessions
+          }
+        />
+      </div>
 
-<div className="mt-8">
-  <DashboardCalendarPreview
-    assignments={assignments}
-    studySessions={
-      studySessions
-    }
-  />
-</div>
-
-
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Upcoming Assignments
             </h2>
 
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-slate-600 dark:text-slate-300">
               Your next active deadlines,
               sorted by date.
             </p>
@@ -535,20 +735,27 @@ const overallWeightedAverage =
 
           <Link
             href="/assignments"
-            className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+            className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Manage Assignments
           </Link>
         </div>
 
-        {upcomingAssignments.length > 0 ? (
+        {upcomingAssignments.length >
+        0 ? (
           <div className="mt-3">
             {upcomingAssignments.map(
               (assignment) => (
                 <AssignmentCard
-                  key={assignment.id}
-                  title={assignment.title}
-                  course={assignment.course}
+                  key={
+                    assignment.id
+                  }
+                  title={
+                    assignment.title
+                  }
+                  course={
+                    assignment.course
+                  }
                   dueDate={
                     assignment.dueDate
                   }
@@ -560,12 +767,12 @@ const overallWeightedAverage =
             )}
           </div>
         ) : (
-          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-            <h3 className="font-semibold text-slate-900">
+          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-950">
+            <h3 className="font-semibold text-slate-900 dark:text-white">
               No active assignments
             </h3>
 
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Add an assignment or enjoy
               having everything completed.
             </p>
@@ -579,78 +786,92 @@ const overallWeightedAverage =
           </div>
         )}
       </section>
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-900">
-        Upcoming Study Sessions
-      </h2>
 
-      <p className="mt-1 text-slate-600">
-        Your next scheduled study blocks.
-      </p>
-    </div>
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Upcoming Study Sessions
+            </h2>
 
-    <Link
-      href="/planner"
-      className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700"
-    >
-      Open Study Planner
-    </Link>
-  </div>
+            <p className="mt-1 text-slate-600 dark:text-slate-300">
+              Your next scheduled study
+              blocks.
+            </p>
+          </div>
 
-  {upcomingStudySessions.length > 0 ? (
-    <div className="mt-3">
-      {upcomingStudySessions.map(
-        (session) => (
-          <DashboardStudySession
-            key={session.id}
-            session={session}
-          />
-        ),
-      )}
-    </div>
-  ) : (
-    <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-      <h3 className="font-semibold text-slate-900">
-        No study sessions scheduled
-      </h3>
+          <Link
+            href="/planner"
+            className="w-fit text-sm font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            Open Study Planner
+          </Link>
+        </div>
 
-      <p className="mt-2 text-sm text-slate-600">
-        Schedule focused study time for one
-        of your courses.
-      </p>
+        {upcomingStudySessions.length >
+        0 ? (
+          <div className="mt-3">
+            {upcomingStudySessions.map(
+              (session) => (
+                <DashboardStudySession
+                  key={
+                    session.id
+                  }
+                  session={
+                    session
+                  }
+                />
+              ),
+            )}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-950">
+            <h3 className="font-semibold text-slate-900 dark:text-white">
+              No study sessions scheduled
+            </h3>
 
-      <Link
-        href="/planner"
-        className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-      >
-        Schedule Session
-      </Link>
-    </div>
-  )}
-</section>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Schedule focused study time
+              for one of your courses.
+            </p>
+
+            <Link
+              href="/planner"
+              className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Schedule Session
+            </Link>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
 
 function DashboardLoading() {
   return (
-    <main className="px-6 py-8">
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {[1, 2, 3, 4].map(
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          1,
+          2,
+          3,
+          4,
+        ].map(
           (placeholder) => (
             <LoadingCard
-  key={placeholder}
-  heightClassName="h-36"
-/>
+              key={
+                placeholder
+              }
+              heightClassName="h-36"
+            />
           ),
         )}
       </div>
 
       <div className="mt-8">
-  <LoadingCard heightClassName="h-96" />
-</div>
+        <LoadingCard heightClassName="h-96" />
+      </div>
     </main>
   );
 }
@@ -669,12 +890,12 @@ function DashboardEmptyState({
   linkText,
 }: DashboardEmptyStateProps) {
   return (
-    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-      <h3 className="font-semibold text-slate-900">
+    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
+      <h3 className="font-semibold text-slate-900 dark:text-white">
         {title}
       </h3>
 
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {description}
       </p>
 
@@ -708,38 +929,40 @@ function DashboardProgressSummary({
   weeklyStudyGoal,
 }: DashboardProgressSummaryProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-900">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
         Overall Progress
       </h2>
 
       <div className="mt-6 space-y-7">
-  <ProgressRow
-    label="Average course progress"
-    percentage={courseProgress}
-    description={`${courseProgress}%`}
-  />
+        <ProgressRow
+          label="Average course progress"
+          percentage={
+            courseProgress
+          }
+          description={`${courseProgress}%`}
+        />
 
-  <ProgressRow
-    label="Assignments completed"
-    percentage={
-      assignmentCompletion
-    }
-    description={`${completedAssignments}/${totalAssignments}`}
-  />
+        <ProgressRow
+          label="Assignments completed"
+          percentage={
+            assignmentCompletion
+          }
+          description={`${completedAssignments}/${totalAssignments}`}
+        />
 
-  <ProgressRow
-    label="Weekly study goal"
-    percentage={
-      weeklyStudyPercentage
-    }
-    description={`${formatStudyMinutes(
-      completedStudyMinutes,
-    )}/${formatStudyMinutes(
-      weeklyStudyGoal,
-    )}`}
-  />
-</div>
+        <ProgressRow
+          label="Weekly study goal"
+          percentage={
+            weeklyStudyPercentage
+          }
+          description={`${formatStudyMinutes(
+            completedStudyMinutes,
+          )}/${formatStudyMinutes(
+            weeklyStudyGoal,
+          )}`}
+        />
+      </div>
     </section>
   );
 }
@@ -758,23 +981,25 @@ function ProgressRow({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 text-sm">
-        <span className="font-medium text-slate-600">
+        <span className="font-medium text-slate-600 dark:text-slate-300">
           {label}
         </span>
 
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-slate-900 dark:text-white">
           {description}
         </span>
       </div>
 
       <div
-  role="progressbar"
-  aria-label={label}
-  aria-valuemin={0}
-  aria-valuemax={100}
-  aria-valuenow={percentage}
-  className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200"
->
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={
+          percentage
+        }
+        className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+      >
         <div
           className="h-full rounded-full bg-blue-600 transition-all"
           style={{
@@ -786,15 +1011,24 @@ function ProgressRow({
   );
 }
 
-function formatStudyMinutes(minutes: number) {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+function formatStudyMinutes(
+  minutes: number,
+) {
+  const hours =
+    Math.floor(
+      minutes / 60,
+    );
+
+  const remainingMinutes =
+    minutes % 60;
 
   if (hours === 0) {
     return `${minutes}m`;
   }
 
-  if (remainingMinutes === 0) {
+  if (
+    remainingMinutes === 0
+  ) {
     return `${hours}h`;
   }
 

@@ -78,7 +78,7 @@ function readObject<T extends object>(
 
 export function createAppBackup(): AppBackup {
   return {
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
 
     courses: readArray<Course>(
@@ -223,7 +223,7 @@ export function migrateAppBackup(
 
     return {
       ...legacyBackup,
-      version: 3,
+      version: 4,
       snoozedNotifications: [],
       sentBrowserNotificationIds: [],
     };
@@ -235,7 +235,7 @@ export function migrateAppBackup(
 
     return {
       ...legacyBackup,
-      version: 3,
+      version: 4,
       dismissedNotificationIds: [],
       snoozedNotifications: [],
       sentBrowserNotificationIds: [],
