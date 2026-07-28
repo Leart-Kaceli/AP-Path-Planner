@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import FirebasePerformanceInitializer from "@/components/firebase/FirebasePerformanceInitializer";
 
 import ThemeInitializer from "@/components/theme/ThemeInitializer";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeInitializer />
+          <FirebasePerformanceInitializer />
 
         {children}
       </body>

@@ -43,7 +43,7 @@ const firebaseConfig = {
       .NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const firebaseApp =
+export const firebaseApp =
   getApps().length > 0
     ? getApp()
     : initializeApp(firebaseConfig);

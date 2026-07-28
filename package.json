@@ -7,8 +7,14 @@
   "build": "next build",
   "start": "next start",
   "lint": "eslint",
+  "test": "vitest",
+  "test:run": "vitest run",
   "test:rules": "firebase emulators:exec --only firestore \"node --test tests/firestore.rules.test.mjs\"",
-  "check": "npm run lint && npm run test:rules && npm run build"
+  "test:e2e": "playwright test",
+  "test:e2e:headed": "playwright test --headed",
+  "test:e2e:ui": "playwright test --ui",
+  "check": "npm run lint && npm run test:run && npm run test:rules && npm run build",
+  "check:full": "npm run check && npm run test:e2e"
 },
   "dependencies": {
     "firebase": "^12.16.0",
@@ -18,15 +24,24 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "firebase-tools": "^15.24.0",
+    "jsdom": "^30.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.10"
   }
 }

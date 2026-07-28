@@ -7,8 +7,9 @@ export default function LoadingCard({
 }: LoadingCardProps) {
   return (
     <div
-      className={`${heightClassName} animate-pulse rounded-2xl border border-slate-200 bg-slate-200 dark:border-slate-800 dark:bg-slate-800`}
-      aria-hidden="true"
-    />
+  role="status"
+  aria-label="Loading"
+  className={`${heightClassName} animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800`}
+/>
   );
 }

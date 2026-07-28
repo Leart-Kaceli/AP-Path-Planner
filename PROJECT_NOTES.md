@@ -2071,3 +2071,95 @@ with recursive users/{UID} deletion.
 - Add performance monitoring
 - Add error monitoring
 - Improve Firebase deployment workflow
+
+# Day 29 Completed
+
+## Test Infrastructure
+
+- Installed Vitest
+- Installed React Testing Library
+- Added jsdom test environment
+- Added global DOM test matchers
+- Added TypeScript path-alias support
+- Added reusable test scripts
+
+## Component Tests
+
+- Added SyncStatus tests
+- Added ConfirmDialog tests
+- Added LoadingCard tests
+- Added connection-status tests
+- Tested visible states and button callbacks
+
+## Utility Tests
+
+- Added conflict-detection tests
+- Tested equal objects
+- Tested changed objects
+- Tested nested object changes
+
+## Form Tests
+
+- Added initial CourseForm validation coverage
+- Verified invalid empty forms do not save
+
+## Developer Workflow
+
+- Added unit and component tests to the project check command
+- Preserved separate Firestore Rules tests
+- Preserved production build verification
+
+## Day 30 Goals
+
+- Add Playwright browser testing
+- Test public navigation
+- Test not-found routes
+- Add application error boundaries
+- Add global error handling
+- Add production performance monitoring
+- Add a complete project verification command
+
+# Day 30 Completed
+
+## End-to-End Testing
+
+- Installed Playwright
+- Added Chromium browser testing
+- Added automatic Next.js test server startup
+- Added homepage smoke test
+- Added public navigation test
+- Added not-found route test
+- Added screenshots and traces for failed tests
+
+## Error Handling
+
+- Added route-level error boundary
+- Added global error boundary
+- Added retry controls
+- Added development console reporting
+
+## Performance Monitoring
+
+- Added Firebase Performance Monitoring initialization
+- Limited initialization to production
+- Added browser-support checking
+- Prevented duplicate initialization
+
+## Developer Workflow
+
+- Added test:e2e command
+- Added headed Playwright testing
+- Added Playwright UI mode
+- Added check:full command
+- Added Playwright output folders to gitignore
+
+## Day 31 Goals
+
+- Expand form test coverage
+- Add authenticated end-to-end tests
+- Run E2E tests against the Firebase Emulator Suite
+- Add GitHub Actions continuous integration
+- Add test coverage reporting
+- Add accessibility testing
+- Add production deployment documentation
+- Add structured error reporting
