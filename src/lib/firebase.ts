@@ -16,7 +16,6 @@ import {
   persistentMultipleTabManager,
 } from "firebase/firestore";
 
-
 const firebaseConfig = {
   apiKey:
     process.env
@@ -46,10 +45,14 @@ const firebaseConfig = {
 export const firebaseApp =
   getApps().length > 0
     ? getApp()
-    : initializeApp(firebaseConfig);
+    : initializeApp(
+        firebaseConfig,
+      );
 
 export const firebaseAuth =
-  getAuth(firebaseApp);
+  getAuth(
+    firebaseApp,
+  );
 
 export const firestoreDatabase =
   initializeFirestore(
@@ -66,20 +69,14 @@ export const firestoreDatabase =
     },
   );
 
-if (
-  process.env.NODE_ENV ===
-  "development"
-) {
-  connectFirestoreEmulator(
-    firestoreDatabase,
-    "127.0.0.1",
-    8090,
-  );
-}
+const shouldUseFirebaseEmulator =
+  process.env
+    .NEXT_PUBLIC_USE_FIREBASE_EMULATOR ===
+  "true";
 
-  if (
-  process.env.NODE_ENV ===
-  "development"
+if (
+  typeof window !== "undefined" &&
+  shouldUseFirebaseEmulator
 ) {
   try {
     connectFirestoreEmulator(
@@ -89,7 +86,7 @@ if (
     );
   } catch {
     /*
-     * Next development hot reload can
+     * Next.js development hot reload can
      * evaluate this module more than once.
      */
   }

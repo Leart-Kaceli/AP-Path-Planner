@@ -3,19 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint",
-  "test": "vitest",
-  "test:run": "vitest run",
-  "test:rules": "firebase emulators:exec --only firestore \"node --test tests/firestore.rules.test.mjs\"",
-  "test:e2e": "playwright test",
-  "test:e2e:headed": "playwright test --headed",
-  "test:e2e:ui": "playwright test --ui",
-  "check": "npm run lint && npm run test:run && npm run test:rules && npm run build",
-  "check:full": "npm run check && npm run test:e2e"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage:open": "start coverage/index.html",
+   "test:rules": "npx firebase emulators:exec --project demo-ap-path-planner --only firestore \"node --test tests/firestore.rules.test.mjs\"",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test e2e/accessibility.spec.ts",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "check": "npm run lint && npm run test:coverage && npm run test:rules && npm run build",
+    "check:full": "npm run check && npm run test:e2e"
+  },
   "dependencies": {
     "firebase": "^12.16.0",
     "next": "^16.2.11",
@@ -23,6 +26,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4",
@@ -34,6 +38,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.4",
+    "@vitest/coverage-v8": "^4.1.10",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
@@ -41,7 +46,6 @@
     "jsdom": "^30.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"
   }
 }

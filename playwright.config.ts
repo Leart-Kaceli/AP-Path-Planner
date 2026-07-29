@@ -8,6 +8,11 @@ export default defineConfig({
 
   fullyParallel: false,
 
+  workers:
+  process.env.CI
+    ? 1
+    : undefined,
+
   forbidOnly:
     Boolean(
       process.env.CI,

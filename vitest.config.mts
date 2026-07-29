@@ -1,5 +1,4 @@
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 import {
   defineConfig,
@@ -7,9 +6,12 @@ import {
 
 export default defineConfig({
   plugins: [
-    tsconfigPaths(),
     react(),
   ],
+
+  resolve: {
+    tsconfigPaths: true,
+  },
 
   test: {
     environment: "jsdom",
@@ -23,13 +25,6 @@ export default defineConfig({
     restoreMocks: true,
     css: true,
 
-    /*
-     * Only run Vitest tests located
-     * inside the src folder.
-     *
-     * This prevents Vitest from running:
-     * tests/firestore.rules.test.mjs
-     */
     include: [
       "src/**/*.test.{ts,tsx}",
     ],
@@ -40,5 +35,51 @@ export default defineConfig({
       ".next/**",
       "e2e/**",
     ],
+
+    coverage: {
+      provider: "v8",
+
+      reporter: [
+        "text",
+        "text-summary",
+        "html",
+        "json",
+        "lcov",
+      ],
+
+      reportsDirectory:
+        "./coverage",
+
+      /*
+       * Begin with the files that
+       * currently have automated tests.
+       *
+       * Add more source files here as
+       * new tests are written.
+       */
+      include: [
+        "src/components/courses/CourseForm.tsx",
+        "src/components/network/AppConnectionStatus.tsx",
+        "src/components/ui/ConfirmDialog.tsx",
+        "src/components/ui/LoadingCard.tsx",
+        "src/components/ui/SyncStatus.tsx",
+        "src/utils/conflicts.ts",
+        "src/utils/dates.ts",
+        "src/utils/grades.ts",
+      ],
+
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/test/**",
+        "**/*.d.ts",
+      ],
+
+      thresholds: {
+        statements: 55,
+        branches: 55,
+        functions: 55,
+        lines: 55,
+      },
+    },
   },
 });

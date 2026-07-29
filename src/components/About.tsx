@@ -20,7 +20,7 @@ export default function About() {
         </div>
 
         <div className="rounded-3xl border border-blue-100 bg-blue-600 p-8 text-white shadow-lg">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-100">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white">
             The goal
           </p>
 

@@ -2072,7 +2072,7 @@ with recursive users/{UID} deletion.
 - Add error monitoring
 - Improve Firebase deployment workflow
 
-# Day 29 Completed
+# Day 28 Completed
 
 ## Test Infrastructure
 
@@ -2109,7 +2109,7 @@ with recursive users/{UID} deletion.
 - Preserved separate Firestore Rules tests
 - Preserved production build verification
 
-## Day 30 Goals
+## Day 29 Goals
 
 - Add Playwright browser testing
 - Test public navigation
@@ -2119,7 +2119,7 @@ with recursive users/{UID} deletion.
 - Add production performance monitoring
 - Add a complete project verification command
 
-# Day 30 Completed
+# Day 29 Completed
 
 ## End-to-End Testing
 
@@ -2153,7 +2153,7 @@ with recursive users/{UID} deletion.
 - Added check:full command
 - Added Playwright output folders to gitignore
 
-## Day 31 Goals
+## Day 30 Goals
 
 - Expand form test coverage
 - Add authenticated end-to-end tests
@@ -2163,3 +2163,53 @@ with recursive users/{UID} deletion.
 - Add accessibility testing
 - Add production deployment documentation
 - Add structured error reporting
+
+# Day 30 Completed
+
+## Code Coverage
+
+- Installed Vitest V8 coverage
+- Added terminal coverage reporting
+- Added HTML coverage reporting
+- Added JSON and LCOV reports
+- Added initial coverage thresholds
+- Added coverage to the project check command
+- Ignored generated coverage files
+
+## Test Expansion
+
+- Expanded conflict-detection tests
+- Added array and property-change tests
+- Added date utility tests
+- Added grade calculation tests
+- Expanded CourseForm validation tests
+- Improved test coverage across utilities and components
+
+## Accessibility Testing
+
+- Installed axe for Playwright
+- Added automated homepage accessibility checks
+- Added automated not-found-page accessibility checks
+- Added WCAG A and AA rule coverage
+- Added a dedicated accessibility test command
+- Preserved manual accessibility review as a future task
+
+## Test Configuration
+
+- Removed the legacy tsconfig-path plugin
+- Enabled native Vite tsconfig path resolution
+- Limited Vitest discovery to src test files
+- Kept Firestore Rules tests separate
+- Improved CI-ready Playwright worker settings
+
+## Day 31 Goals
+
+- Add GitHub Actions continuous integration
+- Run lint automatically on pushes
+- Run component tests and coverage automatically
+- Run Firestore Rules tests automatically
+- Run production builds automatically
+- Run Playwright tests automatically
+- Upload failed test reports
+- Document the development and testing workflow
+- Add repository protection recommendations
