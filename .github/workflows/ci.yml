@@ -74,48 +74,38 @@ jobs:
           retention-days: 14
 
   browser:
-    name: Browser and Accessibility Tests
+  name: Browser and Accessibility Tests
 
-    runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
-    timeout-minutes: 30
+  timeout-minutes: 30
 
-    needs:
-      - quality
+  needs:
+    - quality
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22
+        cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: "21"
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Run Playwright tests
-        run: npm run test:e2e
-        env:
-          CI: "true"
+    - name: Install Chromium
+      run: npx playwright install --with-deps chromium
 
-      - name: Upload Playwright report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 14
-
-      - name: Upload failed browser artifacts
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-test-results
-          path: test-results/
-          retention-days: 14
+    - name: Run Playwright tests with Firebase emulators
+      run: npm run test:e2e:emulator
+      env:
+        CI: "true"

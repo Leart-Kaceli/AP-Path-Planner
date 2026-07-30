@@ -7,12 +7,13 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
+  ".next/**",
+  "node_modules/**",
+  "coverage/**",
+  "playwright-report/**",
+  "test-results/**",
+  "blob-report/**",
+]),
 ]);
 
 export default eslintConfig;

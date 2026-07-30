@@ -43,3 +43,10 @@ Install dependencies:
 
 ```bash
 npm install
+
+## Firebase Emulator Testing
+
+Start the Authentication and Firestore emulators:
+
+```bash
+npm run emulators

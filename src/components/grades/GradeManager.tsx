@@ -577,6 +577,7 @@ setHasGradeConflict(
   if (!gradeToDelete) {
     return;
   }
+  
 
   const shouldDelete =
     window.confirm(

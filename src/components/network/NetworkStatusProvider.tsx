@@ -3,8 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -17,56 +16,61 @@ const NetworkStatusContext =
     NetworkStatusContextValue | undefined
   >(undefined);
 
+type NetworkStatusProviderProps = {
+  children: ReactNode;
+};
+
+function subscribeToNetworkStatus(
+  callback: () => void,
+) {
+  window.addEventListener(
+    "online",
+    callback,
+  );
+
+  window.addEventListener(
+    "offline",
+    callback,
+  );
+
+  return () => {
+    window.removeEventListener(
+      "online",
+      callback,
+    );
+
+    window.removeEventListener(
+      "offline",
+      callback,
+    );
+  };
+}
+
+function getNetworkSnapshot() {
+  return navigator.onLine;
+}
+
+function getServerNetworkSnapshot() {
+  /*
+   * This value is used both during
+   * server rendering and during the
+   * browser's first hydration render.
+   *
+   * After hydration, React reads the
+   * real navigator.onLine value.
+   */
+  return true;
+}
+
 export default function NetworkStatusProvider({
   children,
-}: {
-  children: ReactNode;
-}) {
-  const [
-    isOnline,
-    setIsOnline,
-  ] = useState(() => {
-    if (
-      typeof navigator ===
-      "undefined"
-    ) {
-      return true;
-    }
-
-    return navigator.onLine;
-  });
-
-  useEffect(() => {
-    function handleOnline() {
-      setIsOnline(true);
-    }
-
-    function handleOffline() {
-      setIsOnline(false);
-    }
-
-    window.addEventListener(
-      "online",
-      handleOnline,
+}: NetworkStatusProviderProps) {
+  const isOnline =
+    useSyncExternalStore(
+      subscribeToNetworkStatus,
+      getNetworkSnapshot,
+      getServerNetworkSnapshot,
     );
-
-    window.addEventListener(
-      "offline",
-      handleOffline,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "online",
-        handleOnline,
-      );
-
-      window.removeEventListener(
-        "offline",
-        handleOffline,
-      );
-    };
-  }, []);
 
   return (
     <NetworkStatusContext.Provider

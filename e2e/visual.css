@@ -1,0 +1,20 @@
+/*
+ * Remove animation and blinking from
+ * visual regression screenshots.
+ */
+*,
+*::before,
+*::after {
+  animation-delay: 0s !important;
+  animation-duration: 0s !important;
+  caret-color: transparent !important;
+  transition-delay: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/*
+ * Hide unstable development-only UI.
+ */
+nextjs-portal {
+  display: none !important;
+}

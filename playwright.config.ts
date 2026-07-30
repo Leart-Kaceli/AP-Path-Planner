@@ -4,14 +4,14 @@ import {
 } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir:
+    "./e2e",
 
-  fullyParallel: false,
+  fullyParallel:
+    false,
 
-  workers:
-  process.env.CI
-    ? 1
-    : undefined,
+ workers:
+  1,
 
   forbidOnly:
     Boolean(
@@ -23,7 +23,35 @@ export default defineConfig({
       ? 2
       : 0,
 
-  reporter: "html",
+  reporter: [
+    [
+      "list",
+    ],
+
+    [
+      "html",
+      {
+        open:
+          "never",
+      },
+    ],
+  ],
+
+  expect: {
+  toHaveScreenshot: {
+    animations:
+      "disabled",
+
+    caret:
+      "hide",
+
+    maxDiffPixelRatio:
+      0.01,
+
+    stylePath:
+      "./e2e/visual.css",
+  },
+},
 
   use: {
     baseURL:
@@ -41,15 +69,107 @@ export default defineConfig({
 
   projects: [
     {
-      name: "chromium",
+      name:
+        "setup",
+
+      testMatch:
+        /auth\.setup\.ts/,
+    },
+
+    {
+      name:
+        "public-chromium",
+
+      testIgnore: [
+  /auth\.setup\.ts/,
+  /authenticated[\\/].*\.spec\.ts/,
+  /visual[\\/].*\.visual\.spec\.ts/,
+],
 
       use: {
         ...devices[
           "Desktop Chrome"
         ],
+
+        storageState: {
+          cookies: [],
+          origins: [],
+        },
       },
     },
+
+    {
+      name:
+        "authenticated-chromium",
+
+        fullyParallel:
+  false,
+  
+
+workers:
+  1,
+  
+
+      testMatch:
+  /authenticated[\\/](?!.*\.visual\.spec\.ts).*\.spec\.ts/,
+
+      dependencies: [
+        "setup",
+      ],
+
+      use: {
+        ...devices[
+          "Desktop Chrome"
+        ],
+
+        storageState:
+          "playwright/.auth/student.json",
+      },
+    },
+
+    {
+  name:
+    "visual-chromium",
+
+  testMatch: [
+    /visual[\\/].*\.visual\.spec\.ts/,
   ],
+
+  use: {
+    ...devices[
+      "Desktop Chrome"
+    ],
+
+    storageState: {
+      cookies: [],
+      origins: [],
+    },
+  },
+},
+
+{
+  name:
+    "authenticated-visual-chromium",
+
+  testMatch:
+    /authenticated[\\/].*\.visual\.spec\.ts/,
+
+  dependencies: [
+    "setup",
+  ],
+
+  use: {
+    ...devices[
+      "Desktop Chrome"
+    ],
+
+    storageState:
+      "playwright/.auth/student.json",
+  },
+},
+  ],
+
+  
 
   webServer: {
     command:

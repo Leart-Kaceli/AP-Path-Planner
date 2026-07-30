@@ -215,158 +215,167 @@ export default function AssignmentManager() {
    * users and real-time Firestore data
    * for signed-in users.
    */
-  useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+ useEffect(() => {
+  if (isAuthLoading) {
+    return;
+  }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasLoadedAssignments(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setHasLoadedAssignments(false);
 
-    setAssignmentDataError(
-      null,
-    );
+  setAssignmentDataError(
+    null,
+  );
 
-    if (!user?.uid) {
-      let isCancelled = false;
+  /*
+   * Signed-out users load assignments
+   * and courses from local storage.
+   */
+  if (!user?.uid) {
+    let isCancelled = false;
 
-      async function loadLocalData() {
-        try {
-          const [
-            loadedAssignments,
-            loadedCourses,
-          ] = await Promise.all([
-            loadAssignments(),
-            loadCourses(),
-          ]);
+    async function loadLocalData() {
+      try {
+        const [
+          loadedAssignments,
+          loadedCourses,
+        ] = await Promise.all([
+          loadAssignments(),
+          loadCourses(),
+        ]);
 
-          if (isCancelled) {
-            return;
-          }
+        if (isCancelled) {
+          return;
+        }
 
-          setAssignments(
-            loadedAssignments,
+        setAssignments(
+          loadedAssignments,
+        );
+
+        setCourseNames(
+          loadedCourses.map(
+            (course) =>
+              course.name,
+          ),
+        );
+
+        setAssignmentsFromCache(
+          false,
+        );
+
+        setAssignmentsHavePendingWrites(
+          false,
+        );
+      } catch (error) {
+        console.error(
+          "Could not load assignments:",
+          error,
+        );
+
+        if (!isCancelled) {
+          setAssignmentDataError(
+            "Your saved assignments could not be loaded.",
           );
-
-          setCourseNames(
-            loadedCourses.map(
-              (course) =>
-                course.name,
-            ),
+        }
+      } finally {
+        if (!isCancelled) {
+          setHasLoadedAssignments(
+            true,
           );
-
-          setAssignmentsFromCache(
-            false,
-          );
-
-          setAssignmentsHavePendingWrites(
-            false,
-          );
-        } catch (error) {
-          console.error(
-            "Could not load assignments:",
-            error,
-          );
-
-          if (!isCancelled) {
-            setAssignmentDataError(
-              "Your saved assignments could not be loaded.",
-            );
-          }
-        } finally {
-          if (!isCancelled) {
-            setHasLoadedAssignments(
-              true,
-            );
-          }
         }
       }
-
-      void loadLocalData();
-
-      return () => {
-        isCancelled = true;
-      };
     }
 
-    const userId =
-      user.uid;
-
-    const unsubscribeAssignments =
-      subscribeToAssignments(
-        userId,
-
-        (snapshot) => {
-          setAssignments(
-            snapshot.data,
-          );
-
-          setAssignmentsFromCache(
-            snapshot.fromCache,
-          );
-
-          setAssignmentsHavePendingWrites(
-            snapshot.hasPendingWrites,
-          );
-
-          setHasLoadedAssignments(
-            true,
-          );
-
-          setAssignmentDataError(
-            null,
-          );
-        },
-
-        (error) => {
-          console.error(
-            "Assignment listener failed:",
-            error,
-          );
-
-          setAssignmentDataError(
-            "Live assignment sync disconnected. Try refreshing the page.",
-          );
-
-          setHasLoadedAssignments(
-            true,
-          );
-        },
-      );
-
-    const unsubscribeCourses =
-      subscribeToCourses(
-        userId,
-
-        (snapshot) => {
-          setCourseNames(
-            snapshot.data.map(
-              (course) =>
-                course.name,
-            ),
-          );
-        },
-
-        (error) => {
-          console.error(
-            "Assignment course listener failed:",
-            error,
-          );
-
-          setAssignmentDataError(
-            "Your course list could not be loaded.",
-          );
-        },
-      );
+    void loadLocalData();
 
     return () => {
-      unsubscribeAssignments();
-      unsubscribeCourses();
+      isCancelled = true;
     };
-  }, [
-    isAuthLoading,
-    user?.uid,
-  ]);
+  }
+
+  /*
+   * Signed-in users receive assignments
+   * and courses through Firestore
+   * realtime listeners.
+   */
+  const userId =
+    user.uid;
+
+  const unsubscribeAssignments =
+    subscribeToAssignments(
+      userId,
+
+      (snapshot) => {
+        setAssignments(
+          snapshot.data,
+        );
+
+        setAssignmentsFromCache(
+          snapshot.fromCache,
+        );
+
+        setAssignmentsHavePendingWrites(
+          snapshot.hasPendingWrites,
+        );
+
+        setHasLoadedAssignments(
+          true,
+        );
+
+        setAssignmentDataError(
+          null,
+        );
+      },
+
+      (error) => {
+        console.error(
+          "Assignment listener failed:",
+          error,
+        );
+
+        setAssignmentDataError(
+          "Live assignment sync disconnected. Try refreshing the page.",
+        );
+
+        setHasLoadedAssignments(
+          true,
+        );
+      },
+    );
+
+  const unsubscribeCourses =
+    subscribeToCourses(
+      userId,
+
+      (snapshot) => {
+        setCourseNames(
+          snapshot.data.map(
+            (course) =>
+              course.name,
+          ),
+        );
+      },
+
+      (error) => {
+        console.error(
+          "Assignment course listener failed:",
+          error,
+        );
+
+        setAssignmentDataError(
+          "Your course list could not be loaded.",
+        );
+      },
+    );
+
+  return () => {
+    unsubscribeAssignments();
+    unsubscribeCourses();
+  };
+}, [
+  isAuthLoading,
+  user?.uid,
+]);
 
   /*
    * Signed-out users save the whole
