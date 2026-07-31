@@ -4,6 +4,10 @@ import {
   useEffect,
 } from "react";
 
+import {
+  reportClientError,
+} from "@/utils/clientErrorReporting";
+
 type ErrorPageProps = {
   error: Error & {
     digest?: string;
@@ -16,14 +20,25 @@ export default function ErrorPage({
   error,
   reset,
 }: ErrorPageProps) {
-  useEffect(() => {
-    console.error(
-      "Application route error:",
-      error,
-    );
-  }, [
-    error,
-  ]);
+
+useEffect(() => {
+  reportClientError({
+    source:
+      "react-error",
+
+    name:
+      error.name,
+
+    message:
+      error.message,
+
+    stack:
+      error.stack ??
+      null,
+  });
+}, [
+  error,
+]);
 
   return (
     <main

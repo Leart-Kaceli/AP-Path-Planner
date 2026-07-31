@@ -50,3 +50,41 @@ Start the Authentication and Firestore emulators:
 
 ```bash
 npm run emulators
+
+## Production Monitoring
+
+AP Path Planner uses:
+
+- Vercel Web Analytics for page-view and visitor reporting
+- Vercel Speed Insights for Core Web Vitals
+- Firebase Performance Monitoring for page-load and network traces
+- Next.js client instrumentation for global browser errors
+- A same-origin API endpoint for structured client-error logs
+
+Client-error reports intentionally exclude:
+
+- User email addresses
+- Firebase user IDs
+- Course contents
+- Assignment contents
+- Grade data
+- Form values
+
+## Monitoring Verification
+
+After deployment:
+
+1. Open the production application.
+2. Navigate through several routes.
+3. Check Vercel Analytics.
+4. Check Vercel Speed Insights.
+5. Check Firebase Performance.
+6. Check Vercel logs for server errors.
+7. Run deployed Playwright tests.
+
+## Deployed Tests
+
+Run smoke and accessibility tests against a live URL:
+
+```bash
+npx cross-env DEPLOYMENT_URL=https://your-domain.example npm run test:deployed

@@ -66,6 +66,7 @@ export default defineConfig({
         "src/utils/conflicts.ts",
         "src/utils/dates.ts",
         "src/utils/grades.ts",
+        "src/lib/firebaseEnvironment.ts",
       ],
 
       exclude: [

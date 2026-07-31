@@ -74,6 +74,7 @@ export default defineConfig({
   /not-found\.spec\.ts/,
   /accessibility\.spec\.ts/,
   /deployed-health\.spec\.ts/,
+  /performance\.spec\.ts/,
 ],
 
       use: {

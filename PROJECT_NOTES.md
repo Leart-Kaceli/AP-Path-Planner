@@ -2375,3 +2375,107 @@ with recursive users/{UID} deletion.
 - Add structured client error monitoring
 - Add performance-budget checks
 - Review remaining low-coverage files
+
+# Day 34 Completed
+
+## Preview Deployment
+
+- Connected the GitHub repository to Vercel
+- Added Preview and Production environment variables
+- Created a live Preview deployment
+- Confirmed emulator mode is disabled when deployed
+- Verified the deployed homepage and not-found page
+
+## Firebase Production Configuration
+
+- Added deployed domains to Firebase Authentication
+- Verified email and password authentication
+- Verified Google authentication if enabled
+- Verified Firestore data creation and persistence
+- Deployed tested Firestore Security Rules
+- Confirmed user data remains scoped by authenticated user ID
+
+## Deployed Testing
+
+- Added a deployed-site Playwright configuration
+- Added live homepage health checks
+- Added deployed not-found checks
+- Added deployed accessibility checks
+- Added manual deployed-test command
+- Added GitHub Actions deployed smoke tests
+
+## Release Protection
+
+- Added Preview verification workflow
+- Added deployment test artifacts
+- Configured deployment checks where available
+- Documented Preview promotion
+- Documented production rollback procedure
+
+## Day 35 Goals
+
+- Add production Web Analytics
+- Add Speed Insights
+- Add structured client-error reporting
+- Add global browser error monitoring
+- Add unhandled-promise monitoring
+- Add Web Vitals reporting
+- Add performance-budget tests
+- Add Firebase environment tests
+- Document production monitoring
+
+# Day 35 Completed
+
+## Analytics
+
+- Added Vercel Web Analytics
+- Added Vercel Speed Insights
+- Enabled deployed page-view collection
+- Added Core Web Vitals reporting
+- Preserved Firebase Performance Monitoring
+
+## Client Error Monitoring
+
+- Added Next.js client instrumentation
+- Added global window-error monitoring
+- Added unhandled-promise-rejection monitoring
+- Added React error-boundary reporting
+- Added a same-origin client-error endpoint
+- Added structured server-side JSON logging
+- Excluded user and academic data from reports
+
+## Performance Reliability
+
+- Added production performance-budget tests
+- Added deployed performance-budget tests
+- Added page-load timing limits
+- Added transferred-resource limits
+- Added JavaScript transfer limits
+- Documented the initial budget baseline
+
+## Environment Reliability
+
+- Added Firebase environment unit tests
+- Tested complete production configuration
+- Tested missing-variable failure behavior
+- Tested emulator bypass behavior
+- Added Firebase environment validation to coverage
+
+## Production Monitoring
+
+- Documented Vercel Analytics verification
+- Documented Speed Insights verification
+- Documented Firebase Performance verification
+- Documented structured-error verification
+- Added deployed monitoring checklist
+
+## Day 36 Goals
+
+- Add privacy and data-retention documentation
+- Add a user-facing privacy page
+- Add account-data export verification
+- Add account-deletion E2E coverage
+- Add Firestore index review
+- Improve high-value component coverage
+- Add dependency and security auditing
+- Review production accessibility manually

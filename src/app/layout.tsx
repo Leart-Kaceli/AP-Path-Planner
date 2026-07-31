@@ -2,8 +2,17 @@ import type { Metadata } from "next";
 import FirebasePerformanceInitializer from "@/components/firebase/FirebasePerformanceInitializer";
 
 import ThemeInitializer from "@/components/theme/ThemeInitializer";
+import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
 
 import "./globals.css";
+
+import {
+  Analytics,
+} from "@vercel/analytics/next";
+
+import {
+  SpeedInsights,
+} from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "AP Path Planner",
@@ -28,6 +37,9 @@ export default function RootLayout({
           <FirebasePerformanceInitializer />
 
         {children}
+        <WebVitalsReporter />
+        <Analytics />
+  <SpeedInsights />
       </body>
     </html>
   );
