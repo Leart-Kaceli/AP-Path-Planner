@@ -32,7 +32,9 @@
 "test:visual:update:all": "firebase emulators:exec --project demo-ap-path-planner --only auth,firestore \"npm run test:visual:update:all:inner\"",
 "test:production": "playwright test --config=playwright.production.config.ts",
 "check:production": "npm run build && npm run test:production",
-"predeploy:check": "npm run lint && npm run test:coverage && npm run test:rules && npm run build && npm run test:e2e:emulator && npm run test:production"
+"predeploy:check": "npm run lint && npm run test:coverage && npm run test:rules && npm run build && npm run test:e2e:emulator && npm run test:production",
+"test:deployed": "playwright test --config=playwright.deployed.config.ts",
+"test:preview": "cross-env DEPLOYMENT_URL=$PREVIEW_URL playwright test --config=playwright.deployed.config.ts"
   },
   "dependencies": {
     "firebase": "^12.16.0",

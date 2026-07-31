@@ -1,0 +1,68 @@
+name: Deployed Preview Smoke Tests
+
+on:
+  repository_dispatch:
+    types:
+      - vercel.deployment.success
+
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: Deployment URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deployed-smoke:
+    name: Test Deployed Site
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 15
+
+    env:
+      DEPLOYMENT_URL: >-
+        ${{ github.event_name == 'workflow_dispatch'
+          && inputs.deployment_url
+          || github.event.client_payload.url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Show deployment URL
+        run: echo "Testing $DEPLOYMENT_URL"
+
+      - name: Run deployed-site tests
+        run: npm run test:deployed
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: deployed-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload failed test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: deployed-test-results
+          path: test-results/
+          retention-days: 14
