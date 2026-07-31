@@ -203,6 +203,25 @@ test(
         },
       );
 
+          const database =
+      testEnv
+        .authenticatedContext("user-a")
+        .firestore();
+
+    await assertFails(
+      getDoc(
+        doc(
+          database,
+          "users",
+          "user-b",
+          "assignments",
+          "assignment-1",
+        ),
+      ),
+    );
+  },
+);
+
       test(
   "user can write own course",
   async () => {
@@ -717,27 +736,6 @@ test(
 
           date: "2026-08-01",
         },
-      ),
-    );
-  },
-);
-
-    const database =
-      testEnv
-        .authenticatedContext(
-          "user-a",
-        )
-        .firestore();
-
-    await assertFails(
-      getDoc(
-        doc(
-          database,
-          "users",
-          "user-b",
-          "assignments",
-          "assignment-1",
-        ),
       ),
     );
   },
