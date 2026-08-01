@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-slate-100 dark:bg-slate-950">
@@ -8,6 +10,12 @@ export default function Footer() {
           An independent student project. Not affiliated with or endorsed by
           the College Board.
         </p>
+        <Link
+  href="/privacy"
+  className="text-sm text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+>
+  Privacy
+</Link>
       </div>
     </footer>
   );

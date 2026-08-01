@@ -34,7 +34,8 @@
     "check:production": "npm run build && npm run test:production",
     "predeploy:check": "npm run lint && npm run test:coverage && npm run test:rules && npm run build && npm run test:e2e:emulator && npm run test:production",
     "test:deployed": "playwright test --config=playwright.deployed.config.ts",
-    "test:preview": "cross-env DEPLOYMENT_URL=$PREVIEW_URL playwright test --config=playwright.deployed.config.ts"
+    "test:preview": "cross-env DEPLOYMENT_URL=$PREVIEW_URL playwright test --config=playwright.deployed.config.ts",
+    "release:check": "npm run lint && npm run test:coverage && npm run test:rules && npm run build && npm run test:e2e:emulator && npm run test:production"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

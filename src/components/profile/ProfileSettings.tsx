@@ -34,6 +34,22 @@ import {
   useAuth,
 } from "@/hooks/useAuth";
 
+import {
+  firebaseAuth,
+} from "@/lib/firebase";
+
+import {
+  deleteUserApplicationData,
+} from "@/utils/deleteUserData";
+
+import {
+  permanentlyDeleteAccount,
+} from "@/utils/deleteAccount";
+
+import {
+  getAccountDeletionErrorMessage,
+} from "@/utils/firebaseAccountErrors";
+
 type BrowserNotificationPermission =
   | NotificationPermission
   | "unsupported";
@@ -44,6 +60,23 @@ export default function ProfileSettings() {
   user,
   isLoading: isAuthLoading,
 } = useAuth();
+
+const [
+  isClearingData,
+  setIsClearingData,
+] = useState(false);
+
+const [
+  isDeletingAccount,
+  setIsDeletingAccount,
+] = useState(false);
+
+const [
+  dataManagementMessage,
+  setDataManagementMessage,
+] = useState<
+  string | null
+>(null);
 
   const [profile, setProfile] =
     useState<StudentProfile>(
@@ -277,6 +310,101 @@ async function requestNotificationPermission() {
     setMessage(
       "Profile reset to default settings.",
     );
+  }
+
+
+  async function handleClearApplicationData() {
+    const currentUser =
+      firebaseAuth.currentUser;
+
+    if (!currentUser) {
+      setDataManagementMessage(
+        "You must be signed in to clear application data.",
+      );
+
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Delete all courses, assignments, study sessions, grades, and profile settings? Your login account will remain active.",
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsClearingData(true);
+    setDataManagementMessage(null);
+
+    try {
+      await deleteUserApplicationData(
+        currentUser.uid,
+      );
+
+      setDataManagementMessage(
+        "Your AP Path Planner data was cleared successfully.",
+      );
+    } catch (error) {
+      console.error(
+        "Failed to clear user data:",
+        error,
+      );
+
+      setDataManagementMessage(
+        "Your data could not be completely cleared. Please try again.",
+      );
+    } finally {
+      setIsClearingData(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const currentUser =
+      firebaseAuth.currentUser;
+
+    if (!currentUser) {
+      setDataManagementMessage(
+        "You must be signed in to delete the account.",
+      );
+
+      return;
+    }
+
+    const confirmation =
+      window.prompt(
+        'This permanently deletes your account and application data. Type DELETE to continue.',
+      );
+
+    if (confirmation !== "DELETE") {
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setDataManagementMessage(null);
+
+    try {
+      await permanentlyDeleteAccount(
+        currentUser,
+      );
+
+      window.location.assign(
+        "/",
+      );
+    } catch (error) {
+      console.error(
+        "Failed to delete account:",
+        error,
+      );
+
+      setDataManagementMessage(
+        getAccountDeletionErrorMessage(
+          error,
+        ),
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
   }
 
   if (!hasLoaded) {
@@ -849,6 +977,58 @@ async function requestNotificationPermission() {
               Reset
             </button>
           </div>
+
+          <section className="mt-8 rounded-2xl border border-red-900/60 bg-red-950/20 p-6">
+            <h2 className="text-xl font-semibold text-red-700 dark:text-red-200">
+              Data and account
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+              Clearing application data removes your planning records but
+              keeps your login. Deleting the account permanently removes
+              both your records and login account.
+            </p>
+
+            {dataManagementMessage ? (
+              <p
+                role="status"
+                className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                {dataManagementMessage}
+              </p>
+            ) : null}
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleClearApplicationData}
+                disabled={
+                  isClearingData ||
+                  isDeletingAccount
+                }
+                className="rounded-lg border border-red-500 px-4 py-3 font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-950"
+              >
+                {isClearingData
+                  ? "Clearing data..."
+                  : "Clear application data"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={
+                  isDeletingAccount ||
+                  isClearingData
+                }
+                className="rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isDeletingAccount
+                  ? "Deleting account..."
+                  : "Delete account permanently"}
+              </button>
+            </div>
+          </section>
+
         </div>
       </form>
 
@@ -994,5 +1174,3 @@ function NotificationStatusRow({
     </div>
   );
 }
-
-

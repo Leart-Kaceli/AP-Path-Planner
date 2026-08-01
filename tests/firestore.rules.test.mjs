@@ -14,6 +14,7 @@ import {
 } from "@firebase/rules-unit-testing";
 
 import {
+  deleteDoc,
   doc,
   getDoc,
   setDoc,
@@ -75,6 +76,114 @@ test(
           completedAt: null,
           notes: "",
         },
+      ),
+    );
+  },
+);
+
+test(
+  "user can delete own course",
+  async () => {
+    await testEnv
+      .withSecurityRulesDisabled(
+        async (
+          context,
+        ) => {
+          await setDoc(
+            doc(
+              context.firestore(),
+              "users",
+              "user-a",
+              "courses",
+              "delete-course",
+            ),
+            {
+              name:
+                "AP Biology",
+
+              teacher:
+                "Ms. Teacher",
+
+              scoreGoal:
+                5,
+
+              progress:
+                25,
+            },
+          );
+        },
+      );
+
+    const database =
+      testEnv
+        .authenticatedContext(
+          "user-a",
+        )
+        .firestore();
+
+    await assertSucceeds(
+      deleteDoc(
+        doc(
+          database,
+          "users",
+          "user-a",
+          "courses",
+          "delete-course",
+        ),
+      ),
+    );
+  },
+);
+
+test(
+  "user cannot delete another user's course",
+  async () => {
+    await testEnv
+      .withSecurityRulesDisabled(
+        async (
+          context,
+        ) => {
+          await setDoc(
+            doc(
+              context.firestore(),
+              "users",
+              "user-b",
+              "courses",
+              "private-course",
+            ),
+            {
+              name:
+                "AP Chemistry",
+
+              teacher:
+                "Mr. Teacher",
+
+              scoreGoal:
+                5,
+
+              progress:
+                50,
+            },
+          );
+        },
+      );
+
+    const database =
+      testEnv
+        .authenticatedContext(
+          "user-a",
+        )
+        .firestore();
+
+    await assertFails(
+      deleteDoc(
+        doc(
+          database,
+          "users",
+          "user-b",
+          "courses",
+          "private-course",
+        ),
       ),
     );
   },

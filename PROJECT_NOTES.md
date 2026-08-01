@@ -2479,3 +2479,92 @@ with recursive users/{UID} deletion.
 - Improve high-value component coverage
 - Add dependency and security auditing
 - Review production accessibility manually
+
+# Day 36 Completed
+
+## Privacy
+
+- Added a public Privacy page
+- Documented stored account and academic-planning information
+- Documented data export
+- Documented data clearing
+- Documented permanent account deletion
+- Documented technical error and performance reporting
+- Added a Privacy link to the public application
+
+## Data Management
+
+- Verified application-data export
+- Added clear-all-application-data behavior
+- Added permanent account deletion behavior
+- Added destructive-action confirmations
+- Added loading and error states
+- Added recent-login error guidance
+- Confirmed account deletion removes known Firestore collections
+
+## Security Tests
+
+- Added rules coverage for deleting owned documents
+- Confirmed users cannot delete another user's documents
+- Added privacy-page browser coverage
+- Re-ran unit, Rules, browser, and production checks
+
+## Day 37 Goals
+
+- Audit dependencies
+- Enable Dependabot
+- Add security headers
+- Add robots metadata
+- Add sitemap metadata
+- Review production metadata
+- Enable code scanning where available
+- Create a production release checklist
+- Perform a final launch verification
+
+# Day 37 Completed
+
+## Dependency Security
+
+- Reviewed npm audit results
+- Reviewed outdated packages
+- Enabled the GitHub dependency graph
+- Enabled Dependabot alerts
+- Enabled Dependabot security updates
+- Added weekly npm version updates
+- Added monthly GitHub Actions updates
+
+## Application Security
+
+- Added X-Content-Type-Options
+- Added frame protection
+- Added Referrer-Policy
+- Added Permissions-Policy
+- Added browser security-header tests
+- Reviewed CodeQL default setup where available
+
+## Search and Metadata
+
+- Added generated robots.txt
+- Prevented private routes from being indexed
+- Added generated sitemap.xml
+- Added public homepage and Privacy entries
+- Improved title and description metadata
+- Added metadata browser tests
+
+## Release Reliability
+
+- Added a release-check command
+- Added a complete production checklist
+- Added a rollback procedure
+- Verified Preview deployment
+- Verified Production deployment
+- Ran deployed smoke, accessibility, health, and performance tests
+
+## Day 38 Goals
+
+- Move large-scale account-data deletion to a trusted server function
+- Add a carefully tested Content Security Policy
+- Increase high-value component test coverage
+- Review monitoring dashboards regularly
+- Review Dependabot pull requests
+- Continue accessibility testing with keyboard and screen-reader checks

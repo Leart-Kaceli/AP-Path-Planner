@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Playwright authenticated state
 /playwright/.auth/
+
+.vercel
+.env*

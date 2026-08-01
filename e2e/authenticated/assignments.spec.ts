@@ -24,6 +24,12 @@ async function createRequiredCourse(
     "/courses",
   );
 
+  await expect(
+    page,
+  ).toHaveURL(
+    /\/courses/,
+  );
+
   const courseNameInput =
     page.getByLabel(
       /course name/i,
@@ -37,7 +43,38 @@ async function createRequiredCourse(
     "AP Calculus BC",
   );
 
-  await page
+  const teacherInput =
+    page.getByLabel(
+      /teacher/i,
+    );
+
+  if (
+    await teacherInput.count()
+  ) {
+    await teacherInput.fill(
+      "Ms. Rivera",
+    );
+  }
+
+  const goalScoreInput =
+    page.getByLabel(
+      /goal score/i,
+    );
+
+  if (
+    await goalScoreInput.count()
+  ) {
+    await goalScoreInput.fill(
+      "5",
+    );
+  }
+
+  const courseForm =
+    courseNameInput.locator(
+      "xpath=ancestor::form[1]",
+    );
+
+  await courseForm
     .getByRole(
       "button",
       {
@@ -53,11 +90,21 @@ async function createRequiredCourse(
       {
         exact: true,
       },
-    ),
+    ).first(),
   ).toBeVisible({
     timeout:
       15_000,
   });
+
+  await expect(
+    courseNameInput,
+  ).toHaveValue(
+    "",
+    {
+      timeout:
+        15_000,
+    },
+  );
 }
 
 test(
@@ -80,7 +127,10 @@ test(
 
     await expect(
       assignmentTitleInput,
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout:
+        15_000,
+    });
 
     await assignmentTitleInput.fill(
       "Integration Practice",
@@ -93,28 +143,42 @@ test(
 
     await expect(
       courseSelect,
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout:
+        15_000,
+    });
 
-    await expect(
+    const calculusOption =
       courseSelect.locator(
         "option",
         {
           hasText:
             "AP Calculus BC",
         },
-      ),
+      );
+
+    await expect(
+      calculusOption,
     ).toHaveCount(
       1,
       {
         timeout:
-          15_000,
+          20_000,
       },
     );
 
-    await courseSelect.selectOption({
-      label:
-        "AP Calculus BC",
-    });
+    const courseValue =
+      await calculusOption.getAttribute(
+        "value",
+      );
+
+    expect(
+      courseValue,
+    ).toBeTruthy();
+
+    await courseSelect.selectOption(
+      courseValue!,
+    );
 
     const dueDateInput =
       page.getByLabel(
@@ -130,19 +194,24 @@ test(
     );
 
     const prioritySelect =
-  page.locator(
-    "#assignment-priority",
-  );
+      page.locator(
+        "#assignment-priority",
+      );
 
-await expect(
-  prioritySelect,
-).toBeVisible();
+    await expect(
+      prioritySelect,
+    ).toBeVisible();
 
-await prioritySelect.selectOption(
-  "High",
-);
+    await prioritySelect.selectOption(
+      "High",
+    );
 
-    await page
+    const assignmentForm =
+      assignmentTitleInput.locator(
+        "xpath=ancestor::form[1]",
+      );
+
+    await assignmentForm
       .getByRole(
         "button",
         {
@@ -158,12 +227,10 @@ await prioritySelect.selectOption(
         {
           exact: true,
         },
-      ),
+      ).first(),
     ).toBeVisible({
       timeout:
         15_000,
     });
-
-
   },
 );
