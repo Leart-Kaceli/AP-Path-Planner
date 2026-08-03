@@ -3,6 +3,11 @@ import {
   devices,
 } from "@playwright/test";
 
+const useFirebaseEmulators =
+  process.env
+    .NEXT_PUBLIC_USE_FIREBASE_EMULATORS ===
+  "true";
+
 export default defineConfig({
   testDir:
     "./e2e",
@@ -10,12 +15,10 @@ export default defineConfig({
   fullyParallel:
     false,
 
- workers:
-  process.env
-    .NEXT_PUBLIC_USE_FIREBASE_EMULATORS ===
-    "true"
-    ? 1
-    : undefined,
+  workers:
+    useFirebaseEmulators
+      ? 1
+      : undefined,
 
   forbidOnly:
     Boolean(
@@ -42,20 +45,20 @@ export default defineConfig({
   ],
 
   expect: {
-  toHaveScreenshot: {
-    animations:
-      "disabled",
+    toHaveScreenshot: {
+      animations:
+        "disabled",
 
-    caret:
-      "hide",
+      caret:
+        "hide",
 
-    maxDiffPixelRatio:
-      0.01,
+      maxDiffPixelRatio:
+        0.01,
 
-    stylePath:
-      "./e2e/visual.css",
+      stylePath:
+        "./e2e/visual.css",
+    },
   },
-},
 
   use: {
     baseURL:
@@ -85,10 +88,10 @@ export default defineConfig({
         "public-chromium",
 
       testIgnore: [
-  /auth\.setup\.ts/,
-  /authenticated[\\/].*\.spec\.ts/,
-  /visual[\\/].*\.visual\.spec\.ts/,
-],
+        /auth\.setup\.ts/,
+        /authenticated[\\/].*\.spec\.ts/,
+        /visual[\\/].*\.visual\.spec\.ts/,
+      ],
 
       use: {
         ...devices[
@@ -106,20 +109,11 @@ export default defineConfig({
       name:
         "authenticated-chromium",
 
-        fullyParallel:
-  false,
-  
-
-workers:
-  process.env
-    .NEXT_PUBLIC_USE_FIREBASE_EMULATORS ===
-    "true"
-    ? 1
-    : undefined,
-  
+      fullyParallel:
+        false,
 
       testMatch:
-  /authenticated[\\/](?!.*\.visual\.spec\.ts).*\.spec\.ts/,
+        /authenticated[\\/](?!.*\.visual\.spec\.ts).*\.spec\.ts/,
 
       dependencies: [
         "setup",
@@ -136,48 +130,45 @@ workers:
     },
 
     {
-  name:
-    "visual-chromium",
+      name:
+        "visual-chromium",
 
-  testMatch: [
-    /visual[\\/].*\.visual\.spec\.ts/,
-  ],
+      testMatch:
+        /visual[\\/].*\.visual\.spec\.ts/,
 
-  use: {
-    ...devices[
-      "Desktop Chrome"
-    ],
+      use: {
+        ...devices[
+          "Desktop Chrome"
+        ],
 
-    storageState: {
-      cookies: [],
-      origins: [],
+        storageState: {
+          cookies: [],
+          origins: [],
+        },
+      },
     },
-  },
-},
 
-{
-  name:
-    "authenticated-visual-chromium",
+    {
+      name:
+        "authenticated-visual-chromium",
 
-  testMatch:
-    /authenticated[\\/].*\.visual\.spec\.ts/,
+      testMatch:
+        /authenticated[\\/].*\.visual\.spec\.ts/,
 
-  dependencies: [
-    "setup",
+      dependencies: [
+        "setup",
+      ],
+
+      use: {
+        ...devices[
+          "Desktop Chrome"
+        ],
+
+        storageState:
+          "playwright/.auth/student.json",
+      },
+    },
   ],
-
-  use: {
-    ...devices[
-      "Desktop Chrome"
-    ],
-
-    storageState:
-      "playwright/.auth/student.json",
-  },
-},
-  ],
-
-  
 
   webServer: {
     command:
