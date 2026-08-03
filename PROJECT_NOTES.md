@@ -2568,3 +2568,31 @@ with recursive users/{UID} deletion.
 - Review monitoring dashboards regularly
 - Review Dependabot pull requests
 - Continue accessibility testing with keyboard and screen-reader checks
+
+# Day 38 Completed
+
+## Emulator Reliability
+
+- Confirmed Authentication emulator port
+- Confirmed Firestore emulator port
+- Removed duplicate emulator connections
+- Confirmed emulator environment variables
+- Added response validation to emulator cleanup
+- Kept shared-emulator tests sequential
+
+## Course and Assignment Testing
+
+- Verified course persistence after creation
+- Fixed course save behavior where required
+- Made assignment E2E setup independent
+- Created the required course within the assignment test
+- Selected courses using their real option value
+- Verified assignment creation through the emulator
+
+## CI
+
+- Separated functional and visual test responsibilities
+- Added Playwright report artifacts
+- Added failed-test artifacts
+- Verified GitHub Actions workflow indentation
+- Re-ran lint, unit, Rules, build, emulator, and production checks
