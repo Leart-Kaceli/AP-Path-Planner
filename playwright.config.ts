@@ -11,7 +11,11 @@ export default defineConfig({
     false,
 
  workers:
-  1,
+  process.env
+    .NEXT_PUBLIC_USE_FIREBASE_EMULATORS ===
+    "true"
+    ? 1
+    : undefined,
 
   forbidOnly:
     Boolean(
@@ -107,7 +111,11 @@ export default defineConfig({
   
 
 workers:
-  1,
+  process.env
+    .NEXT_PUBLIC_USE_FIREBASE_EMULATORS ===
+    "true"
+    ? 1
+    : undefined,
   
 
       testMatch:

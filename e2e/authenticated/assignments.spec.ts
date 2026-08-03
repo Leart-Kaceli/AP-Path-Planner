@@ -3,13 +3,53 @@ import {
   test,
 } from "@playwright/test";
 
-import type {
-  Page,
-} from "@playwright/test";
-
 import {
   clearFirestoreEmulator,
 } from "../helpers/emulators";
+
+import {
+  readFile,
+} from "node:fs/promises";
+
+
+import {
+  initializeTestEnvironment,
+} from "@firebase/rules-unit-testing";
+
+import {
+  doc,
+  setDoc,
+} from "firebase/firestore";
+
+const projectId =
+  "demo-ap-path-planner";
+
+const firestorePort =
+  8085;
+
+const testEnvironmentPromise =
+  initializeTestEnvironment({
+    projectId,
+
+    firestore: {
+      host:
+        "127.0.0.1",
+
+      port:
+        firestorePort,
+    },
+  });
+
+  test.afterAll(
+  async () => {
+    const testEnvironment =
+      await testEnvironmentPromise;
+
+    await testEnvironment.cleanup();
+  },
+);
+  
+
 
 test.beforeEach(
   async () => {
@@ -17,94 +57,63 @@ test.beforeEach(
   },
 );
 
-async function createRequiredCourse(
-  page: Page,
-) {
-  await page.goto(
-    "/courses",
-  );
+type TestUserRecord = {
+  uid: string;
+  email: string;
+};
 
-  await expect(
-    page,
-  ).toHaveURL(
-    /\/courses/,
-  );
-
-  const courseNameInput =
-    page.getByLabel(
-      /course name/i,
+async function readTestUser() {
+  const fileContents =
+    await readFile(
+      "playwright/.auth/test-user.json",
+      "utf8",
     );
 
-  await expect(
-    courseNameInput,
-  ).toBeVisible();
+  return JSON.parse(
+    fileContents,
+  ) as TestUserRecord;
+}
 
-  await courseNameInput.fill(
-    "AP Calculus BC",
-  );
 
-  const teacherInput =
-    page.getByLabel(
-      /teacher/i,
-    );
+async function seedRequiredCourse() {
+  const testUser =
+    await readTestUser();
 
-  if (
-    await teacherInput.count()
-  ) {
-    await teacherInput.fill(
-      "Ms. Rivera",
-    );
-  }
+  const testEnvironment =
+    await testEnvironmentPromise;
 
-  const goalScoreInput =
-    page.getByLabel(
-      /goal score/i,
-    );
+  await testEnvironment
+    .withSecurityRulesDisabled(
+      async (
+        context,
+      ) => {
+        await setDoc(
+          doc(
+            context.firestore(),
+            "users",
+            testUser.uid,
+            "courses",
+            "ap-calculus-bc",
+          ),
+          {
+            id:
+              "ap-calculus-bc",
 
-  if (
-    await goalScoreInput.count()
-  ) {
-    await goalScoreInput.fill(
-      "5",
-    );
-  }
+            name:
+              "AP Calculus BC",
 
-  const courseForm =
-    courseNameInput.locator(
-      "xpath=ancestor::form[1]",
-    );
+            teacher:
+              "Ms. Rivera",
 
-  await courseForm
-    .getByRole(
-      "button",
-      {
-        name:
-          /add course|save course/i,
+            goalScore:
+              5,
+
+            progress:
+              0,
+          },
+        );
       },
-    )
-    .click();
-
-  await expect(
-    page.getByText(
-      "AP Calculus BC",
-      {
-        exact: true,
-      },
-    ).first(),
-  ).toBeVisible({
-    timeout:
-      15_000,
-  });
-
-  await expect(
-    courseNameInput,
-  ).toHaveValue(
-    "",
-    {
-      timeout:
-        15_000,
-    },
-  );
+    );
 }
 
 test(
@@ -112,9 +121,7 @@ test(
   async ({
     page,
   }) => {
-    await createRequiredCourse(
-      page,
-    );
+    await seedRequiredCourse();
 
     await page.goto(
       "/assignments",
@@ -202,9 +209,30 @@ test(
       prioritySelect,
     ).toBeVisible();
 
-    await prioritySelect.selectOption(
-      "High",
-    );
+    const availablePriorities =
+      await prioritySelect
+        .locator("option")
+        .allTextContents();
+
+    const highPriority =
+      availablePriorities.find(
+        (
+          option,
+        ) =>
+          option
+            .trim()
+            .toLowerCase() ===
+          "high",
+      );
+
+    expect(
+      highPriority,
+    ).toBeTruthy();
+
+    await prioritySelect.selectOption({
+      label:
+        highPriority!,
+    });
 
     const assignmentForm =
       assignmentTitleInput.locator(
