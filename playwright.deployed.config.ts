@@ -3,14 +3,35 @@ import {
   devices,
 } from "@playwright/test";
 
-const deployedBaseUrl =
+const deploymentUrl =
   process.env.DEPLOYMENT_URL;
 
-if (!deployedBaseUrl) {
+if (!deploymentUrl) {
   throw new Error(
-    "DEPLOYMENT_URL must be provided before running deployed-site tests.",
+    "DEPLOYMENT_URL must be provided when running deployed tests.",
   );
 }
+
+const normalizedDeploymentUrl =
+  deploymentUrl.replace(
+    /\/+$/,
+    "",
+  );
+
+const bypassSecret =
+  process.env
+    .VERCEL_AUTOMATION_BYPASS_SECRET;
+
+const bypassHeaders =
+  bypassSecret
+    ? {
+        "x-vercel-protection-bypass":
+          bypassSecret,
+
+        "x-vercel-set-bypass-cookie":
+          "true",
+      }
+    : undefined;
 
 export default defineConfig({
   testDir:
@@ -32,6 +53,9 @@ export default defineConfig({
       ? 2
       : 0,
 
+  timeout:
+    30_000,
+
   reporter: [
     [
       "list",
@@ -47,8 +71,15 @@ export default defineConfig({
   ],
 
   use: {
+    ...devices[
+      "Desktop Chrome"
+    ],
+
     baseURL:
-      deployedBaseUrl,
+      normalizedDeploymentUrl,
+
+    extraHTTPHeaders:
+      bypassHeaders,
 
     trace:
       "on-first-retry",
@@ -59,8 +90,11 @@ export default defineConfig({
     video:
       "retain-on-failure",
 
-    ignoreHTTPSErrors:
-      false,
+    navigationTimeout:
+      20_000,
+
+    actionTimeout:
+      10_000,
   },
 
   projects: [
@@ -68,19 +102,17 @@ export default defineConfig({
       name:
         "deployed-chromium",
 
-      testMatch: [
-  /home\.spec\.ts/,
-  /navigation\.spec\.ts/,
-  /not-found\.spec\.ts/,
-  /accessibility\.spec\.ts/,
-  /deployed-health\.spec\.ts/,
-  /performance\.spec\.ts/,
-],
+      testIgnore: [
+        /auth\.setup\.ts/,
+        /authenticated[\\/].*\.spec\.ts/,
+        /visual[\\/].*\.visual\.spec\.ts/,
+      ],
 
       use: {
-        ...devices[
-          "Desktop Chrome"
-        ],
+        storageState: {
+          cookies: [],
+          origins: [],
+        },
       },
     },
   ],
