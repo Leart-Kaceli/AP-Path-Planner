@@ -2,128 +2,75 @@ import type {
   Metadata,
 } from "next";
 
-import Link from "next/link";
-
-export const metadata:
-  Metadata = {
+export const metadata: Metadata = {
   title:
     "Privacy | AP Path Planner",
 
   description:
-    "Learn how AP Path Planner stores, uses, exports, and deletes account data.",
+    "Learn how AP Path Planner stores and manages application data.",
 };
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-16 text-slate-100">
-      <article className="mx-auto max-w-3xl">
-        <Link
-          href="/"
-          className="text-sm font-semibold text-blue-400 transition hover:text-blue-300"
-        >
-          ← Return home
-        </Link>
+    <main className="mx-auto w-full max-w-4xl px-6 py-12">
+      <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+        Privacy
+      </h1>
 
-        <h1 className="mt-8 text-4xl font-bold tracking-tight">
-          Privacy
-        </h1>
+      <p className="mt-4 text-slate-700 dark:text-slate-300">
+        AP Path Planner stores the information
+        needed to provide your planning tools,
+        including courses, assignments, study
+        sessions, grades, and profile settings.
+      </p>
 
-        <p className="mt-4 text-slate-300">
-          AP Path Planner helps students organize AP courses,
-          assignments, study sessions, grades, goals, and profile
-          settings.
+      <section className="mt-10 space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          Account information
+        </h2>
+
+        <p className="text-slate-700 dark:text-slate-300">
+          Firebase Authentication manages your
+          account identity and sign-in information.
         </p>
+      </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Information stored
-          </h2>
+      <section className="mt-10 space-y-4">
+         <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+    Information stored
+  </h2>
 
-          <p className="mt-3 text-slate-300">
-            When you create an account, the application may store
-            your authentication information, profile settings,
-            courses, assignments, study sessions, grade entries,
-            and grade-category weights.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            How information is used
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            Your information is used to provide planning,
-            progress-tracking, grade-estimation, calendar, and
-            study-management features. AP Path Planner does not
-            sell student information.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Storage and authentication
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            Authentication is provided through Firebase
-            Authentication. Application data is stored in Cloud
-            Firestore and is associated with the authenticated
-            account.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Exporting your data
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            The account settings page provides an option to export
-            your AP Path Planner information as a backup file.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Deleting your information
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            The account settings page provides options to clear
-            application data or permanently delete the account.
-            Account deletion cannot be undone.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Error and performance information
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            The application may collect technical performance and
-            error information, such as the page where an error
-            occurred. Error reports should not include course
-            contents, assignment contents, grades, or form values.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          <h2 className="text-2xl font-semibold">
-            Contact
-          </h2>
-
-          <p className="mt-3 text-slate-300">
-            Questions about the application or its data practices
-            may be submitted through the project repository.
-          </p>
-        </section>
-
-        <p className="mt-12 border-t border-slate-800 pt-6 text-sm text-slate-400">
-          Last updated: August 1, 2026
+        <p className="text-slate-700 dark:text-slate-300">
+          Your planning records are associated
+          with your account and protected by
+          Firestore Security Rules.
         </p>
-      </article>
+      </section>
+
+      <section className="mt-10 space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          Data controls
+        </h2>
+
+        <p className="text-slate-700 dark:text-slate-300">
+          The profile page provides controls for
+          clearing application data and permanently
+          deleting your account.
+        </p>
+      </section>
+
+      <section className="mt-10 space-y-4">
+  <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+    Deleting your information
+  </h2>
+
+  <p className="text-slate-700 dark:text-slate-300">
+    You can clear your application data from the
+    profile page while keeping your login account
+    active. You can also permanently delete your
+    account and its associated application data.
+  </p>
+</section>
     </main>
   );
 }

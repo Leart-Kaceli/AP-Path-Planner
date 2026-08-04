@@ -1,4 +1,6 @@
-import type { NextConfig } from "next";
+import type {
+  NextConfig,
+} from "next";
 
 const securityHeaders = [
   {
@@ -30,34 +32,22 @@ const securityHeaders = [
       "Permissions-Policy",
 
     value:
-      "camera=(), microphone=(), geolocation=(), browsing-topics=()",
-  },
-
-  {
-    key:
-      "Cross-Origin-Opener-Policy",
-
-    value:
-      "same-origin-allow-popups",
+      "camera=(), microphone=(), geolocation=()",
   },
 ];
 
-
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
-
-   async headers() {
+  async headers() {
     return [
       {
         source:
-          "/(.*)",
+          "/:path*",
 
         headers:
           securityHeaders,
       },
     ];
-}
-}
+  },
+};
 
 export default nextConfig;

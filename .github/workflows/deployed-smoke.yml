@@ -1,33 +1,29 @@
-name: Deployed Preview Smoke Tests
+name: Deployed Smoke Tests
 
 on:
-  repository_dispatch:
-    types:
-      - vercel.deployment.success
-
   workflow_dispatch:
     inputs:
       deployment_url:
-        description: Deployment URL
+        description: Full deployment URL
         required: true
         type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: deployed-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deployed-smoke:
-    name: Test Deployed Site
-
+  smoke:
+    name: Test Deployed Application
     runs-on: ubuntu-latest
-
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     env:
-      DEPLOYMENT_URL: >-
-        ${{ github.event_name == 'workflow_dispatch'
-          && inputs.deployment_url
-          || github.event.client_payload.url }}
+      DEPLOYMENT_URL: ${{ inputs.deployment_url }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
     steps:
       - name: Check out repository
@@ -45,10 +41,22 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Show deployment URL
-        run: echo "Testing $DEPLOYMENT_URL"
+      - name: Verify deployment URL
+        shell: bash
+        run: |
+          if [[ "$DEPLOYMENT_URL" != https://* ]]; then
+            echo "DEPLOYMENT_URL must start with https://"
+            exit 1
+          fi
 
-      - name: Run deployed-site tests
+          if [[ "$DEPLOYMENT_URL" == https://vercel.com/* ]]; then
+            echo "Use the deployed .vercel.app domain, not the Vercel dashboard URL."
+            exit 1
+          fi
+
+          echo "Testing deployment: $DEPLOYMENT_URL"
+
+      - name: Run deployed smoke tests
         run: npm run test:deployed
 
       - name: Upload Playwright report

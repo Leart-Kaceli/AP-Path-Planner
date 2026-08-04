@@ -10,27 +10,25 @@ const siteUrl =
 export default function robots():
   MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent:
-        "*",
+    rules: [
+      {
+        userAgent:
+          "*",
 
-      allow: [
-        "/",
-        "/privacy",
-      ],
+        allow:
+          "/",
 
-      disallow: [
-        "/dashboard",
-        "/courses",
-        "/assignments",
-        "/study-planner",
-        "/calendar",
-        "/grades",
-        "/profile",
-        "/account",
-        "/api/",
-      ],
-    },
+        disallow: [
+          "/dashboard",
+          "/assignments",
+          "/courses",
+          "/study-planner",
+          "/calendar",
+          "/grades",
+          "/profile",
+        ],
+      },
+    ],
 
     sitemap:
       `${siteUrl}/sitemap.xml`,

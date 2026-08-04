@@ -14,11 +14,8 @@ export default function sitemap():
       url:
         siteUrl,
 
-      lastModified:
-        new Date(),
-
       changeFrequency:
-        "monthly",
+        "weekly",
 
       priority:
         1,
@@ -28,14 +25,11 @@ export default function sitemap():
       url:
         `${siteUrl}/privacy`,
 
-      lastModified:
-        new Date(),
-
       changeFrequency:
-        "yearly",
+        "monthly",
 
       priority:
-        0.4,
+        0.5,
     },
   ];
 }
