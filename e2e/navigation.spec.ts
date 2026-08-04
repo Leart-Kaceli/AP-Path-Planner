@@ -8,7 +8,20 @@ test(
   async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(
+      "/",
+    );
+
+    /*
+     * Confirm that the deployed page is
+     * AP Path Planner before testing its
+     * navigation.
+     */
+    await expect(
+      page,
+    ).toHaveTitle(
+      /AP Path Planner/i,
+    );
 
     const applicationLink =
       page
@@ -23,7 +36,10 @@ test(
 
     await expect(
       applicationLink,
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout:
+        10_000,
+    });
 
     const startingUrl =
       page.url();
@@ -34,6 +50,20 @@ test(
       page,
     ).not.toHaveURL(
       startingUrl,
+      {
+        timeout:
+          10_000,
+      },
+    );
+
+    /*
+     * Confirm navigation stayed inside
+     * the AP Path Planner application.
+     */
+    await expect(
+      page,
+    ).toHaveTitle(
+      /AP Path Planner/i,
     );
   },
 );

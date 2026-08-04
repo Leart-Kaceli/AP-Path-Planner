@@ -11,6 +11,10 @@ test(
     const response =
       await page.goto(
         "/",
+        {
+          waitUntil:
+            "domcontentloaded",
+        },
       );
 
     expect(
@@ -18,9 +22,9 @@ test(
     ).not.toBeNull();
 
     expect(
-      response?.status(),
-    ).toBeLessThan(
-      400,
+      response?.ok(),
+    ).toBe(
+      true,
     );
 
     await expect(
@@ -30,10 +34,14 @@ test(
     );
 
     await expect(
-      page.locator(
-        "body",
+      page.getByRole(
+        "heading",
+        {
+          name:
+            /your success starts with a plan/i,
+        },
       ),
-    ).not.toBeEmpty();
+    ).toBeVisible();
   },
 );
 
@@ -45,6 +53,10 @@ test(
     const response =
       await page.goto(
         "/deployed-health-unknown-route",
+        {
+          waitUntil:
+            "domcontentloaded",
+        },
       );
 
     expect(
@@ -52,8 +64,25 @@ test(
     ).not.toBeNull();
 
     await expect(
-      page.getByText(
-        /page not found/i,
+      page.getByRole(
+        "heading",
+        {
+          name:
+            /page not found/i,
+        },
+      ),
+    ).toBeVisible({
+      timeout:
+        10_000,
+    });
+
+    await expect(
+      page.getByRole(
+        "link",
+        {
+          name:
+            /return home|go home|back to home/i,
+        },
       ),
     ).toBeVisible();
   },
