@@ -10,6 +10,12 @@ Live application:
 
 [Open AP Path Planner](https://ap-path-planner.vercel.app)
 
+## Project Case Study
+
+A detailed case study covering the product, architecture, testing strategy, technical challenges, and lessons learned is available on my portfolio:
+
+[Read the AP Path Planner case study](https://personal-portfolio-eight-ecru-40.vercel.app/projects/ap-path-planner)
+
 ### Current Status
 
 AP Path Planner is deployed and actively being improved. The next stage of the project is gathering feedback from real students and using that feedback to guide future releases.
