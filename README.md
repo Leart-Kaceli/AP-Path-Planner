@@ -18,7 +18,7 @@ A detailed case study covering the product, architecture, testing strategy, tech
 
 ### Current Status
 
-AP Path Planner is deployed and actively being improved. The next stage of the project is gathering feedback from real students and using that feedback to guide future releases.
+AP Path Planner is deployed and actively being improved. I am gathering feedback from real users and using that feedback to guide future releases.
 
 ## Screenshots
 
@@ -56,7 +56,9 @@ The project also became an opportunity for me to work through the complete softw
 8. Add automated testing
 9. Improve accessibility
 10. Configure production deployment
-11. Verify the deployed application
+11. Gather user feedback
+12. Iterate on features based on that feedback
+13. Verify the deployed application
 
 ## Features
 
@@ -79,10 +81,27 @@ The project also became an opportunity for me to work through the complete softw
 
 - Create assignments
 - Associate assignments with courses
+- Automatically color-code assignments by course
+- Display consistent course colors across assignments, the dashboard, and calendar
 - Add due dates
 - Set priorities
 - Mark assignments complete
 - Edit and delete assignments
+
+### Course Color Coding
+
+Assignments are automatically assigned a consistent visual color based on their course.
+
+The same course color is used across:
+
+- Assignment cards
+- Course badges
+- Dashboard assignments
+- Calendar assignment events
+
+Course colors are generated deterministically from the course name instead of being stored as additional assignment data. This allows existing assignments to receive consistent colors without requiring a Firestore schema migration.
+
+Course names remain visible alongside the colors so that color is not the only way users identify a course.
 
 ### Study Planner
 
@@ -97,6 +116,7 @@ The project also became an opportunity for me to work through the complete softw
 
 - View assignments by date
 - View planned study sessions
+- Distinguish assignments visually by course
 - Understand upcoming academic workload
 
 ### Grade Tracking
@@ -218,6 +238,8 @@ users/{userId}
 
 Firestore Security Rules verify that the authenticated user matches the user path before allowing access to private records.
 
+Course color information does not require additional Firestore fields. Assignment colors are derived from the associated course name in the application interface.
+
 ## Testing
 
 AP Path Planner uses several test layers because no single test type can verify the entire application.
@@ -235,6 +257,12 @@ Coverage:
 ```bash
 npm run test:coverage
 ```
+
+Course color generation is also covered by utility tests that verify:
+
+- The same course receives stable styling
+- Course-name casing and whitespace are normalized
+- Empty course names receive fallback styling
 
 ### Firestore Security Rules Tests
 
@@ -271,6 +299,8 @@ Example workflows include:
 ### Accessibility Tests
 
 Playwright and automated accessibility checks detect serious accessibility problems such as insufficient contrast or missing accessible labels.
+
+Course color coding is supplementary: course names remain displayed in text so users do not need to rely solely on color to identify assignments.
 
 ### Production Tests
 
@@ -431,6 +461,8 @@ src/
 ├── services/
 ├── types/
 └── utils/
+    ├── courseColors.ts
+    └── courseColors.test.ts
 
 e2e/
 ├── authenticated/
@@ -479,6 +511,16 @@ Automated checks found issues such as insufficient text contrast that were not o
 
 This reinforced the importance of measuring accessibility rather than judging it only by appearance.
 
+### Feedback-Driven Development
+
+Real user feedback introduced another part of the development process: deciding how a requested feature should fit into the existing architecture.
+
+A user suggested color-coding assignments by course to make academic workloads easier to scan visually.
+
+Instead of storing an additional color value on every assignment, I implemented deterministic course-based colors. This allowed existing assignments to receive consistent colors without changing the Firestore assignment schema.
+
+The feature was then applied across assignment cards, dashboard assignments, and calendar events while retaining course-name text for accessibility.
+
 ## What I Learned
 
 Building AP Path Planner taught me that production software involves much more than creating visible features.
@@ -494,6 +536,9 @@ Some of the most important lessons were:
 - Documentation makes debugging easier
 - The first visible error is not always the root cause
 - Large projects become manageable when they are divided into smaller tasks
+- User feedback can reveal useful improvements that are easy to overlook as the developer
+- New features should fit the existing data model instead of adding unnecessary complexity
+- Color should supplement information rather than replace readable labels
 
 ## Future Improvements
 
@@ -527,4 +572,4 @@ The application is designed so that users do not need to expose academic plannin
 
 ---
 
-Built as a long-term software-engineering project focused on full-stack development, security, testing, accessibility, deployment, and student productivity.
+Built as a long-term software-engineering project focused on full-stack development, security, testing, accessibility, deployment, student productivity, and feedback-driven iteration.
