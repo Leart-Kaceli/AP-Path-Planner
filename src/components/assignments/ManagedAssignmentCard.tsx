@@ -1,4 +1,11 @@
-import type { Assignment } from "@/types/assignment";
+import type {
+  Assignment,
+} from "@/types/assignment";
+
+import {
+  getCourseColorStyles,
+} from "@/utils/courseColors";
+
 import {
   getAssignmentTiming,
 } from "@/utils/dates";
@@ -8,33 +15,26 @@ type ManagedAssignmentCardProps = {
   onToggleComplete: (
     assignmentId: string,
   ) => void;
-  onEdit: (assignment: Assignment) => void;
-  onDelete: (assignmentId: string) => void;
+  onEdit: (
+    assignment: Assignment,
+  ) => void;
+  onDelete: (
+    assignmentId: string,
+  ) => void;
 };
 
 const priorityStyles = {
-  Low: "bg-green-100 text-green-700",
-  Medium: "bg-amber-100 text-amber-700",
-  High: "bg-red-100 text-red-700",
+  Low:
+    "bg-green-100 text-green-700",
+  Medium:
+    "bg-amber-100 text-amber-700",
+  High:
+    "bg-red-100 text-red-700",
 };
 
-function formatDueDate(dueDate: string) {
-  const date = new Date(
-    `${dueDate}T00:00:00`,
-  );
-
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    },
-  ).format(date);
-}
-
 const timingStyles = {
-  Overdue: "bg-red-100 text-red-700",
+  Overdue:
+    "bg-red-100 text-red-700",
   "Due Today":
     "bg-orange-100 text-orange-700",
   "Due Soon":
@@ -45,31 +45,62 @@ const timingStyles = {
     "bg-green-100 text-green-700",
 };
 
+function formatDueDate(
+  dueDate: string,
+) {
+  const date =
+    new Date(
+      `${dueDate}T00:00:00`,
+    );
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month:
+        "short",
+      day:
+        "numeric",
+      year:
+        "numeric",
+    },
+  ).format(date);
+}
+
 export default function ManagedAssignmentCard({
   assignment,
   onToggleComplete,
   onEdit,
   onDelete,
 }: ManagedAssignmentCardProps) {
-  const timing = getAssignmentTiming(
-    assignment.dueDate,
-    assignment.completed,
-  );
+  const timing =
+    getAssignmentTiming(
+      assignment.dueDate,
+      assignment.completed,
+    );
+
+  const courseColors =
+    getCourseColorStyles(
+      assignment.course,
+    );
 
   return (
     <article
-      className={`rounded-2xl border bg-white p-6 shadow-sm transition ${
-        assignment.completed
-          ? "border-green-200 opacity-75"
-          : "border-slate-200"
-      }`}
-    >
+  className={`rounded-2xl border border-l-4 bg-white p-6 shadow-sm transition ${
+    assignment.completed
+      ? "border-green-200 opacity-75"
+      : "border-slate-200"
+  } ${courseColors.cardAccent}`}
+>
       <div className="flex items-start gap-4">
         <input
           type="checkbox"
-          checked={assignment.completed}
+          checked={
+            assignment.completed
+          }
           onChange={() =>
-            onToggleComplete(assignment.id)
+            onToggleComplete(
+              assignment.id,
+            )
           }
           aria-label={`Mark ${assignment.title} as ${
             assignment.completed
@@ -89,33 +120,47 @@ export default function ManagedAssignmentCard({
                     : "text-slate-900"
                 }`}
               >
-                {assignment.title}
+                {
+                  assignment.title
+                }
               </h3>
 
-              <p className="mt-1 text-sm text-slate-500">
-                {assignment.course}
-              </p>
+              <span
+                className={`mt-2 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                  courseColors.badge
+                }`}
+              >
+                {
+                  assignment.course
+                }
+              </span>
             </div>
 
-            <span
-              className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                priorityStyles[
+            <div className="flex flex-wrap gap-2">
+              <span
+                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                  priorityStyles[
+                    assignment
+                      .priority
+                  ]
+                }`}
+              >
+                {
                   assignment.priority
-                ]
-              }`}
-            >
-              {assignment.priority}
-            </span>
-            <span
-  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-    timingStyles[timing]
-  }`}
->
-  {timing}
-</span>
+                }
+              </span>
+
+              <span
+                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                  timingStyles[
+                    timing
+                  ]
+                }`}
+              >
+                {timing}
+              </span>
+            </div>
           </div>
-
-
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             <p>
@@ -139,7 +184,9 @@ export default function ManagedAssignmentCard({
 
           {assignment.notes && (
             <p className="mt-4 rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-              {assignment.notes}
+              {
+                assignment.notes
+              }
             </p>
           )}
 
@@ -147,7 +194,9 @@ export default function ManagedAssignmentCard({
             <button
               type="button"
               onClick={() =>
-                onEdit(assignment)
+                onEdit(
+                  assignment,
+                )
               }
               className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
             >
@@ -157,7 +206,9 @@ export default function ManagedAssignmentCard({
             <button
               type="button"
               onClick={() =>
-                onDelete(assignment.id)
+                onDelete(
+                  assignment.id,
+                )
               }
               className="text-sm font-semibold text-red-600 transition hover:text-red-700"
             >

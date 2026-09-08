@@ -1,34 +1,47 @@
 import Link from "next/link";
 
-import {
-  formatCalendarTime,
-} from "@/utils/calendar";
-
 import type {
   CalendarEvent as CalendarEventType,
 } from "@/types/calendar";
 
+import {
+  formatCalendarTime,
+} from "@/utils/calendar";
+
+import {
+  getCourseColorStyles,
+} from "@/utils/courseColors";
+
 type CalendarEventProps = {
-  event: CalendarEventType;
+  event:
+    CalendarEventType;
 };
 
 export default function CalendarEvent({
   event,
 }: CalendarEventProps) {
   const kindLabel =
-    event.kind === "assignment"
+    event.kind ===
+    "assignment"
       ? "Assignment"
       : "Study";
+
+  const courseColors =
+    getCourseColorStyles(
+      event.course,
+    );
+
+  const eventStyles =
+    event.kind ===
+    "assignment"
+      ? courseColors.calendarEvent
+      : "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-900 dark:bg-violet-950/50 dark:text-violet-200";
 
   return (
     <Link
       href={event.href}
       title={`${kindLabel}: ${event.title}`}
-      className={`block rounded-md border px-2 py-1.5 text-xs transition hover:shadow-sm ${
-        event.kind === "assignment"
-          ? "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-200"
-          : "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-900 dark:bg-violet-950/50 dark:text-violet-200"
-      } ${
+      className={`block rounded-md border px-2 py-1.5 text-xs transition hover:shadow-sm ${eventStyles} ${
         event.completed
           ? "opacity-60"
           : ""
@@ -42,6 +55,10 @@ export default function CalendarEvent({
         }`}
       >
         {event.title}
+      </span>
+
+      <span className="mt-0.5 block truncate opacity-80">
+        {event.course}
       </span>
 
       <span className="mt-0.5 block truncate opacity-80">
